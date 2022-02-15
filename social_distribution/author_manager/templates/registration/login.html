@@ -1,0 +1,7 @@
+<h2>Login</h2>
+    <form method="post">
+        {% csrf_token %}
+        {{ form.as_p }}
+    <button type="submit">Login</button>
+    <p>Need An Account? <a href="{% url 'author_manager:sign_up' %}">Sign Up</a> </p>
+</form>
