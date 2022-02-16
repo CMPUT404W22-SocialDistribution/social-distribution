@@ -1,7 +1,59 @@
-<h2>Sign up</h2>
-    <form method="post">
-        {% csrf_token %}
-        {{ form.as_p }}
-    <button type="submit">Sign Up</button>
-    <p>Already Have An Account? <a href="{% url 'author_manager:login' %}">Sign In</a> </p>
-</form>
+{% extends 'base/base_auth.html' %}
+
+{% block content %}
+
+<div class="container">
+    <div class="card signup-form shadow-lg">
+        <div class="card-body">
+            <h1 class="card-title text-center bold"><strong>Sign Up</strong></h1>
+            <div class="card-text">
+                <form class="sigup row g-2" method="post">
+                    {% csrf_token %}
+                    <div class="form-floating col-md-6 mb-3">
+                        <input type="text" class="form-control" name="username" placeholder="Username *" required>
+                        <label for="floatingInput">Username *</label>
+                    </div>
+                    <div class="form-floating col-md-6 mb-3 pl-1">
+                        <input type="text" class="form-control" name="displayName" placeholder="Displayname *" required>
+                        <label for="floatingInput">Displayname *</label>
+                    </div>
+                    <div class="form-floating col-md-6 mb-3">
+                        <input type="password" class="form-control" name="password1" placeholder="Password *" required>
+                        <label for="floatingPassword">Password *</label>
+                    </div>
+                    <div class="form-floating col-md-6 mb-3">
+                        <input type="password" class="form-control" name="password2" placeholder="Password Confirmation *" required>
+                        <label for="floatingPassword">Password Confirmation *</label>
+                    </div>
+                    <div class="form-text">
+                        <ul>
+                            <li>
+                                Your password can’t be too similar to your other personal information.
+                            </li>
+                            <li>
+                                Your password must contain at least 8 characters.
+                            </li>
+                            <li>
+                                Your password can’t be a commonly used password.
+                            </li>
+                            <li>
+                                Your password can’t be entirely numeric.
+                            </li>
+                        </ul>
+                    </div>
+                    <div class="form-floating mb-5">
+                        <input type="text" class="form-control" name="github" placeholder="Github (optional)" required>
+                        <label for="floatingInput">Github (optional)</label>
+                    </div>
+                    <div>
+                        <button type="submit" class="shadow btn btn-primary">Sign Up</button>
+                    </div>
+                    <div class="text-center mt-3">
+                        Already Have An Account? <a href="{% url 'author_manager:login' %}">Sign In</a>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
