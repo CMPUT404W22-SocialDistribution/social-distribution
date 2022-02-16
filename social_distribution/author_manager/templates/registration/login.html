@@ -1,7 +1,37 @@
-<h2>Login</h2>
-    <form method="post">
-        {% csrf_token %}
-        {{ form.as_p }}
-    <button type="submit">Login</button>
-    <p>Need An Account? <a href="{% url 'author_manager:sign_up' %}">Sign Up</a> </p>
-</form>
+{% extends 'base/base.html' %}
+
+{% block header %}
+{% load static %}
+<link rel="stylesheet" href="{% static 'css/login.css' %}">  
+{% endblock %}
+
+{% block content %}
+
+<div class="container">
+    <div class="card login-form shadow-lg">
+        <div class="card-body">
+            <h1 class="card-title text-center bold"><strong>Login</strong></h1>
+            <div class="card-text">
+                <form method="post">
+                    {% csrf_token %}
+                    <div class="form-floating mb-3">
+                        <input type="text" class="form-control" name="username" placeholder="Username">
+                        <label for="floatingInput">Username</label>
+                    </div>
+                    <div class="form-floating mb-5">
+                        <input type="password" class="form-control" name="password" placeholder="Password">
+                        <label for="floatingPassword">Password</label>
+                    </div>
+                    <div>
+                        <button type="submit" class="shadow btn btn-primary">Login</button>
+                    </div>
+                    <div class="text-center mt-3">
+                        Don't Have An Account? <a href="{% url 'author_manager:sign_up' %}">Sign Up</a> 
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+{% endblock %}
