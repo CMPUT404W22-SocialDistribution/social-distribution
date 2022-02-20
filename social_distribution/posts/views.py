@@ -1,8 +1,8 @@
 from django.shortcuts import render
 from rest_framework import generics, authentication, permissions
 
-from social_distribution.posts.serializers import PostSerializer
-from.models import Post
+from .serializers import PostSerializer
+from .models import Post
 from author_manager.models import *
 from rest_framework.response import Response
 
@@ -10,21 +10,21 @@ class PostsAPI(generics.GenericAPIView):
     authentication_classes = [authentication.BasicAuthentication]
     permission_classes = [permissions.IsAuthenticated]
     serializer_class = PostSerializer
-
     def get(self,request, author_id):
         author = Author.objects.get(id=author_id)
-        posts = author.posts.all()
-        current_user = request.user
-        if current_user.id != author_id:
-            posts.filter(unlisted=False)
-        serializer = self.get_serializer(posts, many=True)
-        if serializer.is_valid():
-            content = {
-                'author': author,
-                'posts': serializer.data
-            }
-            return Response(content, 200)
-        return Response(serializer.errors, 400)
+        posts = author.posts.filter(unlisted=False).all()
+        current_author = Author.objects.get(user=request.user)
+        if current_author.id != author.id:
+            posts = posts.filter(visibility='public')
+
+        serializer = PostSerializer(posts, many=True)
+        content = {
+            'current author': current_author.displayName,
+            'author': author.displayName,
+            'posts': serializer.data
+        }
+        return Response(content, 200)
+        
 
         
     def post(self, request, author_id):

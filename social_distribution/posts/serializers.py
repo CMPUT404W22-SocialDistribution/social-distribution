@@ -11,4 +11,10 @@ class AuthorSerializer(serializers.ModelSerializer):
 class PostSerializer(serializers.ModelSerializer):
     class Meta:
         model = Post
-        fields = '__all__'
+        fields = ['type', 'title', 'id', 'source', 'origin', 'description', 'content_type',
+                    'content', 'author', 'categories', 'published', 'visibility', 'unlisted']
+    
+    # def to_representation(self, instance):
+    #     data =  super().to_representation(instance)
+    #     data['author'] = AuthorSerializer(Author.objects.get(pk=data['author'])).data
+    #     return data

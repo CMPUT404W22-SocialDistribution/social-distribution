@@ -1,8 +1,8 @@
-from django.urls import path, url
+from django.urls import path, re_path
 from .views import *
 
 app_name = 'posts'
 urlpatterns = [
-    url(r'^authors/<str:author_id>/posts/$', PostsAPI.as_view(), name ="posts"),
+    path('authors/<str:author_id>/posts/', PostsAPI.as_view(), name ="posts"),
   
 ]
