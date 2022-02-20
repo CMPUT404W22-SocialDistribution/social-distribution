@@ -1,9 +1,10 @@
 from email.errors import MessageError
+import re
 from django.contrib import messages
 from django.shortcuts import redirect, render
 from .forms import SignUpForm
 from .models import Author
-from django.contrib.auth import authenticate, login
+from django.contrib.auth import authenticate, login, logout
 from django.contrib.auth.decorators import login_required
 from django.contrib.auth.forms import AuthenticationForm
 
@@ -46,3 +47,12 @@ def sign_in(request):
 def home(request):
     # this is temp we should probably do AJAX later
     return render(request, 'author_manager/index.html')
+
+
+@login_required
+def sign_out(request):
+    if request.method == 'GET':
+        request.user.auth_token.delete()
+        logout(request)
+        print(request.user)
+        return redirect('author_manager:login')

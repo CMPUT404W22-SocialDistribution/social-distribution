@@ -9,6 +9,7 @@ class AuthorSerializer(serializers.ModelSerializer):
 
 
 class PostSerializer(serializers.ModelSerializer):
+    # add comments
     class Meta:
         model = Post
         fields = ['type', 'title', 'id', 'source', 'origin', 'description', 'content_type',
