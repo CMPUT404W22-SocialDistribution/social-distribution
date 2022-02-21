@@ -5,7 +5,7 @@ from .models import Author
 class ProfileSerializer(serializers.ModelSerializer):
     class Meta:
         model = Author
-        fields = ['user','uuid', 'type', 'id', 'host', 'displayName', 'url', 'github', 'profileImage']
+        fields = ['user', 'type', 'id', 'host', 'displayName', 'url', 'github', 'profileImage']
 
     def __init__(self, *args, **kwargs):
         remove_fields = kwargs.pop('remove_fields', None)

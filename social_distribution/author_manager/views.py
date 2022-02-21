@@ -58,8 +58,8 @@ class ProfileAPI(APIView):
             update an author's profile.
     """
 
-    renderer_classes = [TemplateHTMLRenderer]
-    template_name = 'author_profile/profile.html'
+    # renderer_classes = [TemplateHTMLRenderer]
+    # template_name = 'author_profile/profile.html'
 
     def get(self, request, id):
         """
@@ -68,16 +68,16 @@ class ProfileAPI(APIView):
             - If successful:
                 Status 200 and the author's basic information.
         """
-        profile = Author.objects.get(uuid=id)
+        profile = Author.objects.get(id=id)
         # profile = get_object_or_404(Author, id=id)
-        serializer = ProfileSerializer(profile, remove_fields=['user', 'uuid'] )
-        return Response({'profile': profile})
-        # return Response(serializer.data, status=status.HTTP_200_OK)
+        serializer = ProfileSerializer(profile, remove_fields=['user'] )
+        # return Response({'profile': profile})
+        return Response(serializer.data, status=status.HTTP_200_OK)
 
     def post(self, request, id):
         #Get object we want to update
-        profile = Author.objects.get(uuid=id)
-        serializer = ProfileSerializer(profile, data=request.data, partial=True, remove_fields=['user', 'uuid'])
+        profile = Author.objects.get(id=id)
+        serializer = ProfileSerializer(profile, data=request.data, partial=True, remove_fields=['user'])
 
         if serializer.is_valid():
             serializer.save()
@@ -105,7 +105,7 @@ class GetAllAuthors(APIView):
                 Status 200 and the author's basic information.
         """
         authors = Author.objects.all()
-        serializer = ProfileSerializer(authors, many=True, remove_fields=['user', 'uuid'])
+        serializer = ProfileSerializer(authors, many=True, remove_fields=['user'])
         response = {
             'type':  "authors",
             'items': serializer.data
