@@ -18,7 +18,7 @@ def post_create(request, author_id):
 
     if request.method == "GET":
         form = PostForm()
-        return render(request, 'posts/post_create.html', {'form': form, 'profile':author})
+        return render(request, 'posts/post_create.html', {'form': form})
 
     elif request.method == "POST":
         if request.user.author != author:

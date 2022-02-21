@@ -51,7 +51,7 @@
                         <li class="nav-item dropdown">
                             <a id="username" class="nav-link dropdown-toggle" href="#" role="button" data-bs-toggle="dropdown" style="font-size: 18;"><i class="fa-solid fa-user"></i> &nbsp;{{ user.username }}&nbsp; &nbsp; &nbsp;</a>
                             <ul class="dropdown-menu">
-                                <li><a class="dropdown-item" href="{% url 'author_manager:profile' profile.id %}">Profile</a></li>
+                                <li><a class="dropdown-item" href="{% url 'author_manager:profile' user.author.id %}">Profile</a></li>
                                 <li><a class="dropdown-item" href="{% url 'author_manager:logout' %}">Logout</a></li>
                             </ul>
                         </li>
