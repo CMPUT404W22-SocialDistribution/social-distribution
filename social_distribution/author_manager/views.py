@@ -63,6 +63,7 @@ def sign_out(request):
         print(request.user)
         return redirect('author_manager:login')
 
+
 class ProfileAPI(APIView):
     """
     An API endpoint allows viewing and updating a profile.

@@ -138,9 +138,11 @@ USE_TZ = True
 # https://docs.djangoproject.com/en/4.0/howto/static-files/
 
 
+
 LOGIN_URL = 'author_manager:login'
 LOGOUT_URL = 'author_manager:logout'
 LOGIN_REDIRECT_URL = 'author_manager:home'
+
 
 STATIC_URL = '/static/'
 STATICFILES_DIRS = [
