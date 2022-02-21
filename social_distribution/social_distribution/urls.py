@@ -18,5 +18,8 @@ from django.urls import path, include
 
 urlpatterns = [
     path('admin/', admin.site.urls),
-    path('', include('author_manager.urls'))
+    path('', include('author_manager.urls')),
+    path('', include('posts.urls')),
+    path('nested_admin', include('nested_admin.urls')),
 ]
+
