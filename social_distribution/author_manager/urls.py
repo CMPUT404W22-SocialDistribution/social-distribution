@@ -6,9 +6,8 @@ app_name = 'author_manager'
 urlpatterns = [
     path('signup/', views.sign_up, name ="sign_up"),
     path('login/', views.sign_in, name='login'),
-    path('home/', views.home, name='home'),
+    path('', views.home, name='home'),
     path('logout/', views.sign_out, name='logout'),
-    path('home/', views.home, name='home'),
     path('authors/<uuid:id>/',  ProfileAPI.as_view(), name='profile'),
     path('authors/', GetAllAuthors.as_view(), name='getAllAuthors'),
 ]

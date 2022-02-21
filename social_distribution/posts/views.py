@@ -1,18 +1,97 @@
-from django.shortcuts import get_object_or_404, render
+from django.shortcuts import get_object_or_404, render, redirect
+
+from posts.forms import PostForm
 from rest_framework import generics, authentication, permissions
 
 from .serializers import PostSerializer
 from .models import Post
 from author_manager.models import *
 from rest_framework.response import Response
+from django.contrib.auth.decorators import login_required
+
+@login_required
+def post_create(request, author_id):
+    author = Author.objects.get(id=author_id)
+    if request.user.author != author:
+            error = "401 Unauthorized"
+            return render(request, 'posts/post_create.html', {'error': error})
+
+    if request.method == "GET":
+        form = PostForm()
+        return render(request, 'posts/post_create.html', {'form': form})
+
+    elif request.method == "POST":
+        if request.user.author != author:
+            error = "401 Unauthorized"
+            return render(request, 'posts/post_create.html', {'error': error})
+
+        updated_request = request.POST.copy()
+        
+        updated_request.update(
+            {
+            'author': author,
+            'type': 'post'
+            }
+        )
+        form = PostForm(updated_request)
+        
+        
+        if form.is_valid():
+            post = form.save(commit=False)
+            post.save()
+            return redirect('author_manager:home')
+        else:
+            print(form.errors)
+            return redirect('posts:posts', author_id)
+
+@login_required
+def post_detail(request, author_id, post_id):
+    
+    author = Author.objects.get(id=author_id)
+
+    if request.method == "GET":
+        post = get_object_or_404(Post, id=post_id)
+        form = PostForm(instance=post)
+        context = {
+            'form': form,
+            'edit': True
+        }
+        return render(request, 'posts/post_create.html', context)
+
+    elif request.method == "POST":
+        if request.user.author != author:
+            error = "401 Unauthorized"
+            return render(request, 'posts/post_create.html', {'error': error})
+
+        updated_request = request.POST.copy()
+        
+        updated_request.update(
+            {
+            'author': author,
+            'type': 'post'
+            }
+        )
+        post = get_object_or_404(Post, id=post_id)
+        form = PostForm(updated_request, instance=post)
+        
+        
+        if form.is_valid():
+            post_updated = form.save(commit=False)
+            post_updated.save()
+            return redirect('author_manager:home')
+        else:
+            print(form.errors)
+            return redirect('posts:posts', author_id)
+
 
 class PostsAPI(generics.GenericAPIView):
     authentication_classes = [authentication.BasicAuthentication]
     permission_classes = [permissions.IsAuthenticated]
     serializer_class = PostSerializer
     def get(self,request, author_id):
-        # TODO: remote
+
         author = Author.objects.get(id=author_id)
+
         posts = author.posts.filter(unlisted=False).all()
         current_user = Author.objects.get(user=request.user)
         if current_user.id != author.id:

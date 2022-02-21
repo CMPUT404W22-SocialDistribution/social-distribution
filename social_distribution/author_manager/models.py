@@ -3,9 +3,12 @@ from django.contrib.auth.models import User
 import uuid
 
 class Author(models.Model):
+    def short_uuid():
+        return uuid.uuid4().hex[:8]
+
     user = models.OneToOneField(User, on_delete=models.CASCADE, related_name='author')
     type = models.CharField(max_length=50, default="author")
-    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
+    id = models.CharField(primary_key=True, default=short_uuid, max_length = 8, editable=False, unique=True)
     host = models.CharField(max_length=500, default='http://127.0.0.1:8000/', blank=True)
     displayName = models.CharField(max_length=200, default=f"{str(user)}")
     github = models.CharField(max_length=200, blank=True)
