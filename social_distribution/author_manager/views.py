@@ -1,3 +1,4 @@
+from email.errors import MessageError
 from django.contrib import messages
 from django.shortcuts import redirect, render
 from .forms import SignUpForm
@@ -18,8 +19,14 @@ def sign_up(request):
         form = SignUpForm(request.POST)
         if form.is_valid():
             user = form.save(commit=True)
-            messages.success(request, 'Your account has been created!')
+            messages.success(request, 'Your account has been created.')
             return redirect('author_manager:login')
+        else:
+            errors = list(form.errors.values())
+            for error in errors:
+                mess = error[0] 
+                break
+            messages.warning(request, mess)
     else:
         form = SignUpForm()
     return render(request, 'registration/signup.html', {'form': form})     
@@ -34,10 +41,11 @@ def sign_in(request):
         form = AuthenticationForm(request, data=request.POST)
         if form.is_valid():
             user = authenticate(username=username, password=password)
-
             if user:
                 login(request, user)
                 return redirect('author_manager:home')
+        else:
+            messages.warning(request, 'Sorry, we could not find your account.')
     return render(request, 'registration/login.html', {'form': form})
 
 
@@ -58,8 +66,8 @@ class ProfileAPI(APIView):
             update an author's profile.
     """
 
-    # renderer_classes = [TemplateHTMLRenderer]
-    # template_name = 'author_profile/profile.html'
+    renderer_classes = [TemplateHTMLRenderer]
+    template_name = 'author_profile/profile.html'
 
     def get(self, request, id):
         """
@@ -71,8 +79,8 @@ class ProfileAPI(APIView):
         profile = Author.objects.get(id=id)
         # profile = get_object_or_404(Author, id=id)
         serializer = ProfileSerializer(profile, remove_fields=['user'] )
-        # return Response({'profile': profile})
-        return Response(serializer.data, status=status.HTTP_200_OK)
+        return Response({'profile': profile})
+        # return Response(serializer.data, status=status.HTTP_200_OK)
 
     def post(self, request, id):
         #Get object we want to update
