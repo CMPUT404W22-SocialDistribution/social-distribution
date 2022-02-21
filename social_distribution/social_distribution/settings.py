@@ -40,7 +40,13 @@ INSTALLED_APPS = [
     'django.contrib.staticfiles',
     'rest_framework',
     'author_manager',
+    'posts',
+    'nested_admin',
+    'crispy_forms',
 ]
+
+CRISPY_TEMPLATE_PACK = 'bootstrap4'
+
 
 MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',
@@ -58,7 +64,9 @@ TEMPLATES = [
     {
         'BACKEND': 'django.template.backends.django.DjangoTemplates',
         'DIRS': [os.path.join(BASE_DIR, 'author_manager/templates'),
-                os.path.join(BASE_DIR, 'author_manager/templates/author_manager')
+                os.path.join(BASE_DIR, 'author_manager/templates/author_manager'),
+                os.path.join(BASE_DIR, 'posts/templates'),
+                os.path.join(BASE_DIR, 'posts/templates/posts'),
                 ],
         'APP_DIRS': True,
         'OPTIONS': {
@@ -128,6 +136,12 @@ USE_TZ = True
 
 # Static files (CSS, JavaScript, Images)
 # https://docs.djangoproject.com/en/4.0/howto/static-files/
+
+
+
+LOGIN_URL = 'author_manager:login'
+LOGOUT_URL = 'author_manager:logout'
+LOGIN_REDIRECT_URL = 'author_manager:home'
 
 
 STATIC_URL = '/static/'
