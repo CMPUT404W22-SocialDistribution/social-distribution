@@ -6,9 +6,12 @@ class Category(models.Model):
     text = models.CharField(max_length=30)
 
 class Post(models.Model):
+    def short_uuid():
+        return uuid.uuid4().hex[:8]
+
     type = models.CharField(max_length=50, default='post')
     title = models.CharField(max_length=200)
-    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
+    id = models.CharField(primary_key=True, default=short_uuid, max_length = 8, editable=False, unique=True)
     source = models.CharField(max_length=300, blank=True)
     origin = models.CharField(max_length=300, blank=True)
     description = models.CharField(max_length=300, blank=True, null=True)

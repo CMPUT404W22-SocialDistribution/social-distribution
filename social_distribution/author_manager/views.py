@@ -59,7 +59,6 @@ def home(request):
 @login_required
 def sign_out(request):
     if request.method == 'GET':
-        request.user.auth_token.delete()
         logout(request)
         print(request.user)
         return redirect('author_manager:login')

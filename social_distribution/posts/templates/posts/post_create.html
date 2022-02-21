@@ -1,0 +1,27 @@
+{% extends 'base.html' %} {% block content %}
+
+{% load crispy_forms_tags %}
+
+<!-- https://simpleisbetterthancomplex.com/tutorial/2018/11/28/advanced-form-rendering-with-django-crispy-forms.html -->
+
+
+
+{% if error %}
+    <h1 class="text-center" style="padding-top: 20px; font-family: roboto">{{error}}</h1>
+{% else %}
+    {% if edit %}
+    <h1 class="text-center" style="padding-top: 20px; font-family: roboto">Edit Post</h1>
+    {% else %}
+    <h1 class="text-center" style="padding-top: 20px; font-family: roboto">Create Post</h1>
+    {% endif %}
+    <hr style="width:7%; margin: auto;" />
+    <div class="row" id="" style="padding-top: 20px;">
+        <div class="col-4"></div>
+        <div class="col-4 inline">{% crispy form %}</div>
+        <div class="col-4"></div>
+    </div>
+{% endif %}
+
+
+
+{% endblock %}
