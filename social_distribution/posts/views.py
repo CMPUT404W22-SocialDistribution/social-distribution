@@ -43,7 +43,7 @@ def post_create(request, author_id):
             return redirect('posts:post_detail', author_id, post.id)
         else:
             print(form.errors)
-            return redirect('posts:posts', author_id)
+            return redirect('posts:post_create', author_id)
 
 @login_required
 def post_edit(request, author_id, post_id):
@@ -83,7 +83,7 @@ def post_edit(request, author_id, post_id):
             return redirect('posts:post_detail', author_id, post_id)
         else:
             print(form.errors)
-            return redirect('posts:posts', author_id)
+            return redirect('posts:post_create', author_id)
 
 @login_required
 def post_detail(request, author_id, post_id):
@@ -126,16 +126,22 @@ def post_delete(request, author_id, post_id):
             error = "401 Unauthorized"
             return render(request, 'posts/post_create.html', {'error': error}, status=401)
 
+@login_required
+def my_posts(request, author_id):
+    if request.method == "GET":
+        author = Author.objects.get(id=author_id)
+        if request.user.author == author:
+            return render(request, 'posts/my_posts.html', {'author_id': author_id})
 
 class PostsAPI(generics.GenericAPIView):
-    authentication_classes = [authentication.BasicAuthentication]
+    authentication_classes = [authentication.BasicAuthentication, authentication.SessionAuthentication]
     permission_classes = [permissions.IsAuthenticated]
     serializer_class = PostSerializer
     def get(self,request, author_id):
 
         author = Author.objects.get(id=author_id)
 
-        posts = author.posts.filter(unlisted=False).all()
+        posts = author.posts.filter(unlisted=False).order_by('-published')
         current_user = Author.objects.get(user=request.user)
         if current_user.id != author.id:
             posts = posts.filter(visibility='public')

@@ -23,6 +23,7 @@
               rel="stylesheet">
         <script src="https://kit.fontawesome.com/abd7f00367.js" crossorigin="anonymous"></script>
         <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js"></script>
+        <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.6.0/jquery.min.js" integrity="sha512-894YE6QWD5I59HgZOGReFYm4dnWc1Qt5NtvYSaNcOP+u1T9qYdvdihz0PPSiiqn/+/3e7Jo4EaG7TubfWGUrMQ==" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
     </head>
     <body>
         <nav class="navbar navbar-expand-sm navbar-dark bg-dark fixed-top">
@@ -42,7 +43,7 @@
                 <div class="collapse navbar-collapse" id="mynavbar">
                     <ul class="navbar-nav">
                         <li class="nav-item active">
-                            <a class="nav-link font-weight-bold" href="#">My Post</a>
+                            <a class="nav-link font-weight-bold" href="{% url 'posts:posts' user.author.id %}">My Posts</a>
                         </li>
                         <li class="nav-item active">
                             <a class="nav-link font-weight-bold" href="#">Friends</a>
@@ -52,7 +53,7 @@
                         </li>
                     </ul>
                     &nbsp;&nbsp;&nbsp;
-                    <a href="{% url 'posts:posts' user.author.id %}">
+                    <a href="{% url 'posts:post_create' user.author.id %}">
                         <button class="navbar-btn btn btn-sm btn-secondary font-weight-bold"
                                 style='width:10em'>Create Post</button>
                     </a>
