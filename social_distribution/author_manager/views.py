@@ -2,7 +2,9 @@ from email.errors import MessageError
 import re
 from django.contrib import messages
 from django.shortcuts import redirect, render
-from .forms import SignUpForm
+
+# import idna
+from .forms import SignUpForm, EditProfileForm
 from .models import Author
 from django.contrib.auth import authenticate, login, logout
 from django.contrib.auth.decorators import login_required
@@ -63,6 +65,29 @@ def sign_out(request):
         print(request.user)
         return redirect('author_manager:login')
 
+@login_required
+def profile_edit(request, id):
+    
+    author = Author.objects.get(id=id)
+    if request.user.author != author:
+            error = "401 Unauthorized"
+            return render(request, 'author_profile/edit_profile.html', {'error': error})
+    if request.method == "GET":
+        form = EditProfileForm(instance=author)
+        return render(request, 'author_profile/edit_profile.html', {'form':form})
+        # return render(request, 'author_profile/edit_profile.html', {'profile':author})
+        
+    elif request.method == "POST":
+        updated_request = request.POST.copy()
+        form = EditProfileForm(updated_request, instance=author)        
+        if form.is_valid():
+            post = form.save(commit=False)
+            post.save()
+            return redirect('author_manager:profile', id)
+        else:
+            print(form.errors)
+            return redirect('author_manager:editProfile', id)
+
 
 class ProfileAPI(APIView):
     """
@@ -75,8 +100,8 @@ class ProfileAPI(APIView):
             update an author's profile.
     """
 
-    # renderer_classes = [TemplateHTMLRenderer]
-    # template_name = 'author_profile/profile.html'
+    renderer_classes = [TemplateHTMLRenderer]
+    template_name = 'author_profile/profile.html'
 
     def get(self, request, id):
         """
@@ -88,8 +113,8 @@ class ProfileAPI(APIView):
         profile = Author.objects.get(id=id)
         # profile = get_object_or_404(Author, id=id)
         serializer = ProfileSerializer(profile, remove_fields=['user'] )
-        # return Response({'profile': profile})
-        return Response(serializer.data, status=status.HTTP_200_OK)
+        return Response({'profile': profile})
+        # return Response(serializer.data, status=status.HTTP_200_OK)
 
     def post(self, request, id):
         #Get object we want to update
@@ -128,4 +153,3 @@ class GetAllAuthors(APIView):
             'items': serializer.data
         }
         return Response(response, status=status.HTTP_200_OK)
-

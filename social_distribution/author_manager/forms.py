@@ -2,6 +2,8 @@ from django.contrib.auth.forms import UserCreationForm
 from django.contrib.auth.models import User
 from django.core.exceptions import ValidationError
 from django import forms
+from crispy_forms.helper import FormHelper
+from crispy_forms.layout import Layout, Submit, Row, Column
 
 from .models import Author
 
@@ -36,5 +38,42 @@ class SignUpForm(UserCreationForm):
             
         return user
 
+
+
+col12 = 'form-group col-md-12 mb-0'
+
+class EditProfileForm(forms.ModelForm):
+    class Meta:
+        model = Author
+        fields = ['displayName', 'github', 'profileImage', 'birthday', 'email', 'about']
+        widgets = {
+            'categories': forms.Select(attrs={'rows': 1}),
+        }
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.helper = FormHelper()
+        self.helper.layout = Layout(
+            
+            Row(
+                Column('displayName', css_class=col12),
+            ),
+            Row(
+                Column('github', css_class=col12),
+            ),
+            Row(
+                Column('profileImage', css_class=col12),
+            ),
+            
+            Row(
+                Column('birthday', css_class=col12),
+            ),
+            Row(
+                Column('email', css_class=col12),
+            ),
+            Row(
+                Column('about', css_class=col12),
+            ),
+            Submit('submit', 'Edit Profile')
+        )
 
     

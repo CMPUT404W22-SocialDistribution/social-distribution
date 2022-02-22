@@ -54,7 +54,8 @@ def post_detail(request, author_id, post_id):
         form = PostForm(instance=post)
         context = {
             'form': form,
-            'edit': True
+            'edit': True,
+            'profile':author,
         }
         return render(request, 'posts/post_create.html', context)
 
