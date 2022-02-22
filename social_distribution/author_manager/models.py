@@ -14,6 +14,10 @@ class Author(models.Model):
     github = models.CharField(max_length=200, blank=True)
     profileImage = models.ImageField(upload_to='images/', blank=True, null=True)
 
+    birthday = models.CharField(max_length=100, null=True, blank=True)
+    email = models.EmailField(max_length=100, unique=True, blank=True, null=True, default=None)
+    about = models.CharField(max_length=1000, blank=True, null=True)
+
     @property
     def url(self):
         return self.host + 'authors/' + str(self.id)

@@ -1,0 +1,16 @@
+{% extends 'author_manager/base.html' %}
+{% load crispy_forms_tags %}
+
+{% block content %}
+
+
+<div class="row" id="" style="padding-top: 20px;">
+    <div class="col-4"></div>
+    
+    <div class="col-4 inline">
+        <h3>EDIT PROFILE</h3><br>
+        {% crispy form %}</div>
+    <div class="col-4"></div>
+</div>
+
+{% endblock content %}

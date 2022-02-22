@@ -7,6 +7,7 @@
         <meta name="viewport" content="width=device-width, initial-scale=1.0">
         <title>Squawker</title>
         <link rel="stylesheet" href="{% static 'css/base.css' %}">
+        <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.5.0/font/bootstrap-icons.css">
         <link rel="stylesheet"
               href="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/css/bootstrap.min.css"
               integrity="sha384-ggOyR0iXCbMQv3Xipma34MD+dH/1fQ784/j6cY/iJTQUOhcWr7x9JvoRxT2MZw1T"
@@ -74,7 +75,7 @@
                                    style="font-size: 18;"><i class="fa-solid fa-user"></i> &nbsp;{{ user.username }}&nbsp; &nbsp; &nbsp;</a>
                                 <ul class="dropdown-menu">
                                     <li>
-                                        <a class="dropdown-item" href='#'>Profile</a>
+                                        <a class="dropdown-item" href="{% url 'author_manager:profile' user.author.id %}">Profile</a>
                                     </li>
                                     <li>
                                         <a class="dropdown-item" href="{% url 'author_manager:logout' %}">Logout</a>
@@ -91,3 +92,4 @@
         </div>
     </body>
 </html>
+
