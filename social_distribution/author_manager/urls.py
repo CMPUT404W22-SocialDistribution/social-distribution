@@ -10,4 +10,5 @@ urlpatterns = [
     path('logout/', views.sign_out, name='logout'),
     path('authors/<str:id>/',  ProfileAPI.as_view(), name='profile'),
     path('authors/', GetAllAuthors.as_view(), name='getAllAuthors'),
+    path('authors/<str:id>/edit', views.profile_edit, name='editProfile'),
 ]

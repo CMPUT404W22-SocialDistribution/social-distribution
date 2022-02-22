@@ -2,7 +2,9 @@ from email.errors import MessageError
 import re
 from django.contrib import messages
 from django.shortcuts import redirect, render
-from .forms import SignUpForm
+
+# import idna
+from .forms import SignUpForm, EditProfileForm
 from .models import Author
 from django.contrib.auth import authenticate, login, logout
 from django.contrib.auth.decorators import login_required
@@ -62,6 +64,30 @@ def sign_out(request):
         logout(request)
         print(request.user)
         return redirect('author_manager:login')
+
+@login_required
+def profile_edit(request, id):
+    
+    author = Author.objects.get(id=id)
+    if request.user.author != author:
+            error = "401 Unauthorized"
+            return render(request, 'author_profile/edit_profile.html', {'error': error})
+    if request.method == "GET":
+        form = EditProfileForm(instance=author)
+        return render(request, 'author_profile/edit_profile.html', {'form':form})
+        # return render(request, 'author_profile/edit_profile.html', {'profile':author})
+        
+    elif request.method == "POST":
+        updated_request = request.POST.copy()
+        form = EditProfileForm(updated_request, instance=author)        
+        if form.is_valid():
+            post = form.save(commit=False)
+            post.save()
+            return redirect('author_manager:profile', id)
+        else:
+            print(form.errors)
+            return redirect('author_manager:editProfile', id)
+
 
 class ProfileAPI(APIView):
     """
