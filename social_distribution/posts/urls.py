@@ -7,4 +7,5 @@ urlpatterns = [
     path('authors/<str:author_id>/posts/create', post_create, name ="posts"),
     path('authors/<str:author_id>/posts/<str:post_id>/edit', post_edit, name ="post_edit"),
     path('authors/<str:author_id>/posts/<str:post_id>', post_detail, name ="post_detail"),
+    path('authors/<str:author_id>/posts/<str:post_id>/delete', post_delete, name ="post_delete"),
 ]

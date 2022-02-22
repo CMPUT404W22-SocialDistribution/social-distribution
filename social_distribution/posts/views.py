@@ -1,3 +1,4 @@
+from django.http import HttpResponse
 from django.shortcuts import get_object_or_404, render, redirect
 
 from posts.forms import PostForm
@@ -14,7 +15,7 @@ def post_create(request, author_id):
     author = Author.objects.get(id=author_id)
     if request.user.author != author:
             error = "401 Unauthorized"
-            return render(request, 'posts/post_create.html', {'error': error})
+            return render(request, 'posts/post_create.html', {'error': error}, status=401)
 
     if request.method == "GET":
         form = PostForm()
@@ -23,7 +24,7 @@ def post_create(request, author_id):
     elif request.method == "POST":
         if request.user.author != author:
             error = "401 Unauthorized"
-            return render(request, 'posts/post_create.html', {'error': error})
+            return render(request, 'posts/post_create.html', {'error': error}, status=401)
 
         updated_request = request.POST.copy()
         
@@ -39,7 +40,7 @@ def post_create(request, author_id):
         if form.is_valid():
             post = form.save(commit=False)
             post.save()
-            return redirect('author_manager:home')
+            return redirect('posts:post_detail', author_id, post.id)
         else:
             print(form.errors)
             return redirect('posts:posts', author_id)
@@ -62,7 +63,7 @@ def post_edit(request, author_id, post_id):
     elif request.method == "POST":
         if request.user.author != author:
             error = "401 Unauthorized"
-            return render(request, 'posts/post_create.html', {'error': error})
+            return render(request, 'posts/post_create.html', {'error': error}, status=401)
 
         updated_request = request.POST.copy()
         
@@ -91,18 +92,40 @@ def post_detail(request, author_id, post_id):
     
     if request.method == "GET":
         author = Author.objects.get(id=author_id)
+        post = get_object_or_404(Post, id=post_id)
         if request.user.author ==  author:
             isAuthor = True
         else:
             isAuthor = False
+            if post.visibility == "private":
+                error = "404 Not Found"
+                return render(request, 'posts/post_create.html', {'error': error}, status=404)
+                
+            elif post.visibility == "friends":
+                # TODO:
+                # if request.user is not friend to author:
+                #       error = "404 Not Found"
+                # return render(request, 'posts/post_detail.html', {'error': error})
+                pass  
 
-        post = get_object_or_404(Post, id=post_id)
         context = {
             "post": post,
             "isAuthor": isAuthor
         }
         return render(request, 'posts/post_detail.html', context)
-    
+
+@login_required    
+def post_delete(request, author_id, post_id):
+    if request.method == "GET":
+        author = Author.objects.get(id=author_id)
+        post = get_object_or_404(Post, id=post_id)
+        if request.user.author == author:
+            post.delete()
+            return redirect('author_manager:home')
+        else:
+            error = "401 Unauthorized"
+            return render(request, 'posts/post_create.html', {'error': error}, status=401)
+
 
 class PostsAPI(generics.GenericAPIView):
     authentication_classes = [authentication.BasicAuthentication]
