@@ -146,7 +146,7 @@ LOGIN_REDIRECT_URL = 'author_manager:home'
 
 STATIC_URL = '/static/'
 STATICFILES_DIRS = [
-    os.path.join(BASE_DIR, "static/"),
+    os.path.join(BASE_DIR, "author_manager/static/"),
 ]
 
 # Default primary key field type

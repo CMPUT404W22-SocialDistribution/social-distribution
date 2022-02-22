@@ -45,7 +45,7 @@ def post_create(request, author_id):
             return redirect('posts:posts', author_id)
 
 @login_required
-def post_detail(request, author_id, post_id):
+def post_edit(request, author_id, post_id):
     
     author = Author.objects.get(id=author_id)
 
@@ -78,11 +78,30 @@ def post_detail(request, author_id, post_id):
         if form.is_valid():
             post_updated = form.save(commit=False)
             post_updated.save()
-            return redirect('author_manager:home')
+            return redirect('posts:post_detail', author_id, post_id)
         else:
             print(form.errors)
             return redirect('posts:posts', author_id)
 
+@login_required
+def post_detail(request, author_id, post_id):
+
+    # TODO: different permission for author, others
+    
+    if request.method == "GET":
+        author = Author.objects.get(id=author_id)
+        if request.user.author ==  author:
+            isAuthor = True
+        else:
+            isAuthor = False
+
+        post = get_object_or_404(Post, id=post_id)
+        context = {
+            "post": post,
+            "isAuthor": isAuthor
+        }
+        return render(request, 'posts/post_detail.html', context)
+    
 
 class PostsAPI(generics.GenericAPIView):
     authentication_classes = [authentication.BasicAuthentication]
