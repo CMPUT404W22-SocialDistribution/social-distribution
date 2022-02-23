@@ -13,7 +13,7 @@
                             <div class="mr-2">
                                 <img class="rounded-circle"
                                         width="50"
-                                        src="{% static 'img/chicken.svg' %}"
+                                        src="{% static 'img/'|add:post.author.profileImage %}"
                                         alt="profile picture">
                             </div>
                             <div class="ml-2">

@@ -1,5 +1,6 @@
-from django.http import HttpResponse
 from django.shortcuts import get_object_or_404, render, redirect
+from django.views.generic import ListView
+
 from rest_framework.views import APIView
 from posts.forms import PostForm
 from rest_framework import generics, authentication, permissions
@@ -9,6 +10,8 @@ from .models import Post
 from author_manager.models import *
 from rest_framework.response import Response
 from django.contrib.auth.decorators import login_required
+
+from django.db.models import Q
 
 @login_required
 def post_create(request, author_id):
@@ -131,9 +134,24 @@ def post_delete(request, author_id, post_id):
 def my_posts(request, author_id):
     if request.method == "GET":
         return render(request, 'posts/my_posts.html', {'author_id': author_id})
-        
+
+class SearchView(ListView):
+    model = Post
+    template_name = 'posts/search_results.html'
+    
+    def get_queryset(self):
+        query = self.request.GET.get('q')
+        queryset = Post.objects.filter(
+            Q(title__icontains=query) |
+            Q(description__icontains=query) |
+            Q(author__user__username__icontains=query) |
+            Q(author__displayName__icontains=query),
+            visibility="public",
+        )
+        return queryset
 
 
+    
 class PostsAPI(APIView):
     # API endpoint that gathers all public posts, friends posts, my posts in my node 
     authentication_classes = [authentication.BasicAuthentication, authentication.SessionAuthentication]
@@ -151,7 +169,6 @@ class PostsAPI(APIView):
         posts = public_posts | my_posts
         serializer = PostSerializer(posts, many=True)
         return Response(serializer.data, 200)
-
 
 class MyPostsAPI(generics.GenericAPIView):
     # API endpoint that has to do with one's posts
