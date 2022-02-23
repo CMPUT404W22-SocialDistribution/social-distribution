@@ -5,7 +5,7 @@ from django.shortcuts import redirect, render
 
 # import idna
 from .forms import SignUpForm, EditProfileForm
-from .models import Author
+from .models import *
 from django.contrib.auth import authenticate, login, logout
 from django.contrib.auth.decorators import login_required
 from django.contrib.auth.forms import AuthenticationForm
@@ -22,6 +22,10 @@ def sign_up(request):
         form = SignUpForm(request.POST)
         if form.is_valid():
             user = form.save(commit=True)
+            inbox = Inbox(author=user.author)
+            followers = FollowerList(author=user.author)
+            inbox.save()
+            followers.save()
             messages.success(request, 'Your account has been created.')
             return redirect('author_manager:login')
         else:
@@ -87,6 +91,62 @@ def profile_edit(request, id):
         else:
             print(form.errors)
             return redirect('author_manager:editProfile', id)
+
+@login_required
+def friends_view(request, author_id):
+    actor = Author.objects.get(id=author_id)
+
+    if request.user.author != actor:
+            return redirect('author_manager:login')
+
+    if request.method == "GET":
+        return render(request, 'friends/friends.html')
+
+    elif request.method == "POST":
+        object_id = request.POST.get('object_id')
+
+        if object_id == author_id:
+            messages.warning(request, 'You cannot be friend with yourself')
+            return redirect('author_manager:friends', author_id)
+
+        try:
+            object = Author.objects.get(id=object_id)
+            
+            try:
+                friend_request = FriendRequest.objects.get(actor=actor, object=object)
+                messages.warning(request, 'You already sent a friend request to this author.')
+                return redirect('author_manager:friends', author_id)
+            
+            except FriendRequest.DoesNotExist:
+                friend_request = FriendRequest(actor=actor, object=object)
+                friend_request.save()
+
+                inbox = Inbox.objects.get(author=object)
+                inbox.follows.add(friend_request)
+
+                messages.success(request, 'Your friend request has been sent.')
+                return redirect('author_manager:friends', author_id)
+
+        except Author.DoesNotExist:
+            messages.warning(request, 'Sorry, we could not find this author.')
+            return redirect('author_manager:friends', author_id)
+
+
+@login_required
+def inbox_view(request, author_id):
+    current_author = Author.objects.get(id=author_id)
+
+    if request.user.author != current_author:
+            return redirect('author_manager:login')
+
+    if request.method == "GET":
+        inbox = Inbox.objects.get(author=current_author)
+        return render(request, 'inbox/inbox.html', {'follows' : inbox.follows.all()})
+    
+    # if request.method == "POST":
+    #     if request.POST['type'] == 'follows':
+
+    return render(request, 'inbox/inbox.html')
 
 
 class ProfileAPI(APIView):
