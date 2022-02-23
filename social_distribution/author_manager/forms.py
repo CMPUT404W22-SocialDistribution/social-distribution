@@ -45,7 +45,7 @@ col12 = 'form-group col-md-12 mb-0'
 class EditProfileForm(forms.ModelForm):
     class Meta:
         model = Author
-        fields = ['displayName', 'github', 'profileImage', 'birthday', 'email', 'about']
+        fields = ['displayName', 'github', 'birthday', 'email', 'about']
         widgets = {
             'categories': forms.Select(attrs={'rows': 1}),
         }
@@ -60,10 +60,6 @@ class EditProfileForm(forms.ModelForm):
             Row(
                 Column('github', css_class=col12),
             ),
-            Row(
-                Column('profileImage', css_class=col12),
-            ),
-            
             Row(
                 Column('birthday', css_class=col12),
             ),

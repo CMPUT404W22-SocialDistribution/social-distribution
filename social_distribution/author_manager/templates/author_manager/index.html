@@ -1,9 +1,485 @@
-
-
 {% extends 'base.html' %} 
 {% load static %}
 {% block content %}
+    <div class="justify-content-left container-fluid">
+        <div class="row text-center mt-5">
+            <div class="col-md-4"></div>
+            <div class="col-md-5">
+                <div class="input-group width">
+                    <input type="search" class="form-control rounded" placeholder="Search" aria-label="Search" aria-describedby="search-addon" />
+                    <button type="button" class="btn btn-outline-primary">search</button>
+                </div>   
+            </div>
+        </div>
+        <div class="row gutters-sm" style="margin-top: 20px; margin-left:20px" >
+            <div class="col-md-2 mb-3">
+                <div class="card shadow-sm">
+                    <div class="card-body">
+                        <div class="d-flex flex-column align-items-center text-center">
+                            <img class="rounded-circle" width="150" src="{% static 'img/'|add:author.profileImage %}" alt="profile picture">
+                            <div class="mt-4">
+                                <div class="h3 m-0">@johndoe</div>
+                                <div class="h5 text-muted">John Doe</div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="card-footer" >
+                        <div class="row">
+                            <div class="col border-end"> 
+                                <p class="text-center h6 mt-2 mb-1">300</p>
+                                <p class="text-center h7">Followers</p>
+                            </div>
+                            <div class="col">
+                                <p class="text-center h6 mt-2 mb-1">500</p>
+                                <p class="text-center h7">Following</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-10">
+                <div class="row mt-5">
+                    <div class="col-md-5 ml-5" id="my_node">
+                        <div class="row">
+                            <div class="col-md-1">
+                                <img class="rounded-circle"
+                                    width="50"
+                                    src="{% static 'img/3.svg' %}"
+                                    alt="profile picture">
+                                    <p class="text-end"><i class="fa-solid fa-turn-up fa-rotate-90 text-muted mt-2"></i></p>
+                                    
+                            </div>
+                            <div class="col-md-9 mb-3">
+                                <div class="card shadow-sm">
+                                    <div class="card-header">
+                                        <div class="d-flex justify-content-between align-items-center">
+                                            <a href="{% url 'author_manager:profile' user.author.id %}"
+                                                style="color:black;
+                                                        text-decoration: none;">
+                                                <div class="d-flex justify-content-between align-items-center">
+                                                    <div class="h6 m-0 text-muted">@chicken</div>
+                                                </div>
+                                            </a>
+                                            <div class="d-flex justify-content-between align-items-center">
+                                                {% if "public" == "public" %}
+                                                    <i class="card-link text-success fa-solid fa-earth-americas"></i>
+                                                {% elif post.visibility == "private" %}
+                                                    <i class="card-link text-danger fa-solid fa-lock"></i>
+                                                {% elif post.visibility == "friends" %}
+                                                    <i class="card-link fa-solid text-primary fa-user-group"></i>
+                                                {% endif %}
+                                                {% if isAuthor %}
+                                                    <a href="{% url 'posts:post_edit' post.author.id post.id %}"
+                                                        class="card-link text-muted"><i class="fa-solid fa-pen-to-square"></i></a>
+                                                    <a href="{% url 'posts:post_delete' post.author.id post.id %}"
+                                                        onclick="return confirm('Are you sure you want to delete this post?');"
+                                                        class="card-link text-muted"><i class="fa-solid fa-trash"></i></a>
+                                                {% endif %}
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div class="card-body">
+                                        <h3 class="card-title">Bawk bawk public post</h3>
+                                        <div class="card-text fs-6 text-muted">
+                                            <i class="fa-solid fa-calendar-day"> </i><i>&nbsp;&nbsp;Feb 22 2022 10:46 PM</i>
+                                        </div>
+                                        <p>
+                                            <p class="card-text fs-5 fw-light">
+                                                Hello World! <a class="fs-6 text-muted"
+                        data-bs-toggle="collapse"
+                        href="#collapseExample"
+                        role="button"
+                        aria-expanded="false"
+                        aria-controls="collapseExample">
+                                                <i class="fa-solid fa-angle-down"></i>
+                                            </a>
+                                        </p>
+                                    </p>
+                                    <div class="collapse" id="collapseExample">
+                                        <div class="card card-body">
+                                            <p>
+                                                Source: <a href="{{ post.source }}" target="_blank">{{ post.source }}</a>
+                                            </p>
+                                            <p>
+                                                Origin: <a href="{{ post.origin }}" target="_blank">{{ post.origin }}</a>
+                                            </p>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="card-footer">
+                                    <a href="#" class="card-link text-muted" style="text-decoration: none;"><i class="fa-solid fa-thumbs-up"></i> Like</a>
+                                    <a href="#" class="card-link text-muted" style="text-decoration: none;"><i class="fa-solid fa-comment-dots"></i> Comment</a>
+                                    <a href="#" class="card-link text-muted" style="text-decoration: none;"><i class="fa-solid fa-retweet"></i> Share</a>
+                                </div>
+                            </div>
+                            </div>
+                        </div>
+                        <br>
+                        <div class="row">
+                            <div class="col-md-1">
+                                <img class="rounded-circle"
+                                    width="50"
+                                    src="{% static 'img/4.svg' %}"
+                                    alt="profile picture">
+                                    <p class="text-end"><i class="fa-solid fa-turn-up fa-rotate-90 text-muted mt-2"></i></p>
+                                    
+                            </div>
+                            <div class="col-md-9 mb-3">
+                                <div class="card shadow-sm">
+                                    <div class="card-header">
+                                        <div class="d-flex justify-content-between align-items-center">
+                                            <a href="{% url 'author_manager:profile' user.author.id %}"
+                                                style="color:black;
+                                                        text-decoration: none;">
+                                                <div class="d-flex justify-content-between align-items-center">
+                                                    <div class="h6 m-0 text-muted">@chicken</div>
+                                                </div>
+                                            </a>
+                                            <div class="d-flex justify-content-between align-items-center">
+                                                {% if "public" == "public" %}
+                                                    <i class="card-link text-success fa-solid fa-earth-americas"></i>
+                                                {% elif post.visibility == "private" %}
+                                                    <i class="card-link text-danger fa-solid fa-lock"></i>
+                                                {% elif post.visibility == "friends" %}
+                                                    <i class="card-link fa-solid text-primary fa-user-group"></i>
+                                                {% endif %}
+                                                {% if isAuthor %}
+                                                    <a href="{% url 'posts:post_edit' post.author.id post.id %}"
+                                                        class="card-link text-muted"><i class="fa-solid fa-pen-to-square"></i></a>
+                                                    <a href="{% url 'posts:post_delete' post.author.id post.id %}"
+                                                        onclick="return confirm('Are you sure you want to delete this post?');"
+                                                        class="card-link text-muted"><i class="fa-solid fa-trash"></i></a>
+                                                {% endif %}
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div class="card-body">
+                                        <h3 class="card-title">Bawk bawk public post</h3>
+                                        <div class="card-text fs-6 text-muted">
+                                            <i class="fa-solid fa-calendar-day"> </i><i>&nbsp;&nbsp;Feb 22 2022 10:46 PM</i>
+                                        </div>
+                                        <p>
+                                            <p class="card-text fs-5 fw-light">
+                                                Hello World! <a class="fs-6 text-muted"
+                        data-bs-toggle="collapse"
+                        href="#collapseExample"
+                        role="button"
+                        aria-expanded="false"
+                        aria-controls="collapseExample">
+                                                <i class="fa-solid fa-angle-down"></i>
+                                            </a>
+                                        </p>
+                                    </p>
+                                    <div class="collapse" id="collapseExample">
+                                        <div class="card card-body">
+                                            <p>
+                                                Source: <a href="{{ post.source }}" target="_blank">{{ post.source }}</a>
+                                            </p>
+                                            <p>
+                                                Origin: <a href="{{ post.origin }}" target="_blank">{{ post.origin }}</a>
+                                            </p>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="card-footer">
+                                    <a href="#" class="card-link text-muted" style="text-decoration: none;"><i class="fa-solid fa-thumbs-up"></i> Like</a>
+                                    <a href="#" class="card-link text-muted" style="text-decoration: none;"><i class="fa-solid fa-comment-dots"></i> Comment</a>
+                                    <a href="#" class="card-link text-muted" style="text-decoration: none;"><i class="fa-solid fa-retweet"></i> Share</a>
+                                </div>
+                            </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-5 ml-5">
+                        <div class="row">
+                            <div class="col-md-1">
+                                <img class="rounded-circle"
+                                    width="50"
+                                    src="{% static 'img/3.svg' %}"
+                                    alt="profile picture">
+                                    <p class="text-end"><i class="fa-solid fa-turn-up fa-rotate-90 text-muted mt-2"></i></p>
+                                    
+                            </div>
+                            <div class="col-md-9 mb-3">
+                                <div class="card shadow-sm">
+                                    <div class="card-header">
+                                        <div class="d-flex justify-content-between align-items-center">
+                                            <a href="{% url 'author_manager:profile' user.author.id %}"
+                                                style="color:black;
+                                                        text-decoration: none;">
+                                                <div class="d-flex justify-content-between align-items-center">
+                                                    <div class="h6 m-0 text-muted">@chicken</div>
+                                                </div>
+                                            </a>
+                                            <div class="d-flex justify-content-between align-items-center">
+                                                {% if "public" == "public" %}
+                                                    <i class="card-link text-success fa-solid fa-earth-americas"></i>
+                                                {% elif post.visibility == "private" %}
+                                                    <i class="card-link text-danger fa-solid fa-lock"></i>
+                                                {% elif post.visibility == "friends" %}
+                                                    <i class="card-link fa-solid text-primary fa-user-group"></i>
+                                                {% endif %}
+                                                {% if isAuthor %}
+                                                    <a href="{% url 'posts:post_edit' post.author.id post.id %}"
+                                                        class="card-link text-muted"><i class="fa-solid fa-pen-to-square"></i></a>
+                                                    <a href="{% url 'posts:post_delete' post.author.id post.id %}"
+                                                        onclick="return confirm('Are you sure you want to delete this post?');"
+                                                        class="card-link text-muted"><i class="fa-solid fa-trash"></i></a>
+                                                {% endif %}
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div class="card-body">
+                                        <h3 class="card-title">Bawk bawk public post</h3>
+                                        <div class="card-text fs-6 text-muted">
+                                            <i class="fa-solid fa-calendar-day"> </i><i>&nbsp;&nbsp;Feb 22 2022 10:46 PM</i>
+                                        </div>
+                                        <p>
+                                            <p class="card-text fs-5 fw-light">
+                                                Hello World! <a class="fs-6 text-muted"
+                        data-bs-toggle="collapse"
+                        href="#collapseExample"
+                        role="button"
+                        aria-expanded="false"
+                        aria-controls="collapseExample">
+                                                <i class="fa-solid fa-angle-down"></i>
+                                            </a>
+                                        </p>
+                                    </p>
+                                    <div class="collapse" id="collapseExample">
+                                        <div class="card card-body">
+                                            <p>
+                                                Source: <a href="{{ post.source }}" target="_blank">{{ post.source }}</a>
+                                            </p>
+                                            <p>
+                                                Origin: <a href="{{ post.origin }}" target="_blank">{{ post.origin }}</a>
+                                            </p>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="card-footer">
+                                    <a href="#" class="card-link text-muted" style="text-decoration: none;"><i class="fa-solid fa-thumbs-up"></i> Like</a>
+                                    <a href="#" class="card-link text-muted" style="text-decoration: none;"><i class="fa-solid fa-comment-dots"></i> Comment</a>
+                                    <a href="#" class="card-link text-muted" style="text-decoration: none;"><i class="fa-solid fa-retweet"></i> Share</a>
+                                </div>
+                            </div>
+                            </div>
+                        </div>
+                        <br>
+                        <div class="row">
+                            <div class="col-md-1">
+                                <img class="rounded-circle"
+                                    width="50"
+                                    src="{% static 'img/4.svg' %}"
+                                    alt="profile picture">
+                                    <p class="text-end"><i class="fa-solid fa-turn-up fa-rotate-90 text-muted mt-2"></i></p>
+                                    
+                            </div>
+                            <div class="col-md-9 mb-3">
+                                <div class="card shadow-sm">
+                                    <div class="card-header">
+                                        <div class="d-flex justify-content-between align-items-center">
+                                            <a href="{% url 'author_manager:profile' user.author.id %}"
+                                                style="color:black;
+                                                        text-decoration: none;">
+                                                <div class="d-flex justify-content-between align-items-center">
+                                                    <div class="h6 m-0 text-muted">@chicken</div>
+                                                </div>
+                                            </a>
+                                            <div class="d-flex justify-content-between align-items-center">
+                                                {% if "public" == "public" %}
+                                                    <i class="card-link text-success fa-solid fa-earth-americas"></i>
+                                                {% elif post.visibility == "private" %}
+                                                    <i class="card-link text-danger fa-solid fa-lock"></i>
+                                                {% elif post.visibility == "friends" %}
+                                                    <i class="card-link fa-solid text-primary fa-user-group"></i>
+                                                {% endif %}
+                                                {% if isAuthor %}
+                                                    <a href="{% url 'posts:post_edit' post.author.id post.id %}"
+                                                        class="card-link text-muted"><i class="fa-solid fa-pen-to-square"></i></a>
+                                                    <a href="{% url 'posts:post_delete' post.author.id post.id %}"
+                                                        onclick="return confirm('Are you sure you want to delete this post?');"
+                                                        class="card-link text-muted"><i class="fa-solid fa-trash"></i></a>
+                                                {% endif %}
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div class="card-body">
+                                        <h3 class="card-title">Bawk bawk public post</h3>
+                                        <div class="card-text fs-6 text-muted">
+                                            <i class="fa-solid fa-calendar-day"> </i><i>&nbsp;&nbsp;Feb 22 2022 10:46 PM</i>
+                                        </div>
+                                        <p>
+                                            <p class="card-text fs-5 fw-light">
+                                                Hello World! <a class="fs-6 text-muted"
+                        data-bs-toggle="collapse"
+                        href="#collapseExample"
+                        role="button"
+                        aria-expanded="false"
+                        aria-controls="collapseExample">
+                                                <i class="fa-solid fa-angle-down"></i>
+                                            </a>
+                                        </p>
+                                    </p>
+                                    <div class="collapse" id="collapseExample">
+                                        <div class="card card-body">
+                                            <p>
+                                                Source: <a href="{{ post.source }}" target="_blank">{{ post.source }}</a>
+                                            </p>
+                                            <p>
+                                                Origin: <a href="{{ post.origin }}" target="_blank">{{ post.origin }}</a>
+                                            </p>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="card-footer">
+                                    <a href="#" class="card-link text-muted" style="text-decoration: none;"><i class="fa-solid fa-thumbs-up"></i> Like</a>
+                                    <a href="#" class="card-link text-muted" style="text-decoration: none;"><i class="fa-solid fa-comment-dots"></i> Comment</a>
+                                    <a href="#" class="card-link text-muted" style="text-decoration: none;"><i class="fa-solid fa-retweet"></i> Share</a>
+                                </div>
+                            </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                
 
-<h1>Home Page</h1>
+            </div>
+            
+        </div>
+    </div>
 
+    <script>
+        function createPostCard(post){
+            var postTimestamp = new Date(post.published).toLocaleString('en-US', {
+                weekday: 'short', // long, short, narrow
+                day: 'numeric', // numeric, 2-digit
+                year: 'numeric', // numeric, 2-digit
+                month: 'long', // numeric, 2-digit, long, short, narrow
+                hour: 'numeric', // numeric, 2-digit
+                minute: 'numeric', // numeric, 2-digit
+            });
+
+            var postVisibility = post.visibility;
+            var postVisibilityIcon = "";
+            switch (postVisibility) {
+                case "public":
+                    postVisibilityIcon = `<i class="card-link text-success fa-solid fa-earth-americas"></i>`;
+                    break;
+                case "private":
+                    postVisibilityIcon = `<i class="card-link text-danger fa-solid fa-lock"></i>`;
+                    break;
+                case "friends":
+                    postVisibilityIcon = `<i class="card-link fa-solid text-primary fa-user-group"></i>`;
+                    break;
+            }
+
+            var postCardsHtml=`
+            <div class="row">
+                <div class="col-md-1">
+                    <img class="rounded-circle"
+                        width="50"
+                        src="{% static 'img/3.svg' %}"
+                        alt="profile picture">
+                        <p class="text-end"><i class="fa-solid fa-turn-up fa-rotate-90 text-muted mt-2"></i></p>
+                        
+                </div>
+                <div class="col-md-9 mb-3">
+                    <div class="card shadow-sm">
+                        <div class="card-header">
+                            <div class="d-flex justify-content-between align-items-center">
+                                <a href="{% url 'author_manager:profile' user.author.id %}"
+                                    style="color:black;
+                                            text-decoration: none;">
+                                    <div class="d-flex justify-content-between align-items-center">
+                                        <div class="h6 m-0 text-muted">@chicken</div>
+                                    </div>
+                                </a>
+                                <div class="d-flex justify-content-between align-items-center">
+                                    {% if "public" == "public" %}
+                                        <i class="card-link text-success fa-solid fa-earth-americas"></i>
+                                    {% elif post.visibility == "private" %}
+                                        <i class="card-link text-danger fa-solid fa-lock"></i>
+                                    {% elif post.visibility == "friends" %}
+                                        <i class="card-link fa-solid text-primary fa-user-group"></i>
+                                    {% endif %}
+                                    {% if isAuthor %}
+                                        <a href="{% url 'posts:post_edit' post.author.id post.id %}"
+                                            class="card-link text-muted"><i class="fa-solid fa-pen-to-square"></i></a>
+                                        <a href="{% url 'posts:post_delete' post.author.id post.id %}"
+                                            onclick="return confirm('Are you sure you want to delete this post?');"
+                                            class="card-link text-muted"><i class="fa-solid fa-trash"></i></a>
+                                    {% endif %}
+                                </div>
+                            </div>
+                        </div>
+                        <div class="card-body">
+                            <h3 class="card-title">Bawk bawk public post</h3>
+                            <div class="card-text fs-6 text-muted">
+                                <i class="fa-solid fa-calendar-day"> </i><i>&nbsp;&nbsp;Feb 22 2022 10:46 PM</i>
+                            </div>
+                            <p>
+                                <p class="card-text fs-5 fw-light">
+                                    Hello World! <a class="fs-6 text-muted"
+                                                    data-bs-toggle="collapse"
+                                                    href="#collapseExample"
+                                                    role="button"
+                                                    aria-expanded="false"
+                                                    aria-controls="collapseExample">
+                                    <i class="fa-solid fa-angle-down"></i>
+                                </a>
+                            </p>
+                        </p>
+                        <div class="collapse" id="collapseExample">
+                            <div class="card card-body">
+                                <p>
+                                    Source: <a href="{{ post.source }}" target="_blank">{{ post.source }}</a>
+                                </p>
+                                <p>
+                                    Origin: <a href="{{ post.origin }}" target="_blank">{{ post.origin }}</a>
+                                </p>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="card-footer">
+                        <a href="#" class="card-link text-muted" style="text-decoration: none;"><i class="fa-solid fa-thumbs-up"></i> Like</a>
+                        <a href="#" class="card-link text-muted" style="text-decoration: none;"><i class="fa-solid fa-comment-dots"></i> Comment</a>
+                        <a href="#" class="card-link text-muted" style="text-decoration: none;"><i class="fa-solid fa-retweet"></i> Share</a>
+                    </div>
+                </div>
+                </div>
+            </div>
+            
+            `
+        }
+    </script>
+    funtion fetchPosts(){
+        $.ajax({
+            type: 'GET',
+                url: "{% url 'posts:all_posts_api' %}",
+                dataType: 'json',
+                success: (data, status) => {
+                    var postsList = data.posts;
+                    // Get the latest post from the API
+                    var postLatestFromApi = postsList[0];
+                    // Get the latest post from the DOM
+                    var rootFirstChild = document.getElementById("root").firstChild;
+                    var postLatestElement = rootFirstChild ? rootFirstChild.nextElementSibling : null;
+                    var postLatestElementId = postLatestElement ? postLatestElement.id : "empty";
+                    if (postLatestElementId == "empty") {
+                        var postCardsHtml = '';
+                        postsList.map(post => {
+                            postCardsHtml += createPostCard(post);
+                        });
+                        document.getElementById("root").innerHTML += postCardsHtml;
+                    }
+                    else if (postLatestElementId != postLatestFromApi.id) {
+                        console.log(postLatestElement)
+                        var rootElement = document.getElementById("root")
+                        rootElement.innerHTML = createPostCard(postLatestFromApi) + rootElement.innerHTML
+        })
+    }
+
+                        
 {% endblock %}

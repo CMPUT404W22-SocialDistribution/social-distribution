@@ -85,7 +85,7 @@
         function fetchPosts() {
             $.ajax({
                 type: 'GET',
-                url: "{% url 'posts:posts_api' author_id %}",
+                url: "{% url 'posts:my_posts_api' author_id %}",
                 dataType: 'json',
                 success: (data, status) => {
                     var postsList = data.posts;

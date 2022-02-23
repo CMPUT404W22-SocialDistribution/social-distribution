@@ -65,6 +65,9 @@ aria-controls="collapseExample">
                     <p>
                         Origin: <a href="{{ post.origin }}" target="_blank">{{ post.origin }}</a>
                     </p>
+                    {% if post.unlisted %}
+                        <p><i>Unlisted</i></p>
+                    {% endif %}
                 </div>
             </div>
             <br>

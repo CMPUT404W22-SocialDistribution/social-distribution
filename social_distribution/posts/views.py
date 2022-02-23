@@ -1,6 +1,6 @@
 from django.http import HttpResponse
 from django.shortcuts import get_object_or_404, render, redirect
-
+from rest_framework.views import APIView
 from posts.forms import PostForm
 from rest_framework import generics, authentication, permissions
 
@@ -12,6 +12,7 @@ from django.contrib.auth.decorators import login_required
 
 @login_required
 def post_create(request, author_id):
+    #TODO: inbox
     author = Author.objects.get(id=author_id)
     if request.user.author != author:
             error = "401 Unauthorized"
@@ -88,7 +89,7 @@ def post_edit(request, author_id, post_id):
 @login_required
 def post_detail(request, author_id, post_id):
 
-    # TODO: different permission for author, others
+    # TODO: permission for posts visible to friends
     
     if request.method == "GET":
         author = Author.objects.get(id=author_id)
@@ -129,11 +130,31 @@ def post_delete(request, author_id, post_id):
 @login_required
 def my_posts(request, author_id):
     if request.method == "GET":
-        author = Author.objects.get(id=author_id)
-        if request.user.author == author:
-            return render(request, 'posts/my_posts.html', {'author_id': author_id})
+        return render(request, 'posts/my_posts.html', {'author_id': author_id})
+        
 
-class PostsAPI(generics.GenericAPIView):
+
+class PostsAPI(APIView):
+    # API endpoint that gathers all public posts, friends posts, my posts in my node 
+    authentication_classes = [authentication.BasicAuthentication, authentication.SessionAuthentication]
+    permission_classes = [permissions.IsAuthenticated]
+    serializer_class = PostSerializer
+
+    def get(self, request):
+        user = request.user
+        author = Author.objects.get(user=request.user)
+        #public posts
+        public_posts = Post.objects.filter(visibility='public', unlisted=False).order_by('-published')
+        #get friends: friends = author.following.all() & author.follower.all()
+        # friend_posts = Post.objects.filter(author__in=friends, visibility="friends", unlisted=False).order_by('-published')
+        my_posts = Post.objects.filter(author=author).order_by('-published')
+        posts = public_posts | my_posts
+        serializer = PostSerializer(posts, many=True)
+        return Response(serializer.data, 200)
+
+
+class MyPostsAPI(generics.GenericAPIView):
+    # API endpoint that has to do with one's posts
     authentication_classes = [authentication.BasicAuthentication, authentication.SessionAuthentication]
     permission_classes = [permissions.IsAuthenticated]
     serializer_class = PostSerializer
@@ -141,10 +162,12 @@ class PostsAPI(generics.GenericAPIView):
 
         author = Author.objects.get(id=author_id)
 
-        posts = author.posts.filter(unlisted=False).order_by('-published')
+        posts = author.posts.filter().order_by('-published')
         current_user = Author.objects.get(user=request.user)
         if current_user.id != author.id:
-            posts = posts.filter(visibility='public')
+            # TODO: if friend: posts = post.objects.get(Q(visibility='public')|Q(visibility='friends'), unlisted=False)
+            # elif not friend: 
+            posts = posts.filter(visibility='public', unlisted=False)
 
         serializer = PostSerializer(posts, many=True)
         content = {
