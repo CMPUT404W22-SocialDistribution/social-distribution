@@ -10,7 +10,7 @@ from .models import Post
 from author_manager.models import *
 from rest_framework.response import Response
 from django.contrib.auth.decorators import login_required
-
+import commonmark
 from django.db.models import Q
 
 @login_required
@@ -56,6 +56,8 @@ def post_edit(request, author_id, post_id):
 
     if request.method == "GET":
         post = get_object_or_404(Post, id=post_id)
+        if post.content_type == 'text/markdown':
+            post.content = commonmark.commonmark(post.content)
         form = PostForm(instance=post)
         context = {
             'form': form,
@@ -111,7 +113,8 @@ def post_detail(request, author_id, post_id):
                 #       error = "404 Not Found"
                 # return render(request, 'posts/post_detail.html', {'error': error})
                 pass  
-
+        if post.content_type == 'text/markdown':
+            post.content = commonmark.commonmark(post.content)
         context = {
             "post": post,
             "isAuthor": isAuthor
@@ -167,6 +170,9 @@ class PostsAPI(APIView):
         # friend_posts = Post.objects.filter(author__in=friends, visibility="friends", unlisted=False).order_by('-published')
         my_posts = Post.objects.filter(author=author).order_by('-published')
         posts = public_posts | my_posts
+        for post in posts:
+            if post.content_type == 'text/markdown':
+                post.content = commonmark.commonmark(post.content)
         serializer = PostSerializer(posts, many=True)
         return Response(serializer.data, 200)
 
@@ -185,7 +191,11 @@ class MyPostsAPI(generics.GenericAPIView):
             # TODO: if friend: posts = post.objects.get(Q(visibility='public')|Q(visibility='friends'), unlisted=False)
             # elif not friend: 
             posts = posts.filter(visibility='public', unlisted=False)
-
+        
+        for post in posts:
+            if post.content_type == 'text/markdown':
+                post.content = commonmark.commonmark(post.content)
+                
         serializer = PostSerializer(posts, many=True)
         content = {
             'current user': request.user.username,
