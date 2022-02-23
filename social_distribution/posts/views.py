@@ -56,8 +56,6 @@ def post_edit(request, author_id, post_id):
 
     if request.method == "GET":
         post = get_object_or_404(Post, id=post_id)
-        if post.content_type == 'text/markdown':
-            post.content = commonmark.commonmark(post.content)
         form = PostForm(instance=post)
         context = {
             'form': form,
@@ -195,7 +193,7 @@ class MyPostsAPI(generics.GenericAPIView):
         for post in posts:
             if post.content_type == 'text/markdown':
                 post.content = commonmark.commonmark(post.content)
-                
+
         serializer = PostSerializer(posts, many=True)
         content = {
             'current user': request.user.username,
