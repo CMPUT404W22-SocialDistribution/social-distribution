@@ -58,8 +58,9 @@ def sign_in(request):
 
 @login_required
 def home(request):
-    # this is temp we should probably do AJAX later
-    return render(request, 'author_manager/index.html')
+    if request.method == "GET":
+        author = Author.objects.get(user=request.user)
+        return render(request, 'author_manager/index.html', {'author': author})
 
 
 @login_required

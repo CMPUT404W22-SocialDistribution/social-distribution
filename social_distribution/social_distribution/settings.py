@@ -84,6 +84,7 @@ WSGI_APPLICATION = 'social_distribution.wsgi.application'
 REST_FRAMEWORK = {
     'DEFAULT_AUTHENTICATION_CLASSES': [
         'rest_framework.authentication.BasicAuthentication',
+        'rest_framework.authentication.SessionAuthentication',
     ],
     'DEFAULT_PERMISSION_CLASSES': [
         'rest_framework.permissions.IsAuthenticated', 
@@ -145,7 +146,7 @@ LOGIN_REDIRECT_URL = 'author_manager:home'
 
 STATIC_URL = '/static/'
 STATICFILES_DIRS = [
-    os.path.join(BASE_DIR, "static/"),
+    os.path.join(BASE_DIR, "author_manager/static/"),
 ]
 
 # Default primary key field type

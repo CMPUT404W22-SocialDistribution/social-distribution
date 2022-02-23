@@ -14,7 +14,7 @@ class Post(models.Model):
     id = models.CharField(primary_key=True, default=short_uuid, max_length = 8, editable=False, unique=True)
     source = models.CharField(max_length=300, blank=True)
     origin = models.CharField(max_length=300, blank=True)
-    description = models.CharField(max_length=300, blank=True, null=True)
+    description = models.CharField(max_length=300, blank=True, null=True, default="No description")
 
     class ContentType(models.TextChoices):
         MARKDOWN = 'text/markdown',

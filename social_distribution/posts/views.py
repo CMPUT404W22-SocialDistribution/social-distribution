@@ -1,5 +1,7 @@
 from django.shortcuts import get_object_or_404, render, redirect
+from django.views.generic import ListView
 
+from rest_framework.views import APIView
 from posts.forms import PostForm
 from rest_framework import generics, authentication, permissions
 
@@ -8,13 +10,16 @@ from .models import Post
 from author_manager.models import *
 from rest_framework.response import Response
 from django.contrib.auth.decorators import login_required
+import commonmark
+from django.db.models import Q
 
 @login_required
 def post_create(request, author_id):
+    #TODO: inbox
     author = Author.objects.get(id=author_id)
     if request.user.author != author:
             error = "401 Unauthorized"
-            return render(request, 'posts/post_create.html', {'error': error})
+            return render(request, 'posts/post_create.html', {'error': error}, status=401)
 
     if request.method == "GET":
         form = PostForm()
@@ -23,7 +28,7 @@ def post_create(request, author_id):
     elif request.method == "POST":
         if request.user.author != author:
             error = "401 Unauthorized"
-            return render(request, 'posts/post_create.html', {'error': error})
+            return render(request, 'posts/post_create.html', {'error': error}, status=401)
 
         updated_request = request.POST.copy()
         
@@ -39,13 +44,13 @@ def post_create(request, author_id):
         if form.is_valid():
             post = form.save(commit=False)
             post.save()
-            return redirect('author_manager:home')
+            return redirect('posts:post_detail', author_id, post.id)
         else:
             print(form.errors)
-            return redirect('posts:posts', author_id)
+            return redirect('posts:post_create', author_id)
 
 @login_required
-def post_detail(request, author_id, post_id):
+def post_edit(request, author_id, post_id):
     
     author = Author.objects.get(id=author_id)
 
@@ -62,7 +67,7 @@ def post_detail(request, author_id, post_id):
     elif request.method == "POST":
         if request.user.author != author:
             error = "401 Unauthorized"
-            return render(request, 'posts/post_create.html', {'error': error})
+            return render(request, 'posts/post_create.html', {'error': error}, status=401)
 
         updated_request = request.POST.copy()
         
@@ -79,24 +84,115 @@ def post_detail(request, author_id, post_id):
         if form.is_valid():
             post_updated = form.save(commit=False)
             post_updated.save()
-            return redirect('author_manager:home')
+            return redirect('posts:post_detail', author_id, post_id)
         else:
             print(form.errors)
-            return redirect('posts:posts', author_id)
+            return redirect('posts:post_create', author_id)
+
+@login_required
+def post_detail(request, author_id, post_id):
+
+    # TODO: permission for posts visible to friends
+    
+    if request.method == "GET":
+        author = Author.objects.get(id=author_id)
+        post = get_object_or_404(Post, id=post_id)
+        if request.user.author ==  author:
+            isAuthor = True
+        else:
+            isAuthor = False
+            if post.visibility == "private":
+                error = "404 Not Found"
+                return render(request, 'posts/post_create.html', {'error': error}, status=404)
+                
+            elif post.visibility == "friends":
+                # TODO:
+                # if request.user is not friend to author:
+                #       error = "404 Not Found"
+                # return render(request, 'posts/post_detail.html', {'error': error})
+                pass  
+        if post.content_type == 'text/markdown':
+            post.content = commonmark.commonmark(post.content)
+        context = {
+            "post": post,
+            "isAuthor": isAuthor
+        }
+        return render(request, 'posts/post_detail.html', context)
+
+@login_required    
+def post_delete(request, author_id, post_id):
+    if request.method == "GET":
+        author = Author.objects.get(id=author_id)
+        post = get_object_or_404(Post, id=post_id)
+        if request.user.author == author:
+            post.delete()
+            return redirect('author_manager:home')
+        else:
+            error = "401 Unauthorized"
+            return render(request, 'posts/post_create.html', {'error': error}, status=401)
+
+@login_required
+def my_posts(request, author_id):
+    if request.method == "GET":
+        return render(request, 'posts/my_posts.html', {'author_id': author_id})
+
+class SearchView(ListView):
+    model = Post
+    template_name = 'posts/search_results.html'
+    
+    def get_queryset(self):
+        query = self.request.GET.get('q')
+        queryset = Post.objects.filter(
+            Q(title__icontains=query) |
+            Q(description__icontains=query) |
+            Q(author__user__username__icontains=query) |
+            Q(author__displayName__icontains=query),
+            visibility="public",
+        )
+        return queryset
 
 
-class PostsAPI(generics.GenericAPIView):
-    authentication_classes = [authentication.BasicAuthentication]
+    
+class PostsAPI(APIView):
+    # API endpoint that gathers all public posts, friends posts, my posts in my node 
+    authentication_classes = [authentication.BasicAuthentication, authentication.SessionAuthentication]
+    permission_classes = [permissions.IsAuthenticated]
+    serializer_class = PostSerializer
+
+    def get(self, request):
+        user = request.user
+        author = Author.objects.get(user=request.user)
+        #public posts
+        public_posts = Post.objects.filter(visibility='public', unlisted=False).order_by('-published')
+        #get friends: friends = author.following.all() & author.follower.all()
+        # friend_posts = Post.objects.filter(author__in=friends, visibility="friends", unlisted=False).order_by('-published')
+        my_posts = Post.objects.filter(author=author).order_by('-published')
+        posts = public_posts | my_posts
+        for post in posts:
+            if post.content_type == 'text/markdown':
+                post.content = commonmark.commonmark(post.content)
+        serializer = PostSerializer(posts, many=True)
+        return Response(serializer.data, 200)
+
+class MyPostsAPI(generics.GenericAPIView):
+    # API endpoint that has to do with one's posts
+    authentication_classes = [authentication.BasicAuthentication, authentication.SessionAuthentication]
     permission_classes = [permissions.IsAuthenticated]
     serializer_class = PostSerializer
     def get(self,request, author_id):
 
         author = Author.objects.get(id=author_id)
 
-        posts = author.posts.filter(unlisted=False).all()
+        posts = author.posts.filter().order_by('-published')
         current_user = Author.objects.get(user=request.user)
         if current_user.id != author.id:
-            posts = posts.filter(visibility='public')
+            # TODO: if friend: posts = post.objects.get(Q(visibility='public')|Q(visibility='friends'), unlisted=False)
+            # elif not friend: 
+            posts = posts.filter(visibility='public', unlisted=False)
+        
+        for post in posts:
+            if post.content_type == 'text/markdown':
+                post.content = commonmark.commonmark(post.content)
 
         serializer = PostSerializer(posts, many=True)
         content = {
