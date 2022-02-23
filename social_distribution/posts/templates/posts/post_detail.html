@@ -13,7 +13,7 @@
                             <div class="mr-2">
                                 <img class="rounded-circle"
                                         width="50"
-                                        src="{% static 'img/chicken.svg' %}"
+                                        src="{% static 'img/'|add:post.author.profileImage %}"
                                         alt="profile picture">
                             </div>
                             <div class="ml-2">
@@ -65,10 +65,13 @@ aria-controls="collapseExample">
                     <p>
                         Origin: <a href="{{ post.origin }}" target="_blank">{{ post.origin }}</a>
                     </p>
+                    {% if post.unlisted %}
+                        <p><i>Unlisted</i></p>
+                    {% endif %}
                 </div>
             </div>
             <br>
-            <div class="card-text">{{ post.content }}</div>
+            <div class="card-text">{{ post.content  | safe}}</div>
         </div>
         <div class="card-footer">
             <a href="#" class="card-link text-muted" style="text-decoration: none;"><i class="fa-solid fa-thumbs-up"></i> Like</a>

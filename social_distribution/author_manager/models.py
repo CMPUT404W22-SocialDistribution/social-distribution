@@ -1,10 +1,14 @@
 from django.db import models
 from django.contrib.auth.models import User
 import uuid
+import random
 
 class Author(models.Model):
     def short_uuid():
         return uuid.uuid4().hex[:8]
+
+    def randomImage():
+        return str(random.randint(0,6))+'.svg'
 
     user = models.OneToOneField(User, on_delete=models.CASCADE, related_name='author')
     type = models.CharField(max_length=50, default="author")
@@ -12,7 +16,7 @@ class Author(models.Model):
     host = models.CharField(max_length=500, default='http://127.0.0.1:8000/', blank=True)
     displayName = models.CharField(max_length=200, default=f"{str(user)}")
     github = models.CharField(max_length=200, blank=True)
-    profileImage = models.ImageField(upload_to='images/', blank=True, null=True)
+    profileImage = models.CharField(max_length=10, default=randomImage)
 
     birthday = models.CharField(max_length=100, null=True, blank=True)
     email = models.EmailField(max_length=100, unique=True, blank=True, null=True, default=None)
@@ -20,8 +24,7 @@ class Author(models.Model):
 
     @property
     def url(self):
-        return self.host + 'authors/' + str(self.id)
-   
+        return self.host + 'authors/' + str(self.id)    
 
     def __str__(self):
         return self.displayName
