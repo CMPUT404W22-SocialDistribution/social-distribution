@@ -9,6 +9,7 @@
                 <form method="post">
                     {% csrf_token %}
                     <div class="form-text mb-3">
+                        <input type="hidden" name="type" value="send_friend_request">
                         <label style="font-size: 16px">Author ID</label>
                         <input type="text" class="form-control" name="object_id">
                     </div>
@@ -31,13 +32,12 @@
                                 <div>
                                     <a href="{{friend.url}}"  class="text-decoration-none"> {{friend}} </a>
                                 </div>
-                                <!-- <form method="post">
+                                <form method="post">
                                     {% csrf_token %}
-                                    <input type="hidden" name="type" value="follows">
-                                    <input type="hidden" name="actor_id" value="{{follow.actor.id}}">
+                                    <input type="hidden" name="type" value="unfriend">
+                                    <input type="hidden" name="object_id" value="{{friend.id}}">
                                     <button type="submit" class="btn btn-primary">Unfriend</button>
-                                </form> -->
-                                <button type="submit" class="btn btn-primary">Unfriend</button>
+                                </form>
                             </li>
                         {% endfor %}
                   </ol>
