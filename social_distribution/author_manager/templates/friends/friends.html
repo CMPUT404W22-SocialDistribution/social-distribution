@@ -1,0 +1,32 @@
+{% extends 'author_manager/base.html' %}
+
+{% block content %}
+<div class="container" style="padding-top: 20px; font-family: roboto">
+    <div class="card send-request shadow mb-4">
+        <div class="card-body">
+            <h1 class="card-title">Send Friend Request</h1>
+            <div class="card-text">
+                <form method="post">
+                    {% csrf_token %}
+                    <div class="form-text mb-3">
+                        <label style="font-size: 16px">Author ID</label>
+                        <input type="text" class="form-control" name="object_id">
+                    </div>
+                    <div>
+                        <button type="submit" class="shadow btn btn-primary">Send</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+    
+    <div class="card friend-list shadow mb-4">
+        <div class="card-body">
+            <h1 class="card-title mb-2">Friend List</h1>
+            <div class="card-text">
+                <h5 class="form-text" style="font-size: 16px">Haven't had any friends yet !</h5>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock content %}
