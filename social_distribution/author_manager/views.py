@@ -56,6 +56,7 @@ def sign_in(request):
 def home(request):
     if request.method == "GET":
         author = Author.objects.get(user=request.user)
+        # author = get_object_or_404(Author, user=request.user)
         return render(request, 'author_manager/index.html', {'author': author})
 
 
@@ -111,15 +112,16 @@ class ProfileAPI(APIView):
             - If successful:
                 Status 200 and the author's basic information.
         """
-        profile = Author.objects.get(id=id)
-        # profile = get_object_or_404(Author, id=id)
+        # profile = Author.objects.get(id=id)
+        profile = get_object_or_404(Author, id=id)
         serializer = ProfileSerializer(profile, remove_fields=['user'] )
         return Response({'profile': profile})
         # return Response(serializer.data, status=status.HTTP_200_OK)
 
     def post(self, request, id):
         #Get object we want to update
-        profile = Author.objects.get(id=id)
+        # profile = Author.objects.get(id=id)
+        profile = get_object_or_404(Author, id=id)
         serializer = ProfileSerializer(profile, data=request.data, partial=True, remove_fields=['user'])
 
         if serializer.is_valid():

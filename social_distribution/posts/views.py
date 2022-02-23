@@ -6,7 +6,7 @@ from posts.forms import PostForm
 from rest_framework import generics, authentication, permissions
 
 from .serializers import PostSerializer
-from .models import Post
+from .models import Post, Comment
 from author_manager.models import *
 from rest_framework.response import Response
 from django.contrib.auth.decorators import login_required
@@ -179,7 +179,7 @@ class MyPostsAPI(generics.GenericAPIView):
     authentication_classes = [authentication.BasicAuthentication, authentication.SessionAuthentication]
     permission_classes = [permissions.IsAuthenticated]
     serializer_class = PostSerializer
-    def get(self,request, author_id):
+    def get(self, request, author_id):
 
         author = Author.objects.get(id=author_id)
 
@@ -294,3 +294,20 @@ class PostDetailAPI(generics.GenericAPIView):
             else:
                 return Response({'detail': 'Post with this id already exists'}, 400)
                 
+
+class CommentsAPI(APIView):
+    """
+    GET [local, remote] get the list of comments of the post whose id is POST_ID (paginated)
+    """
+    
+    def get(self, request, author_id, post_id):
+        current_user = request.user
+        # US: Comments on friend posts are private only to me the original author.
+        if (current_user.id == author_id):
+            post = get_object_or_404(Post, id=post_id)
+            comments = post.comments.all()  #get all comments from that post_id
+            serializer = PostSerializer(comments, many=True)  #many=True
+
+            return Response(serializer.data, 200)
+        return Response({'detail': 'Not Found!'}, 404)
+
