@@ -102,13 +102,13 @@ def friends_view(request, author_id):
             return redirect('author_manager:login')
 
     if request.method == "GET":
-
+        # get friend list of current author
         friends = []
         
         for follower in followers.items.all():
             try:
                 object_followers = FollowerList.objects.get(author=follower)
-                if object_followers.is_in_follower_list(actor):
+                if object_followers.has_follower(actor):
                     friends.append(follower)
             except:
                 pass
@@ -124,7 +124,12 @@ def friends_view(request, author_id):
 
         try:
             object = Author.objects.get(id=object_id)
-            
+            object_followers = FollowerList.objects.get(author=object)
+
+            if object_followers.has_follower(actor):
+                messages.warning(request, 'You already followed this author.')
+                return redirect('author_manager:friends', author_id) 
+
             try:
                 friend_request = FriendRequest.objects.get(actor=actor, object=object)
                 messages.warning(request, 'You already sent a friend request to this author.')
