@@ -1,0 +1,120 @@
+{% extends 'base.html' %}
+{% load static %}
+{% block content %}
+    <div id="root"></div>
+    <script>
+        function createPostCard(post) {
+            var postTimestamp = new Date(post.published).toLocaleString('en-US', {
+                weekday: 'short', // long, short, narrow
+                day: 'numeric', // numeric, 2-digit
+                year: 'numeric', // numeric, 2-digit
+                month: 'long', // numeric, 2-digit, long, short, narrow
+                hour: 'numeric', // numeric, 2-digit
+                minute: 'numeric', // numeric, 2-digit
+            });
+
+            var postVisibility = post.visibility;
+            var postVisibilityIcon = "";
+            switch (postVisibility) {
+                case "public":
+                    postVisibilityIcon = `<i class="card-link text-success fa-solid fa-earth-americas"></i>`;
+                    break;
+                case "private":
+                    postVisibilityIcon = `<i class="card-link text-danger fa-solid fa-lock"></i>`;
+                    break;
+                case "friends":
+                    postVisibilityIcon = `<i class="card-link fa-solid text-primary fa-user-group"></i>`;
+                    break;
+            }
+            var postCardHtml = `
+            <div class = "row justify-content-center container-fluid" id="${post.id}">
+    <div class="col-5 align-self-center" style="padding: 20px;">
+        <div class="card shadow">
+            <div class="card-header">
+                <div class="d-flex justify-content-between align-items-center">
+                    <a href="{% url 'author_manager:profile' user.author.id %}" style="color:black; text-decoration: none;">
+                        <div class="d-flex justify-content-between align-items-center">
+                            <div class="mr-2">
+                                <img class="rounded-circle" width="50" src="{% static 'img/chicken.svg' %}" alt="profile picture">
+                            </div>
+                            <div class="ml-2">
+                                <div class="h5 m-0">@${post.author_username}</div>
+                                <div class="h7 text-muted">${post.author_displayName}</div>
+                            </div>
+                        </div>
+                    </a>
+                    <div class="d-flex justify-content-between align-items-center">${postVisibilityIcon}</div>
+                </div>
+            </div>
+            <div class="card-body">
+                <h1 class="card-title"><a href="${post.id}" style="text-decoration: none;color: black">${post.title}</a></h1>
+                <div class="card-text fs-6 text-muted">
+                    <i class="fa-solid fa-calendar-day"> </i><i>&nbsp;&nbsp;${postTimestamp}</i>
+                </div>
+                <p>
+                    <p class="card-text fs-5 fw-light">
+                        ${post.description} <a class="fs-6 text-muted" data-bs-toggle="collapse" href="#collapseExample-${post.id}" role="button" aria-expanded="false" aria-controls="collapseExample-${post.id}">
+                        <i class="fa-solid fa-angle-down"></i>
+                    </a>
+                </p>
+            </p>
+            <div class="collapse" id="collapseExample-${post.id}">
+                <div class="card card-body">
+                    <p>
+                        Source: <a href="${post.source}" target="_blank">${post.source}</a>
+                    </p>
+                    <p>
+                        Origin: <a href="${post.origin}" target="_blank">${post.origin}</a>
+                    </p>
+                </div>
+            </div>
+            <br>
+        </div>
+        <div class="card-footer">
+            <a href="#" class="card-link text-muted" style="text-decoration: none;"><i class="fa-solid fa-thumbs-up"></i> Like</a>
+            <a href="#" class="card-link text-muted" style="text-decoration: none;"><i class="fa-solid fa-comment-dots"></i> Comment</a>
+            <a href="#" class="card-link text-muted" style="text-decoration: none;"><i class="fa-solid fa-retweet"></i> Share</a>
+        </div>
+    </div>
+    </div>
+</div>
+            `
+            return postCardHtml;
+        }
+
+        function fetchPosts() {
+            $.ajax({
+                type: 'GET',
+                url: "{% url 'posts:posts_api' author_id %}",
+                dataType: 'json',
+                success: (data, status) => {
+                    var postsList = data.posts;
+                    // Get the latest post from the API
+                    var postLatestFromApi = postsList[0];
+                    // Get the latest post from the DOM
+                    var rootFirstChild = document.getElementById("root").firstChild;
+                    var postLatestElement = rootFirstChild ? rootFirstChild.nextElementSibling : null;
+                    var postLatestElementId = postLatestElement ? postLatestElement.id : "empty";
+                    if (postLatestElementId == "empty") {
+                        var postCardsHtml = '';
+                        postsList.map(post => {
+                            postCardsHtml += createPostCard(post);
+                        });
+                        document.getElementById("root").innerHTML += postCardsHtml;
+                    }
+                    else if (postLatestElementId != postLatestFromApi.id) {
+                        console.log(postLatestElement)
+                        var rootElement = document.getElementById("root")
+                        rootElement.innerHTML = createPostCard(postLatestFromApi) + rootElement.innerHTML
+                    }
+                },
+                error: (error) => {
+                    console.log(error);
+                }
+            });
+            setTimeout(fetchPosts, 5000);
+        }
+        fetchPosts();
+
+    </script>
+{% endblock %}
