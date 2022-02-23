@@ -31,10 +31,10 @@ class FollowerList(models.Model):
     type = models.CharField(max_length=50, default='followers', editable=False)
     author = models.OneToOneField(Author, on_delete=models.CASCADE, primary_key=True)
     # follower list
-    items = models.ManyToManyField(Author, blank=True, null=True, related_name="items")
+    items = models.ManyToManyField(Author, blank=True, related_name="items")
 
     def is_in_follower_list(self, account):
-        if account in self.followers.all():
+        if account in self.items.all():
             return True
         return False
 

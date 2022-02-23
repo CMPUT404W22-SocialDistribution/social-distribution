@@ -95,12 +95,24 @@ def profile_edit(request, id):
 @login_required
 def friends_view(request, author_id):
     actor = Author.objects.get(id=author_id)
+    followers = FollowerList.objects.get(author=actor)
 
     if request.user.author != actor:
             return redirect('author_manager:login')
 
     if request.method == "GET":
-        return render(request, 'friends/friends.html')
+
+        friends = []
+        
+        for follower in followers.items.all():
+            try:
+                object_followers = FollowerList.objects.get(author=follower)
+                if object_followers.is_in_follower_list(actor):
+                    friends.append(follower)
+            except:
+                pass
+
+        return render(request, 'friends/friends.html', {'friends': friends})
 
     elif request.method == "POST":
         object_id = request.POST.get('object_id')
@@ -143,8 +155,29 @@ def inbox_view(request, author_id):
         inbox = Inbox.objects.get(author=current_author)
         return render(request, 'inbox/inbox.html', {'follows' : inbox.follows.all()})
     
-    # if request.method == "POST":
-    #     if request.POST['type'] == 'follows':
+    if request.method == "POST":
+        # Accept friend request
+        if request.POST['type'] == 'follows':
+            object_followers = FollowerList.objects.get(author=current_author)
+
+            try:
+                actor = Author.objects.get(id=request.POST['actor_id'])
+            except Author.DoesNotExist:
+                messages.warning(request, 'Sorry, we could not find this author.')
+            
+            if actor:
+                # add actor to the follwer list of current author:
+                object_followers.items.add(actor)
+
+                #delete the friend request:
+                try:
+                    follow = FriendRequest.objects.get(actor=actor, object=current_author)
+                    follow.delete()
+                except:
+                    pass
+            
+            # messages.success(request, 'Success to accept friend request.')
+            return redirect('author_manager:inbox', author_id)
 
     return render(request, 'inbox/inbox.html')
 
