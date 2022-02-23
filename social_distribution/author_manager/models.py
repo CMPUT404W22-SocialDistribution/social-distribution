@@ -25,3 +25,27 @@ class Author(models.Model):
 
     def __str__(self):
         return self.displayName
+
+
+class FollowerList(models.Model):
+    type = models.CharField(max_length=50, default='followers', editable=False)
+    author = models.OneToOneField(Author, on_delete=models.CASCADE, primary_key=True)
+    # follower list
+    items = models.ManyToManyField(Author, blank=True, null=True, related_name="items")
+
+    def is_in_follower_list(self, account):
+        if account in self.followers.all():
+            return True
+        return False
+
+
+class FriendRequest(models.Model):
+    type = models.CharField(max_length=50, default='follow', editable=False)
+    actor = models.ForeignKey(Author, on_delete=models.CASCADE, related_name="actor")
+    object = models.ForeignKey(Author, on_delete=models.CASCADE, related_name="object")
+    is_active = models.BooleanField(blank=False, null=False, default=True)
+
+class Inbox(models.Model):
+    type = models.CharField(max_length=30, default='inbox', editable=False)
+    author = models.OneToOneField(Author, on_delete=models.CASCADE, primary_key=True)
+    follows = models.ManyToManyField(FriendRequest, blank=True)
