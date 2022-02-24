@@ -165,9 +165,12 @@ class PostsAPI(APIView):
         #public posts
         public_posts = Post.objects.filter(visibility='public', unlisted=False).order_by('-published')
         #get friends: friends = author.following.all() & author.follower.all()
-        # friend_posts = Post.objects.filter(author__in=friends, visibility="friends", unlisted=False).order_by('-published')
+        followers = author.followers.all()
+        followings = author.followings.all()
+        friends = followings & followers
+        friend_posts = Post.objects.filter(author__in=friends, visibility="friends", unlisted=False).order_by('-published')
         my_posts = Post.objects.filter(author=author).order_by('-published')
-        posts = public_posts | my_posts
+        posts = public_posts | my_posts | friend_posts
         for post in posts:
             if post.content_type == 'text/markdown':
                 post.content = commonmark.commonmark(post.content)

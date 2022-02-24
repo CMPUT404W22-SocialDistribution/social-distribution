@@ -22,6 +22,9 @@ class Author(models.Model):
     email = models.EmailField(max_length=100, unique=True, blank=True, null=True, default=None)
     about = models.CharField(max_length=1000, blank=True, null=True)
 
+    followings = models.ManyToManyField('self', symmetrical=False, blank=True, related_name='my_followings')
+    followers = models.ManyToManyField('self', symmetrical=False, blank=True, related_name='my_followers')
+
     @property
     def url(self):
         return self.host + 'authors/' + str(self.id)    
@@ -44,8 +47,10 @@ class FollowerList(models.Model):
 
 class FriendRequest(models.Model):
     type = models.CharField(max_length=50, default='follow', editable=False)
-    actor = models.ForeignKey(Author, on_delete=models.CASCADE, related_name="actor")
-    object = models.ForeignKey(Author, on_delete=models.CASCADE, related_name="object")
+    # sender
+    actor = models.ForeignKey(Author, on_delete=models.CASCADE, related_name="actor")  #request
+    # receiver
+    object = models.ForeignKey(Author, on_delete=models.CASCADE, related_name="object") #requested
 
 class Inbox(models.Model):
     type = models.CharField(max_length=30, default='inbox', editable=False)
