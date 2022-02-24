@@ -98,7 +98,9 @@ def friends_view(request, author_id):
     current_author = Author.objects.get(id=author_id)
     if request.method == "GET":
         followers = current_author.followers.all()
+        print(followers)
         followings = current_author.followings.all()
+        print(followings)
         friends = followings & followers
         return render(request, 'friends/friends.html', {'friends': friends})
     
@@ -205,34 +207,45 @@ def inbox_view(request, author_id):
             return redirect('author_manager:login')
 
     if request.method == "GET":
+        # follow request
         inbox = Inbox.objects.get(author=current_author)
         return render(request, 'inbox/inbox.html', {'follows' : inbox.follows.all()})
     
     if request.method == "POST":
-        # Accept friend request
-        if request.POST['type'] == 'follows':
-            object_followers = FollowerList.objects.get(author=current_author)
-
+        # Accept follow request -> follow back-> true friends
+        if request.POST['type'] == 'befriend':
+            requesting_author = Author.objects.get(id=request.POST['actor_id'])
+            current_author.followings.add(requesting_author)
+            requesting_author.followers.add(current_author)
+            #delete the friend request:
             try:
-                actor = Author.objects.get(id=request.POST['actor_id'])
-            except Author.DoesNotExist:
-                messages.warning(request, 'Sorry, we could not find this author.')
-            
-            if actor:
-                # add actor to the follwer list of current author:
-                object_followers.items.add(actor)
-
-                #delete the friend request:
-                try:
-                    follow = FriendRequest.objects.get(actor=actor, object=current_author)
-                    follow.delete()
-                except:
-                    pass
-            
-            # messages.success(request, 'Success to accept friend request.')
+                follow = FriendRequest.objects.get(actor=requesting_author, object=current_author)
+                follow.delete()
+            except:
+                pass
             return redirect('author_manager:inbox', author_id)
 
-    return render(request, 'inbox/inbox.html')
+            # object_followers = FollowerList.objects.get(author=current_author)
+            
+            # try:
+            #     actor = Author.objects.get(id=request.POST['actor_id'])
+            # except Author.DoesNotExist:
+            #     messages.warning(request, 'Sorry, we could not find this author.')
+            
+            # if actor:
+            #     # add actor to the follwer list of current author:
+            #     object_followers.items.add(actor)
+
+            #     #delete the friend request:
+            #     try:
+            #         follow = FriendRequest.objects.get(actor=actor, object=current_author)
+            #         follow.delete()
+            #     except:
+            #         pass
+            
+            # # messages.success(request, 'Success to accept friend request.')
+            # return redirect('author_manager:inbox', author_id)
+
 
 
 class ProfileAPI(APIView):

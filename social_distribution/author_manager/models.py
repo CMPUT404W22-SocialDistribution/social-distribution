@@ -22,8 +22,8 @@ class Author(models.Model):
     email = models.EmailField(max_length=100, unique=True, blank=True, null=True, default=None)
     about = models.CharField(max_length=1000, blank=True, null=True)
 
-    followings = models.ManyToManyField('self', symmetrical=False, blank=True, null=True, related_name='my_followings')
-    followers = models.ManyToManyField('self', symmetrical=False, blank=True, null=True, related_name='my_followers')
+    followings = models.ManyToManyField('self', symmetrical=False, blank=True, related_name='my_followings')
+    followers = models.ManyToManyField('self', symmetrical=False, blank=True, related_name='my_followers')
 
     @property
     def url(self):
