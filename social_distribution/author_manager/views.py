@@ -149,7 +149,7 @@ def friends_view(request, author_id):
                 current_author.followings.remove(requested_author)
                 requested_author.followers.remove(current_author)
 
-                mess = 'Your are now unfriend with ' + object.displayName
+                mess = 'Your are now unfriend with ' + requested_author.displayName
                 messages.success(request, mess)
                 return redirect('author_manager:friends', author_id)
             except:
