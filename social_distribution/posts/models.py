@@ -29,6 +29,7 @@ class Post(models.Model):
                     default=ContentType.PLAIN
                 )
     content = models.TextField()
+    image = models.ImageField(null=True, blank=True)
     author = models.ForeignKey(
                 Author,
                 on_delete=models.CASCADE,
