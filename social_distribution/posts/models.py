@@ -35,7 +35,7 @@ class Post(models.Model):
         choices=ContentType.choices,
         default=ContentType.PLAIN
     )
-    content = models.TextField()
+    content = models.TextField(blank=True, default="")
     image = models.ImageField(upload_to=image_upload_path, null=True, blank=True)
     author = models.ForeignKey(
         Author,
