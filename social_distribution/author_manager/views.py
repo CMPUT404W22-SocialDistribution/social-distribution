@@ -60,7 +60,10 @@ def sign_in(request):
 def home(request):
     if request.method == "GET":
         author = get_object_or_404(Author, user=request.user)
-        return render(request, 'author_manager/index.html', {'author': author})
+        followers = author.followers.all()
+        followings = author.followings.all()
+        friends = followings & followers
+        return render(request, 'author_manager/index.html', {'author': author, 'friends_count': friends.count})
 
 
 @login_required
@@ -98,9 +101,7 @@ def friends_view(request, author_id):
     current_author = Author.objects.get(id=author_id)
     if request.method == "GET":
         followers = current_author.followers.all()
-        print(followers)
         followings = current_author.followings.all()
-        print(followings)
         friends = followings & followers
         return render(request, 'friends/friends.html', {'friends': friends})
     
@@ -246,7 +247,7 @@ def inbox_view(request, author_id):
             # # messages.success(request, 'Success to accept friend request.')
             # return redirect('author_manager:inbox', author_id)
 
-
+    
 
 class ProfileAPI(APIView):
     """
