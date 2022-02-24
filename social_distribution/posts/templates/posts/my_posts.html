@@ -26,7 +26,7 @@
                     postVisibilityIcon = `<i class="card-link fa-solid text-primary fa-user-group"></i>`;
                     break;
             }
-            var postCardHtml = `
+            var postCardHtmlPart1 = `
             <div class = "row justify-content-center container-fluid" id="${post.id}">
     <div class="col-5 align-self-center" style="padding: 20px;">
         <div class="card shadow">
@@ -70,16 +70,28 @@
             </div>
             <br>
             <div class="card-text">${post.content}</div>
-        </div>
-        <div class="card-footer">
-            <a href="#" class="card-link text-muted" style="text-decoration: none;"><i class="fa-solid fa-thumbs-up"></i> Like</a>
-            <a href="#" class="card-link text-muted" style="text-decoration: none;"><i class="fa-solid fa-comment-dots"></i> Comment</a>
-            <a href="#" class="card-link text-muted" style="text-decoration: none;"><i class="fa-solid fa-retweet"></i> Share</a>
-        </div>
-    </div>
-    </div>
-</div>
             `
+            var postCardHtmlImage = ''
+            if (post.image) {
+                postCardHtmlImage = `
+                <hr>
+                <img class="card-img-bottom" src="${ post.image }">
+                `
+            };
+        
+            var postCardHtmlPart2 = `
+            </div>
+            <div class="card-footer">
+                <a href="#" class="card-link text-muted" style="text-decoration: none;"><i class="fa-solid fa-thumbs-up"></i> Like</a>
+                <a href="#" class="card-link text-muted" style="text-decoration: none;"><i class="fa-solid fa-comment-dots"></i> Comment</a>
+                <a href="#" class="card-link text-muted" style="text-decoration: none;"><i class="fa-solid fa-retweet"></i> Share</a>
+            </div>
+        </div>
+        </div>
+    </div>  
+        `
+        
+            var postCardHtml = (postCardHtmlPart1 + postCardHtmlImage + postCardHtmlPart2);
             return postCardHtml;
         }
 
