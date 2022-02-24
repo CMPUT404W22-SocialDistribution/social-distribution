@@ -233,8 +233,8 @@ def inbox_view(request, author_id):
         # Accept follow request -> follow back-> true friends
         if request.POST['type'] == 'befriend':
             requesting_author = Author.objects.get(id=request.POST['actor_id'])
-            current_author.followings.add(requesting_author)
-            requesting_author.followers.add(current_author)
+            current_author.followers.add(requesting_author)
+            requesting_author.followings.add(current_author)
            
             #delete the friend request:
             try:
