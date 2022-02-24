@@ -294,4 +294,15 @@ class PostDetailAPI(generics.GenericAPIView):
                     return Response(serializer.errors, 400)
             else:
                 return Response({'detail': 'Post with this id already exists'}, 400)
-                
+
+
+class PostImageAPI(generics.GenericAPIView):
+    authentication_classes = [authentication.BasicAuthentication, authentication.SessionAuthentication]
+    permission_classes = [permissions.IsAuthenticated]
+
+    def get(self, request, author_id, post_id):
+        post = get_object_or_404(Post, id=post_id, author_id=author_id)
+        if post.image:
+            return redirect(post.image.url)
+
+        return Response({'detail': 'Post Image Does Not Exist'}, 404)
