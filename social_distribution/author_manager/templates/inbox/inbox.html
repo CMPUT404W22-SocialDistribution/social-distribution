@@ -42,9 +42,9 @@
                                 <div class="d-flex flex-row card-right flex-grow-1 justify-content-end mx-1">
                                     <form method="post">
                                         {% csrf_token %}
-                                        <input type="hidden" name="type" value="follows">
+                                        <input type="hidden" name="type" value="befriend">
                                         <input type="hidden" name="actor_id" value="{{follow.actor.id}}">
-                                        <button type="submit" class="btn btn-outline-primary">Accept</button>
+                                        <button type="submit" class="btn btn-primary">Accept</button>
                                     </form>
                                 </div>
                             </div>

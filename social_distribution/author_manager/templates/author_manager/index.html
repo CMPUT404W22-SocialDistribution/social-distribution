@@ -28,12 +28,12 @@
                     <div class="card-footer" >
                         <div class="row">
                             <div class="col border-end"> 
-                                <p class="text-center h6 mt-2 mb-1">300</p>
-                                <p class="text-center h7">Followers</p>
+                                <p class="text-center h6 mt-2 mb-1">{{ author.followings.all.count }}</p>
+                                <p class="text-center h7">Following</p>
                             </div>
                             <div class="col">
-                                <p class="text-center h6 mt-2 mb-1">500</p>
-                                <p class="text-center h7">Following</p>
+                                <p class="text-center h6 mt-2 mb-1">{{ friends_count}}</p>
+                                <p class="text-center h7">Friends</p>
                             </div>
                         </div>
                     </div>
@@ -90,15 +90,15 @@
                                             <p class="card-text fs-5 fw-light">
                                                 Hello World! <a class="fs-6 text-muted"
                         data-bs-toggle="collapse"
-                        href="#collapseExample"
+                        href="#collapseExample-abc"
                         role="button"
                         aria-expanded="false"
-                        aria-controls="collapseExample">
+                        aria-controls="collapseExample-abc">
                                                 <i class="fa-solid fa-angle-down"></i>
                                             </a>
                                         </p>
                                     </p>
-                                    <div class="collapse" id="collapseExample">
+                                    <div class="collapse" id="collapseExample-abc">
                                         <div class="card card-body">
                                             <p>
                                                 Source: <a href="{{ post.source }}" target="_blank">{{ post.source }}</a>
@@ -191,7 +191,7 @@
                                     </a>
                                 </p>
                                 </p>
-                                <div class="collapse" id="collapseExample"-${post.id}>
+                                <div class="collapse" id="collapseExample-${post.id}">
                                     <div class="card card-body">
                                         <p>
                                             Source: <a href="${post.source}" target="_blank">${post.source}</a>
