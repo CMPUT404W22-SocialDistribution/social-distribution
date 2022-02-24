@@ -3,7 +3,7 @@
 {% block content %}
 <div class="container" style="padding-top: 35px; font-family: roboto; width: 600px;">
     <div class="card send-request shadow mb-5">
-        <h2 class="card-header">Send Friend Request</h2>
+        <h2 class="card-header">Send Follow Request</h2>
         <div class="card-body">
             <div class="card-text">
                 <form class = "justify-content-between" method="post">
@@ -21,8 +21,80 @@
         </div>
     </div>
     
-    <div class="card friend-list shadow mb-4">
-        <h2 class="card-header mb-2">Friend List</h2>
+    <div class="card following-list shadow mb-5">
+        <h2 class="card-header mb-2">Following List</h2>
+        <div class="card-body">
+            <div class="card-text">
+                {% if followings %}
+                    <ol class="list-group">
+                        {% for following in followings %}
+                            <div class="card flex-row flex-grow-1 p-2 mx-2 my-2 align-items-center shadow-sm">
+                                <a href="{{following.url}}">
+                                    <div class="d-flex justify-content-between align-items-center">
+                                        <div class="mr-2">
+                                            <img class="rounded-circle" width="60px" src="/static/img/{{following.profileImage}}" alt="profile picture">
+                                        </div>
+                                    </div>
+                                </a>
+                                <a href="{{following.url}}" style="color:black; text-decoration: none;">
+                                    <div class="d-flex justify-content-between align-items-center">
+                                        <div class="ml-2">
+                                            <h5>{{following}}</h5>
+                                        </div>
+                                    </div>
+                                </a>
+                                <div class="d-flex flex-row card-right flex-grow-1 justify-content-end mx-1">
+                                    <form method="post">
+                                        {% csrf_token %}
+                                        <input type="hidden" name="type" value="unfriend">
+                                        <input type="hidden" name="object_id" value="{{following.id}}">
+                                        <button type="submit" class="btn btn-outline-danger">Unfollow</button>
+                                    </form>
+                                </div>
+                            </div>
+                        {% endfor %}
+                  </ol>
+                {% else %}
+                    <h5 class="form-text" style="font-size: 16px">Haven't had any friends yet !</h5>
+                {% endif %}   
+            </div>
+        </div>
+    </div>
+
+    <div class="card follower-list shadow mb-5">
+        <h2 class="card-header mb-2">Follower List</h2>
+        <div class="card-body">
+            <div class="card-text">
+                {% if followers %}
+                    <ol class="list-group">
+                        {% for follower in followers %}
+                            <div class="card flex-row flex-grow-1 p-2 mx-2 my-2 align-items-center shadow-sm">
+                                <a href="{{follower.url}}">
+                                    <div class="d-flex justify-content-between align-items-center">
+                                        <div class="mr-2">
+                                            <img class="rounded-circle" width="60px" src="/static/img/{{follower.profileImage}}" alt="profile picture">
+                                        </div>
+                                    </div>
+                                </a>
+                                <a href="{{follower.url}}" style="color:black; text-decoration: none;">
+                                    <div class="d-flex justify-content-between align-items-center">
+                                        <div class="ml-2">
+                                            <h5>{{follower}}</h5>
+                                        </div>
+                                    </div>
+                                </a>
+                            </div>
+                        {% endfor %}
+                  </ol>
+                {% else %}
+                    <h5 class="form-text" style="font-size: 16px">Haven't had any friends yet !</h5>
+                {% endif %}   
+            </div>
+        </div>
+    </div>
+
+    <div class="card friend-list shadow mb-5">
+        <h2 class="card-header mb-2">True Friend List</h2>
         <div class="card-body">
             <div class="card-text">
                 {% if friends %}
@@ -39,18 +111,10 @@
                                 <a href="{{friend.url}}" style="color:black; text-decoration: none;">
                                     <div class="d-flex justify-content-between align-items-center">
                                         <div class="ml-2">
-                                            <h5>{{friend}}</h5>
+                                            <h5>{{friend}</h5>
                                         </div>
                                     </div>
                                 </a>
-                                <div class="d-flex flex-row card-right flex-grow-1 justify-content-end mx-1">
-                                    <form method="post">
-                                        {% csrf_token %}
-                                        <input type="hidden" name="type" value="unfriend">
-                                        <input type="hidden" name="object_id" value="{{friend.id}}">
-                                        <button type="submit" class="btn btn-outline-danger">Unfriend</button>
-                                    </form>
-                                </div>
                             </div>
                         {% endfor %}
                   </ol>
@@ -60,5 +124,6 @@
             </div>
         </div>
     </div>
+
 </div>
 {% endblock content %}

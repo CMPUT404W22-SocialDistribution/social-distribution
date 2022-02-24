@@ -1,5 +1,6 @@
 from email.errors import MessageError
 import re
+from tkinter import E
 from django.contrib import messages
 from django.shortcuts import redirect, render
 
@@ -103,7 +104,10 @@ def friends_view(request, author_id):
         followers = current_author.followers.all()
         followings = current_author.followings.all()
         friends = followings & followers
-        return render(request, 'friends/friends.html', {'friends': friends})
+        print(followers)
+        print(followings)
+        print(friends)
+        return render(request, 'friends/friends.html', {'followings': followings, 'followers': followers, 'friends': friends})
     
     if request.method == "POST":
         requested_id = request.POST['object_id']
@@ -125,8 +129,8 @@ def friends_view(request, author_id):
                     inbox = Inbox.objects.get(author=requested_author)
                     inbox.follows.add(friend_request)
                     # For simplicity, if userA request follow userB -> userA follows userB
-                    current_author.followings.add(requested_author)
-                    requested_author.followers.add(current_author)
+                    # current_author.followings.add(requested_author)
+                    # requested_author.followers.add(current_author)
                     messages.success(request, 'Your friend request has been sent.')
                     return redirect('author_manager:friends', author_id)
 
@@ -137,7 +141,20 @@ def friends_view(request, author_id):
             except Author.DoesNotExist:
                 messages.warning(request, 'Sorry, we could not find this author.')
                 return redirect('author_manager:friends', author_id)
-        
+
+        # unfriend
+        else:
+            try:
+                requested_author = get_object_or_404(Author, id=requested_id)
+                current_author.followings.remove(requested_author)
+                requested_author.followers.remove(current_author)
+
+                mess = 'Your are now unfriend with ' + object.displayName
+                messages.success(request, mess)
+                return redirect('author_manager:friends', author_id)
+            except:
+                return redirect('author_manager:friends', author_id)
+
     # actor = Author.objects.get(id=author_id)
     # followers = FollowerList.objects.get(author=actor)
 
@@ -218,13 +235,14 @@ def inbox_view(request, author_id):
             requesting_author = Author.objects.get(id=request.POST['actor_id'])
             current_author.followings.add(requesting_author)
             requesting_author.followers.add(current_author)
+           
             #delete the friend request:
             try:
                 follow = FriendRequest.objects.get(actor=requesting_author, object=current_author)
                 follow.delete()
-                messages.success(request, 'Success to accept friend request.')
             except:
                 pass
+            messages.success(request, 'Success to accept friend request.')
             return redirect('author_manager:inbox', author_id)
 
             # object_followers = FollowerList.objects.get(author=current_author)
