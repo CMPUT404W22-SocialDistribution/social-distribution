@@ -75,7 +75,8 @@ def sign_out(request):
 def profile_edit(request, id):
     
     author = Author.objects.get(id=id)
-    if request.user.author != author:
+    current_user = Author.objects.get(user=request.user)
+    if current_user.id != id:
             error = "401 Unauthorized"
             return render(request, 'author_profile/edit_profile.html', {'error': error})
     if request.method == "GET":

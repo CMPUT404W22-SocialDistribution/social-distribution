@@ -5,13 +5,14 @@ from rest_framework.views import APIView
 from posts.forms import PostForm
 from rest_framework import generics, authentication, permissions
 
-from .serializers import PostSerializer
+from .serializers import PostSerializer, CommentSerializer
 from .models import Post, Comment
 from author_manager.models import *
 from rest_framework.response import Response
 from django.contrib.auth.decorators import login_required
 import commonmark
 from django.db.models import Q
+from rest_framework import status
 
 @login_required
 def post_create(request, author_id):
@@ -295,19 +296,39 @@ class PostDetailAPI(generics.GenericAPIView):
                 return Response({'detail': 'Post with this id already exists'}, 400)
                 
 
+
+
+
+@login_required
+def creat_comment(request, author_id, post_id):
+    current_author = Author.objects.get(id=author_id)
+
+
+
 class CommentsAPI(APIView):
     """
     GET [local, remote] get the list of comments of the post whose id is POST_ID (paginated)
     """
     
     def get(self, request, author_id, post_id):
-        current_user = request.user
+        currentUserID = Author.objects.get(user=request.user).id
         # US: Comments on friend posts are private only to me the original author.
-        if (current_user.id == author_id):
+        if (currentUserID == author_id):
             post = get_object_or_404(Post, id=post_id)
             comments = post.comments.all()  #get all comments from that post_id
-            serializer = PostSerializer(comments, many=True)  #many=True
+            serializer = CommentSerializer(comments, many=True)  #many=True
+            #type, page, size, post, id, comments in the response
+            return Response(serializer.data, status=status.HTTP_200_OK)
+        return Response({'detail': 'Not Found!'}, status=status.HTTP_400_BAD_REQUEST)
 
-            return Response(serializer.data, 200)
-        return Response({'detail': 'Not Found!'}, 404)
+    def post(self, request, author_id, post_id):
+        author = Author.objects.get(user=request.user)
+        post = Post.objects.get(id=post_id)
+
+        comment = Comment.objects.create(author=author, post=post)
+        serializer = CommentSerializer(comment, data=request.data)
+        if serializer.is_valid():
+            serializer.save()
+            return Response(serializer.data, status=status.HTTP_200_OK)
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
