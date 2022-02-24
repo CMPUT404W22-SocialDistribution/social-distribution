@@ -165,6 +165,10 @@ class PostsAPI(APIView):
         #public posts
         public_posts = Post.objects.filter(visibility='public', unlisted=False).order_by('-published')
         #get friends: friends = author.following.all() & author.follower.all()
+        # my_followers = FollowerList.objects.get(author=author).items.all()
+        # print(my_followers)
+        # my_following = FollowerList.objects.get(items=author).author.all()
+        # print(my_following)
         # friend_posts = Post.objects.filter(author__in=friends, visibility="friends", unlisted=False).order_by('-published')
         my_posts = Post.objects.filter(author=author).order_by('-published')
         posts = public_posts | my_posts
