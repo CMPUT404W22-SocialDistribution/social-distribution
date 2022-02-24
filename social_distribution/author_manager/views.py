@@ -189,7 +189,7 @@ def inbox_view(request, author_id):
                 except:
                     pass
             
-            # messages.success(request, 'Success to accept friend request.')
+            messages.success(request, 'Success to accept friend request.')
             return redirect('author_manager:inbox', author_id)
 
     return render(request, 'inbox/inbox.html')

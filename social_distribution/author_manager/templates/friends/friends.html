@@ -1,20 +1,20 @@
 {% extends 'author_manager/base.html' %}
 
 {% block content %}
-<div class="container" style="padding-top: 20px; font-family: roboto">
-    <div class="card send-request shadow mb-4">
+<div class="container" style="padding-top: 35px; font-family: roboto; width: 600px;">
+    <div class="card send-request shadow mb-5">
+        <h2 class="card-header">Send Friend Request</h2>
         <div class="card-body">
-            <h1 class="card-title">Send Friend Request</h1>
             <div class="card-text">
-                <form method="post">
+                <form class = "justify-content-between" method="post">
                     {% csrf_token %}
                     <div class="form-text mb-3">
                         <input type="hidden" name="type" value="send_friend_request">
                         <label style="font-size: 16px">Author ID</label>
                         <input type="text" class="form-control" name="object_id">
                     </div>
-                    <div>
-                        <button type="submit" class="shadow btn btn-primary">Send</button>
+                    <div class="d-flex justify-content-end">
+                        <button type="submit" class="btn btn-outline-primary">Send</button>
                     </div>
                 </form>
             </div>
@@ -22,23 +22,36 @@
     </div>
     
     <div class="card friend-list shadow mb-4">
+        <h2 class="card-header mb-2">Friend List</h2>
         <div class="card-body">
-            <h1 class="card-title mb-2">Friend List</h1>
             <div class="card-text">
                 {% if friends %}
                     <ol class="list-group">
                         {% for friend in friends %}
-                            <li class="list-group-item d-flex justify-content-between align-items-start mb-2">
-                                <div>
-                                    <a href="{{friend.url}}"  class="text-decoration-none"> {{friend}} </a>
+                            <div class="card flex-row flex-grow-1 p-2 mx-2 my-2 align-items-center shadow-sm">
+                                <a href="{{friend.url}}">
+                                    <div class="d-flex justify-content-between align-items-center">
+                                        <div class="mr-2">
+                                            <img class="rounded-circle" width="60px" src="/static/img/{{friend.profileImage}}" alt="profile picture">
+                                        </div>
+                                    </div>
+                                </a>
+                                <a href="{{friend.url}}" style="color:black; text-decoration: none;">
+                                    <div class="d-flex justify-content-between align-items-center">
+                                        <div class="ml-2">
+                                            <h5>{{friend}}</h5>
+                                        </div>
+                                    </div>
+                                </a>
+                                <div class="d-flex flex-row card-right flex-grow-1 justify-content-end mx-1">
+                                    <form method="post">
+                                        {% csrf_token %}
+                                        <input type="hidden" name="type" value="unfriend">
+                                        <input type="hidden" name="object_id" value="{{friend.id}}">
+                                        <button type="submit" class="btn btn-outline-danger">Unfriend</button>
+                                    </form>
                                 </div>
-                                <form method="post">
-                                    {% csrf_token %}
-                                    <input type="hidden" name="type" value="unfriend">
-                                    <input type="hidden" name="object_id" value="{{friend.id}}">
-                                    <button type="submit" class="btn btn-primary">Unfriend</button>
-                                </form>
-                            </li>
+                            </div>
                         {% endfor %}
                   </ol>
                 {% else %}

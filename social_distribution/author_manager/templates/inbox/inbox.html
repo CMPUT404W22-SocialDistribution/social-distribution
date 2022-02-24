@@ -1,29 +1,53 @@
 {% extends 'author_manager/base.html' %}
-
+{% load static %}
 {% block content %}
+
+<style type="text/css">
+	/* .profile-image{
+		max-height: 100px;
+		max-width: 100px;
+	}
+	.profile-image{
+		border-radius: 12px;
+	} */
+</style>
+
 <div class="container" style="padding-top: 20px; font-family: roboto">
-    <div class="text-center">
-        <h1 class="card-title mb-4">My Inbox</h1>  
+    <div class="text-center mb-5">
+        <h1 class="card-title">My Inbox</h1>  
     </div>
 
-    <div class="card friend-requests shadow mb-4">
+    <div class="card friend-requests shadow mb-4" style="width: 500px;">
+        <h2 class="card-header mb-2">Friend Requests</h2>
         <div class="card-body">
-            <h2 class="card-title mb-2">Friend Requests</h2>
             <div class="card-text">
                 {% if follows %}
                     <ol class="list-group">
                         {% for follow in follows %}
-                            <li class="list-group-item d-flex justify-content-between align-items-start mb-2">
-                                <div>
-                                    <a href="{{follow.actor.url}}"  class="text-decoration-none"> {{follow.actor}} </a>
+                            <div class="card flex-row flex-grow-1 p-2 mx-2 my-2 align-items-center shadow-sm">
+                                <a href="{{follow.actor.url}}">
+                                    <div class="d-flex justify-content-between align-items-center">
+                                        <div class="mr-2">
+                                            <img class="rounded-circle" width="60px" src="/static/img/{{follow.actor.profileImage}}" alt="profile picture">
+                                        </div>
+                                    </div>
+                                </a>
+                                <a href="{{follow.actor.url}}" style="color:black; text-decoration: none;">
+                                    <div class="d-flex justify-content-between align-items-center">
+                                        <div class="ml-2">
+                                            <h5>{{follow.actor}}</h5>
+                                        </div>
+                                    </div>
+                                </a>
+                                <div class="d-flex flex-row card-right flex-grow-1 justify-content-end mx-1">
+                                    <form method="post">
+                                        {% csrf_token %}
+                                        <input type="hidden" name="type" value="follows">
+                                        <input type="hidden" name="actor_id" value="{{follow.actor.id}}">
+                                        <button type="submit" class="btn btn-outline-primary">Accept</button>
+                                    </form>
                                 </div>
-                                <form method="post">
-                                    {% csrf_token %}
-                                    <input type="hidden" name="type" value="follows">
-                                    <input type="hidden" name="actor_id" value="{{follow.actor.id}}">
-                                    <button type="submit" class="btn btn-primary">Accept</button>
-                                </form>
-                            </li>
+                            </div>
                         {% endfor %}
                   </ol>
                 {% else %}
