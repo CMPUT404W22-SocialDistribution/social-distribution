@@ -76,9 +76,10 @@ def post_edit(request, author_id, post_id):
             }
         )
         post = get_object_or_404(Post, id=post_id)
-        form = PostForm(updated_request, instance=post)
+        form = PostForm(updated_request, request.FILES, instance=post)
 
         if form.is_valid():
+            # TODO: remove old image upload if one exists and is being replaced
             post_updated = form.save(commit=False)
             post_updated.save()
             return redirect('posts:post_detail', author_id, post_id)
