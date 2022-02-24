@@ -1,4 +1,4 @@
-{% extends 'base.html' %} 
+{% extends 'base.html' %}
 {% load static %}
 {% block content %}
     <div class="justify-content-left container-fluid">
@@ -27,7 +27,7 @@
                     </div>
                     <div class="card-footer" >
                         <div class="row">
-                            <div class="col border-end"> 
+                            <div class="col border-end">
                                 <p class="text-center h6 mt-2 mb-1">300</p>
                                 <p class="text-center h7">Followers</p>
                             </div>
@@ -50,7 +50,7 @@
                                     src="{% static 'img/3.svg' %}"
                                     alt="profile picture">
                                     <p class="text-end"><i class="fa-solid fa-turn-up fa-rotate-90 text-muted mt-2"></i></p>
-                                    
+
                             </div>
                             <div class="col-md-9 mb-3">
                                 <div class="card shadow-sm">
@@ -120,11 +120,11 @@
                         <br>
                     </div>
                 </div>
-                
-                
+
+
 
             </div>
-            
+
         </div>
     </div>
 
@@ -152,9 +152,9 @@
                     postVisibilityIcon = `<i class="card-link fa-solid text-primary fa-user-group"></i>`;
                     break;
             }
-            
 
-            var postCardsHtml=`
+
+            const postCardsHtmlParts = [`
                 <div class="row" id="${post.id}">
                     <div class="col-md-1 mr-2">
                         <img class="rounded-circle border border-2 shadow-sm"
@@ -163,7 +163,7 @@
                             src="/static/img/${post.author_image}"
                             alt="profile picture">
                             <p class="text-end"><i class="fa-solid fa-turn-up fa-rotate-90 text-muted mt-2"></i></p>
-                            
+
                     </div>
                     <div class="col-md-9 mb-3 ml-1">
                         <div class="card shadow-sm">
@@ -202,6 +202,13 @@
                                     </div>
                                 </div>
                                 <div class="card-text">${post.content}</div>
+                            `,
+                post.image ? `
+                                <hr>
+                                <img class="card-img-bottom" src="${post.image}">
+                            `
+                    : "",
+                `
                             </div>
                             <div class="card-footer">
                                 <a href="#" class="card-link text-muted" style="text-decoration: none;"><i class="fa-solid fa-thumbs-up"></i> Like</a>
@@ -212,9 +219,9 @@
                     </div>
                 </div>
                 <br>
-            
-                `
-            return postCardsHtml;
+
+                `];
+            return postCardsHtmlParts.join('');
         }
         function fetchPosts(){
             $.ajax({
@@ -250,7 +257,7 @@
         fetchPosts();
 
     </script>
-    
 
-                        
+
+
 {% endblock %}
