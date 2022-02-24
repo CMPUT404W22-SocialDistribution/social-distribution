@@ -38,9 +38,8 @@ def post_create(request, author_id):
             'type': 'post'
             }
         )
-        form = PostForm(updated_request)
-        
-        
+        form = PostForm(updated_request, request.FILES)
+
         if form.is_valid():
             post = form.save(commit=False)
             post.save()
