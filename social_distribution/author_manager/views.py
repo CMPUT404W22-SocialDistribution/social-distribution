@@ -104,15 +104,15 @@ def friends_view(request, author_id):
         followers = current_author.followers.all()
         followings = current_author.followings.all()
         friends = followings & followers
-        print(followers)
-        print(followings)
-        print(friends)
+        # print(followers)
+        # print(followings)
+        # print(friends)
         return render(request, 'friends/friends.html', {'followings': followings, 'followers': followers, 'friends': friends})
     
     if request.method == "POST":
         requested_id = request.POST['object_id']
         if request.POST['type'] == 'send_friend_request':
-            print(1) 
+            # print(1) 
             if requested_id == author_id:
                 messages.warning(request, 'You cannot be friend with yourself')
                 return redirect('author_manager:friends', author_id)
