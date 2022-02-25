@@ -1,4 +1,4 @@
-{% extends 'base.html' %} 
+{% extends 'base.html' %}
 {% load static %}
 {% block content %}
     <div class="justify-content-left container-fluid">
@@ -154,7 +154,7 @@
             }
             
 
-            var postCardsHtml=`
+            const postCardsHtmlParts = [`
                 <div class="row" id="${post.id}">
                     <div class="col-md-1 mr-2">
                         <img class="rounded-circle border border-2 shadow-sm"
@@ -201,7 +201,14 @@
                                         </p>
                                     </div>
                                 </div>
-                                <div class="card-text">${post.content}</div>
+                                <div class="card-text" id="post-content">${post.content}</div>
+                            `,
+                post.image ? `
+                                <hr>
+                                <img class="card-img-bottom" src="${post.image}">
+                            `
+                    : "",
+                `
                             </div>
                             <div class="card-footer">
                                 <a href="#" class="card-link text-muted" style="text-decoration: none;"><i class="fa-solid fa-thumbs-up"></i> Like</a>
@@ -212,9 +219,9 @@
                     </div>
                 </div>
                 <br>
-            
-                `
-            return postCardsHtml;
+
+                `];
+            return postCardsHtmlParts.join('');
         }
         function fetchPosts(){
             $.ajax({
@@ -240,6 +247,11 @@
                         var rootElement = document.getElementById("my_node")
                         rootElement.innerHTML = createPostCard(postLatestFromApi) + rootElement.innerHTML
                     }
+
+                    // Inject bootstrap class card-img-bottom to constrain inline image sizes
+                    document.querySelectorAll("#post-content img:not(.card-img-bottom)").forEach(postContentInlineImg =>
+                        postContentInlineImg.classList.add('card-img-bottom')
+                    );
                 },
                 error: (error) => {
                     console.log(error);
