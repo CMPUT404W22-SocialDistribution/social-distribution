@@ -201,7 +201,7 @@
                                         </p>
                                     </div>
                                 </div>
-                                <div class="card-text">${post.content}</div>
+                                <div class="card-text" id="post-content">${post.content}</div>
                             `,
                 post.image ? `
                                 <hr>
@@ -247,6 +247,11 @@
                         var rootElement = document.getElementById("my_node")
                         rootElement.innerHTML = createPostCard(postLatestFromApi) + rootElement.innerHTML
                     }
+
+                    // Inject bootstrap class card-img-bottom to constrain inline image sizes
+                    document.querySelectorAll("#post-content img:not(.card-img-bottom)").forEach(postContentInlineImg =>
+                        postContentInlineImg.classList.add('card-img-bottom')
+                    );
                 },
                 error: (error) => {
                     console.log(error);
