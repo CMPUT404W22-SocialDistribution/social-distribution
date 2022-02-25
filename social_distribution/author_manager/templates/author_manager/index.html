@@ -27,13 +27,13 @@
                     </div>
                     <div class="card-footer" >
                         <div class="row">
-                            <div class="col border-end">
-                                <p class="text-center h6 mt-2 mb-1">300</p>
-                                <p class="text-center h7">Followers</p>
+                            <div class="col border-end"> 
+                                <p class="text-center h6 mt-2 mb-1">{{ author.followings.all.count }}</p>
+                                <p class="text-center h7">Following</p>
                             </div>
                             <div class="col">
-                                <p class="text-center h6 mt-2 mb-1">500</p>
-                                <p class="text-center h7">Following</p>
+                                <p class="text-center h6 mt-2 mb-1">{{ friends_count}}</p>
+                                <p class="text-center h7">Friends</p>
                             </div>
                         </div>
                     </div>
@@ -50,7 +50,7 @@
                                     src="{% static 'img/3.svg' %}"
                                     alt="profile picture">
                                     <p class="text-end"><i class="fa-solid fa-turn-up fa-rotate-90 text-muted mt-2"></i></p>
-
+                                    
                             </div>
                             <div class="col-md-9 mb-3">
                                 <div class="card shadow-sm">
@@ -90,15 +90,15 @@
                                             <p class="card-text fs-5 fw-light">
                                                 Hello World! <a class="fs-6 text-muted"
                         data-bs-toggle="collapse"
-                        href="#collapseExample"
+                        href="#collapseExample-abc"
                         role="button"
                         aria-expanded="false"
-                        aria-controls="collapseExample">
+                        aria-controls="collapseExample-abc">
                                                 <i class="fa-solid fa-angle-down"></i>
                                             </a>
                                         </p>
                                     </p>
-                                    <div class="collapse" id="collapseExample">
+                                    <div class="collapse" id="collapseExample-abc">
                                         <div class="card card-body">
                                             <p>
                                                 Source: <a href="{{ post.source }}" target="_blank">{{ post.source }}</a>
@@ -120,11 +120,11 @@
                         <br>
                     </div>
                 </div>
-
-
+                
+                
 
             </div>
-
+            
         </div>
     </div>
 
@@ -152,7 +152,7 @@
                     postVisibilityIcon = `<i class="card-link fa-solid text-primary fa-user-group"></i>`;
                     break;
             }
-
+            
 
             const postCardsHtmlParts = [`
                 <div class="row" id="${post.id}">
@@ -163,7 +163,7 @@
                             src="/static/img/${post.author_image}"
                             alt="profile picture">
                             <p class="text-end"><i class="fa-solid fa-turn-up fa-rotate-90 text-muted mt-2"></i></p>
-
+                            
                     </div>
                     <div class="col-md-9 mb-3 ml-1">
                         <div class="card shadow-sm">
@@ -191,7 +191,7 @@
                                     </a>
                                 </p>
                                 </p>
-                                <div class="collapse" id="collapseExample"-${post.id}>
+                                <div class="collapse" id="collapseExample-${post.id}">
                                     <div class="card card-body">
                                         <p>
                                             Source: <a href="${post.source}" target="_blank">${post.source}</a>
@@ -262,7 +262,7 @@
         fetchPosts();
 
     </script>
+    
 
-
-
+                        
 {% endblock %}

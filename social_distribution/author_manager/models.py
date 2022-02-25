@@ -22,9 +22,37 @@ class Author(models.Model):
     email = models.EmailField(max_length=100, unique=True, blank=True, null=True, default=None)
     about = models.CharField(max_length=1000, blank=True, null=True)
 
+    followings = models.ManyToManyField('self', symmetrical=False, blank=True, related_name='my_followings')
+    followers = models.ManyToManyField('self', symmetrical=False, blank=True, related_name='my_followers')
+
     @property
     def url(self):
         return self.host + 'authors/' + str(self.id)    
 
     def __str__(self):
         return self.displayName
+
+
+class FollowerList(models.Model):
+    type = models.CharField(max_length=50, default='followers', editable=False)
+    author = models.OneToOneField(Author, on_delete=models.CASCADE, primary_key=True)
+    # follower list
+    items = models.ManyToManyField(Author, blank=True, related_name="items")
+
+    def has_follower(self, account):
+        if account in self.items.all():
+            return True
+        return False
+
+
+class FriendRequest(models.Model):
+    type = models.CharField(max_length=50, default='follow', editable=False)
+    # sender
+    actor = models.ForeignKey(Author, on_delete=models.CASCADE, related_name="actor")  #request
+    # receiver
+    object = models.ForeignKey(Author, on_delete=models.CASCADE, related_name="object") #requested
+
+class Inbox(models.Model):
+    type = models.CharField(max_length=30, default='inbox', editable=False)
+    author = models.OneToOneField(Author, on_delete=models.CASCADE, primary_key=True)
+    follows = models.ManyToManyField(FriendRequest, blank=True)
