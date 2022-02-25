@@ -2,7 +2,10 @@ from email.errors import MessageError
 import re
 from tkinter import E
 from django.contrib import messages
+from django.views.generic import ListView
 from django.shortcuts import redirect, render
+from django.contrib.auth.models import User
+from django.db.models import Q
 
 # import idna
 from .forms import SignUpForm, EditProfileForm
@@ -111,110 +114,100 @@ def friends_view(request, author_id):
     
     if request.method == "POST":
         requested_id = request.POST['object_id']
-        if request.POST['type'] == 'send_friend_request':
-            # print(1) 
-            if requested_id == author_id:
-                messages.warning(request, 'You cannot be friend with yourself')
-                return redirect('author_manager:friends', author_id)
-            try: 
-                requested_author = get_object_or_404(Author, id=requested_id)
+        # MOVE TO SEARCH AUTHOR RESULT PAGE
+        # if request.POST['type'] == 'send_friend_request':
+        #     # print(1) 
+        #     if requested_id == author_id:
+        #         messages.warning(request, 'You cannot be friend with yourself')
+        #         return redirect('author_manager:friends', author_id)
+        #     try: 
+        #         requested_author = get_object_or_404(Author, id=requested_id)
                 
-                if requested_author in current_author.followings.all():
-                    messages.warning(request, 'You already followed this author.')
-                    return redirect('author_manager:friends', author_id)
+        #         if requested_author in current_author.followings.all():
+        #             messages.warning(request, 'You already followed this author.')
+        #             return redirect('author_manager:friends', author_id)
 
-                friend_request, created = FriendRequest.objects.get_or_create(actor=current_author, object=requested_author)
+        #         friend_request, created = FriendRequest.objects.get_or_create(actor=current_author, object=requested_author)
 
-                if created: 
-                    inbox = Inbox.objects.get(author=requested_author)
-                    inbox.follows.add(friend_request)
-                    # For simplicity, if userA request follow userB -> userA follows userB
-                    # current_author.followings.add(requested_author)
-                    # requested_author.followers.add(current_author)
-                    messages.success(request, 'Your friend request has been sent.')
-                    return redirect('author_manager:friends', author_id)
+        #         if created: 
+        #             inbox = Inbox.objects.get(author=requested_author)
+        #             inbox.follows.add(friend_request)
+        #             # For simplicity, if userA request follow userB -> userA follows userB
+        #             # current_author.followings.add(requested_author)
+        #             # requested_author.followers.add(current_author)
+        #             messages.success(request, 'Your friend request has been sent.')
+        #             return redirect('author_manager:friends', author_id)
 
-                else:
-                    messages.warning(request, 'You already sent a friend request to this author.')
-                    return redirect('author_manager:friends', author_id)
+        #         else:
+        #             messages.warning(request, 'You already sent a friend request to this author.')
+        #             return redirect('author_manager:friends', author_id)
                 
-            except Author.DoesNotExist:
-                messages.warning(request, 'Sorry, we could not find this author.')
-                return redirect('author_manager:friends', author_id)
+        #     except Author.DoesNotExist:
+        #         messages.warning(request, 'Sorry, we could not find this author.')
+        #         return redirect('author_manager:friends', author_id)
 
-        # unfriend
+        # # unfriend
+        # else:
+        try:
+            requested_author = get_object_or_404(Author, id=requested_id)
+            current_author.followings.remove(requested_author)
+            requested_author.followers.remove(current_author)
+
+            mess = 'Your are now unfriend with ' + requested_author.displayName
+            messages.success(request, mess)
+            return redirect('author_manager:friends', author_id)
+        except:
+            return redirect('author_manager:friends', author_id)
+
+class SearchAuthorView(ListView):
+    model = Author
+    template_name = 'friends/search_results.html'
+
+    def get_queryset(self):
+        query = self.request.GET.get('q')
+        if query == '':
+            queryset = []
         else:
-            try:
-                requested_author = get_object_or_404(Author, id=requested_id)
-                current_author.followings.remove(requested_author)
-                requested_author.followers.remove(current_author)
-
-                mess = 'Your are now unfriend with ' + requested_author.displayName
-                messages.success(request, mess)
-                return redirect('author_manager:friends', author_id)
-            except:
-                return redirect('author_manager:friends', author_id)
-
-    # actor = Author.objects.get(id=author_id)
-    # followers = FollowerList.objects.get(author=actor)
-
-    # if request.user.author != actor:
-    #         return redirect('author_manager:login')
-
-    # if request.method == "GET":
-    #     # By definition friends = followers 
-    #     return render(request, 'friends/friends.html', {'friends': followers.items.all()})
-
-    # if request.method == "POST":
-    #     object_id = request.POST['object_id']
-
-    #     # send friend request
-    #     if request.POST['type'] == 'send_friend_request':
-
-    #         if object_id == author_id:
-    #             messages.warning(request, 'You cannot be friend with yourself')
-    #             return redirect('author_manager:friends', author_id)
-
-    #         try:
-    #             object = Author.objects.get(id=object_id)
-    #             object_followers = FollowerList.objects.get(author=object)
-
-    #             if object_followers.has_follower(actor):
-    #                 messages.warning(request, 'You already followed this author.')
-    #                 return redirect('author_manager:friends', author_id) 
-
-    #             try:
-    #                 friend_request = FriendRequest.objects.get(actor=actor, object=object)
-    #                 messages.warning(request, 'You already sent a friend request to this author.')
-    #                 return redirect('author_manager:friends', author_id)
-                
-    #             except FriendRequest.DoesNotExist:
-    #                 friend_request = FriendRequest(actor=actor, object=object)
-    #                 friend_request.save()
-
-    #                 inbox = Inbox.objects.get(author=object)
-    #                 inbox.follows.add(friend_request)
-
-    #                 messages.success(request, 'Your friend request has been sent.')
-    #                 return redirect('author_manager:friends', author_id)
-
-    #         except Author.DoesNotExist:
-    #             messages.warning(request, 'Sorry, we could not find this author.')
-    #             return redirect('author_manager:friends', author_id)
+            queryset = Author.objects.filter(
+                Q(user__username__icontains=query) |
+                Q(displayName__icontains=query),
+            )
         
-    #     # unfriend
-    #     else:
-    #         try:
-    #             object = Author.objects.get(id=object_id)
-    #             followers.items.remove(object)
+        return queryset
+    
+    def post(self, request, *args, **kwargs):
+        author_id = request.user.author.id
+        current_author = Author.objects.get(id=author_id)
+        requested_id = request.POST['object_id']
+        
+        if requested_id == author_id:
+            messages.warning(request, 'You cannot be friend with yourself')
+            return redirect('author_manager:friends', author_id)
+        try: 
+            requested_author = get_object_or_404(Author, id=requested_id)
+            
+            if requested_author in current_author.followings.all():
+                messages.warning(request, 'You already followed this author.')
+                return redirect('author_manager:friends', author_id)
 
-    #             mess = 'Your are now unfriend with ' + object.displayName
-    #             messages.success(request, mess)
-    #             return redirect('author_manager:friends', author_id)
-    #         except:
-    #             pass
+            friend_request, created = FriendRequest.objects.get_or_create(actor=current_author, object=requested_author)
 
+            if created: 
+                inbox = Inbox.objects.get(author=requested_author)
+                inbox.follows.add(friend_request)
+                # For simplicity, if userA request follow userB -> userA follows userB
+                # current_author.followings.add(requested_author)
+                # requested_author.followers.add(current_author)
+                messages.success(request, 'Your friend request has been sent.')
+                return redirect('author_manager:friends', author_id)
 
+            else:
+                messages.warning(request, 'You already sent a friend request to this author.')
+                return redirect('author_manager:friends', author_id)
+            
+        except Author.DoesNotExist:
+            messages.warning(request, 'Sorry, we could not find this author.')
+            return redirect('author_manager:friends', author_id)
 
 
 @login_required
@@ -245,29 +238,7 @@ def inbox_view(request, author_id):
             messages.success(request, 'Success to accept friend request.')
             return redirect('author_manager:inbox', author_id)
 
-            # object_followers = FollowerList.objects.get(author=current_author)
             
-            # try:
-            #     actor = Author.objects.get(id=request.POST['actor_id'])
-            # except Author.DoesNotExist:
-            #     messages.warning(request, 'Sorry, we could not find this author.')
-            
-            # if actor:
-            #     # add actor to the follwer list of current author:
-            #     object_followers.items.add(actor)
-
-            #     #delete the friend request:
-            #     try:
-            #         follow = FriendRequest.objects.get(actor=actor, object=current_author)
-            #         follow.delete()
-            #     except:
-            #         pass
-            
-            # # messages.success(request, 'Success to accept friend request.')
-            # return redirect('author_manager:inbox', author_id)
-
-    
-
 class ProfileAPI(APIView):
     """
     An API endpoint allows viewing and updating a profile.

@@ -13,5 +13,6 @@ urlpatterns = [
     path('authors/', GetAllAuthors.as_view(), name='getAllAuthors'),
     path('authors/<str:id>/edit', views.profile_edit, name='editProfile'),
     path('authors/<str:author_id>/friends', friends_view, name ="friends"),
+    path('search/authors', SearchAuthorView.as_view(), name="search_author"),
     path('authors/<str:author_id>/inbox', inbox_view, name = "inbox"),
 ]
