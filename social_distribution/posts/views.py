@@ -1,6 +1,6 @@
 from django.shortcuts import get_object_or_404, render, redirect
 from django.views.generic import ListView
-
+from django.http import JsonResponse
 from rest_framework.views import APIView
 from posts.forms import PostForm
 from rest_framework import generics, authentication, permissions
@@ -136,6 +136,7 @@ def post_delete(request, author_id, post_id):
 def my_posts(request, author_id):
     if request.method == "GET":
         return render(request, 'posts/my_posts.html', {'author_id': author_id})
+
 
 class SearchView(ListView):
     model = Post
@@ -298,11 +299,23 @@ class PostDetailAPI(generics.GenericAPIView):
 
 
 
-
 @login_required
-def creat_comment(request, author_id, post_id):
+def create_comment(request, author_id, post_id):
     current_author = Author.objects.get(id=author_id)
+    post = get_object_or_404(Post, id=post_id)
+    comments = post.comments.all()  #get all comments from that post_id
 
+
+    if request.method == "GET":
+        return render(request, 'comments/create_comment.html', {'comments': comments, 'author':current_author, 'post':post})
+    elif request.method == "POST":
+        comment=request.POST['comment']
+        postID=request.POST['post']
+        post=Post.objects.get(id=postID) # Obtain the instance
+        author = Author.objects.get(user=request.user) # Obtain the instance
+
+        comment = Comment.objects.create(author=author, post=post, comment=comment)
+        return JsonResponse({"bool":True})
 
 
 class CommentsAPI(APIView):

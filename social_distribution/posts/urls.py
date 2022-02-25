@@ -11,5 +11,6 @@ urlpatterns = [
     path('authors/<str:author_id>/posts/<str:post_id>', post_detail, name ="post_detail"),
     path('authors/<str:author_id>/posts/<str:post_id>/delete', post_delete, name ="post_delete"),
     path('api/posts/', PostsAPI.as_view(), name="all_posts_api"),
-    path('api/authors/<str:author_id>/posts/<str:post_id>/comments', CommentsAPI.as_view(), name="comments"),
+    path('api/authors/<str:author_id>/posts/<str:post_id>/comments', CommentsAPI.as_view(), name="comments_api"),
+    path('authors/<str:author_id>/posts/<str:post_id>/comments', create_comment, name="comments"),
 ]
