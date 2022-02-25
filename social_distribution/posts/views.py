@@ -91,8 +91,10 @@ def post_edit(request, author_id, post_id):
 @login_required
 def post_detail(request, author_id, post_id):
     # TODO: permission for posts visible to friends
-
     if request.method == "GET":
+        user = request.user
+        # Using user name to get author 
+        current_user = Author.objects.get(user=user)
         author = Author.objects.get(id=author_id)
         post = get_object_or_404(Post, id=post_id)
         if request.user.author == author:
@@ -100,8 +102,15 @@ def post_detail(request, author_id, post_id):
         else:
             isAuthor = False
             if post.visibility == "private":
-                error = "404 Not Found"
-                return render(request, 'posts/post_create.html', {'error': error}, status=404)
+                if post.visibleTo == current_user.id:
+                    context = {
+                        "post": post,
+                        "isAuthor": isAuthor
+                    }
+                    return render(request, 'posts/post_detail.html', context)
+                else:
+                    error = "404 Not Found"
+                    return render(request, 'posts/post_create.html', {'error': error}, status=404)
 
             elif post.visibility == "friends":
                 # TODO:
