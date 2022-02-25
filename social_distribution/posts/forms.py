@@ -1,7 +1,6 @@
-from django import forms
 from crispy_forms.helper import FormHelper
-from crispy_forms.layout import Layout, Submit, Row, Column, Field, HTML
-
+from crispy_forms.layout import Layout, Submit, Row, Column
+from django import forms
 
 from .models import Post
 
@@ -13,6 +12,7 @@ col4 = 'form-group col-md-4 mb-0'
 col3 = 'form-group col-md-3 mb-0'
 col2 = 'form-group col-md-2 mb-0'
 col1 = 'form-group col-md-1 mb-0'
+
 
 class PostForm(forms.ModelForm):
     class Meta:
@@ -43,6 +43,9 @@ class PostForm(forms.ModelForm):
             ),
             Row(
                 Column('content', css_class=col12),
+            ),
+            Row(
+                Column('image', css_class=col12),
             ),
             Row(
                 Column('unlisted', css_class=col12),

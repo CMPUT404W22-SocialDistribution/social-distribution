@@ -1,4 +1,4 @@
-{% extends 'base.html' %} 
+{% extends 'base.html' %}
 {% load static %}
 {% block content %}
     <div class="justify-content-left container-fluid">
@@ -28,12 +28,12 @@
                     <div class="card-footer" >
                         <div class="row">
                             <div class="col border-end"> 
-                                <p class="text-center h6 mt-2 mb-1">300</p>
-                                <p class="text-center h7">Followers</p>
+                                <p class="text-center h6 mt-2 mb-1">{{ author.followings.all.count }}</p>
+                                <p class="text-center h7">Following</p>
                             </div>
                             <div class="col">
-                                <p class="text-center h6 mt-2 mb-1">500</p>
-                                <p class="text-center h7">Following</p>
+                                <p class="text-center h6 mt-2 mb-1">{{ friends_count}}</p>
+                                <p class="text-center h7">Friends</p>
                             </div>
                         </div>
                     </div>
@@ -90,15 +90,15 @@
                                             <p class="card-text fs-5 fw-light">
                                                 Hello World! <a class="fs-6 text-muted"
                         data-bs-toggle="collapse"
-                        href="#collapseExample"
+                        href="#collapseExample-abc"
                         role="button"
                         aria-expanded="false"
-                        aria-controls="collapseExample">
+                        aria-controls="collapseExample-abc">
                                                 <i class="fa-solid fa-angle-down"></i>
                                             </a>
                                         </p>
                                     </p>
-                                    <div class="collapse" id="collapseExample">
+                                    <div class="collapse" id="collapseExample-abc">
                                         <div class="card card-body">
                                             <p>
                                                 Source: <a href="{{ post.source }}" target="_blank">{{ post.source }}</a>
@@ -155,7 +155,7 @@
             }
             
 
-            var postCardsHtml=`
+            const postCardsHtmlParts = [`
                 <div class="row" id="${post.id}">
                     <div class="col-md-1 mr-2">
                         <img class="rounded-circle border border-2 shadow-sm"
@@ -192,7 +192,7 @@
                                     </a>
                                 </p>
                                 </p>
-                                <div class="collapse" id="collapseExample"-${post.id}>
+                                <div class="collapse" id="collapseExample-${post.id}">
                                     <div class="card card-body">
                                         <p>
                                             Source: <a href="${post.source}" target="_blank">${post.source}</a>
@@ -202,7 +202,14 @@
                                         </p>
                                     </div>
                                 </div>
-                                <div class="card-text">${post.content}</div>
+                                <div class="card-text" id="post-content">${post.content}</div>
+                            `,
+                post.image ? `
+                                <hr>
+                                <img class="card-img-bottom" src="${post.image}">
+                            `
+                    : "",
+                `
                             </div>
                             <div class="card-footer">
                                 <a href="#" class="card-link text-muted" style="text-decoration: none;"><i class="fa-solid fa-thumbs-up"></i> Like</a>
@@ -213,9 +220,9 @@
                     </div>
                 </div>
                 <br>
-            
-                `
-            return postCardsHtml;
+
+                `];
+            return postCardsHtmlParts.join('');
         }
         function fetchPosts(){
             $.ajax({
@@ -241,6 +248,11 @@
                         var rootElement = document.getElementById("my_node")
                         rootElement.innerHTML = createPostCard(postLatestFromApi) + rootElement.innerHTML
                     }
+
+                    // Inject bootstrap class card-img-bottom to constrain inline image sizes
+                    document.querySelectorAll("#post-content img:not(.card-img-bottom)").forEach(postContentInlineImg =>
+                        postContentInlineImg.classList.add('card-img-bottom')
+                    );
                 },
                 error: (error) => {
                     console.log(error);
