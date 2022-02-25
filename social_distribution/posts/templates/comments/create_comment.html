@@ -14,6 +14,7 @@
                 <a href="{% url 'author_manager:profile' user.author.id %}">
                 @{{request.user}}</a>
             </p>
+            <p>{{comment.published}}</p>
         </div>
     </div>
     {% csrf_token %}
@@ -53,6 +54,7 @@
                         $(".save-comment").addClass('disabled').text('saving..');
                     },
                     success:function(res){
+                        console.log(res.comment)
                         if(res.bool==true){
                             $(".comment-text").val('')
 
@@ -65,6 +67,7 @@
                                             <a href='+_url+'>\
                                             @{{request.user}}</a>\
                                             </p>\
+                                            <p>'+res.published+' <\p>\
                                         </div>\
                                     </div>';
                             

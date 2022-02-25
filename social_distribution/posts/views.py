@@ -3,32 +3,23 @@ from django.contrib.auth.decorators import login_required
 from django.db.models import Q
 from django.shortcuts import get_object_or_404, render, redirect
 from django.views.generic import ListView
-<<<<<<< HEAD
 from django.http import JsonResponse
 from rest_framework.views import APIView
 from posts.forms import PostForm
-=======
->>>>>>> 00df6bd60e89139dd15faef18a80ebe9e65426af
 from rest_framework import generics, authentication, permissions
 from rest_framework.response import Response
 from rest_framework.views import APIView
 
-<<<<<<< HEAD
 from .serializers import PostSerializer, CommentSerializer
 from .models import Post, Comment
 from author_manager.models import *
 from rest_framework.response import Response
 from django.contrib.auth.decorators import login_required
-import commonmark
 from django.db.models import Q
 from rest_framework import status
-=======
-from author_manager.models import *
-from posts.forms import PostForm
-from .models import Post
-from .serializers import PostSerializer
 
->>>>>>> 00df6bd60e89139dd15faef18a80ebe9e65426af
+
+
 
 @login_required
 def post_create(request, author_id):
@@ -201,10 +192,6 @@ class MyPostsAPI(generics.GenericAPIView):
     authentication_classes = [authentication.BasicAuthentication, authentication.SessionAuthentication]
     permission_classes = [permissions.IsAuthenticated]
     serializer_class = PostSerializer
-<<<<<<< HEAD
-=======
-
->>>>>>> 00df6bd60e89139dd15faef18a80ebe9e65426af
     def get(self, request, author_id):
 
         author = Author.objects.get(id=author_id)
@@ -338,7 +325,8 @@ def create_comment(request, author_id, post_id):
         author = Author.objects.get(user=request.user) # Obtain the instance
 
         comment = Comment.objects.create(author=author, post=post, comment=comment)
-        return JsonResponse({"bool":True})
+        data =[{'published': comment.published}]
+        return JsonResponse({"bool":True, 'published': comment.published})
 
 
 class CommentsAPI(APIView):
