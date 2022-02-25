@@ -56,5 +56,5 @@ class Post(models.Model):
         choices=VisibilityType.choices,
         default=VisibilityType.PUBLIC
     )
-    visiableTo = models.CharField(max_length=200, blank=True)
+    visibleTo = models.CharField(max_length=200, blank=True)
     unlisted = models.BooleanField(default=False)
