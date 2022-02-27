@@ -15,8 +15,8 @@ from .serializers import PostSerializer
 
 @login_required
 def post_create(request, author_id):
-    # TODO: inbox
     author = Author.objects.get(id=author_id)
+    # check if the current user is authorized to create post with the author_id
     if request.user.author != author:
         error = "401 Unauthorized"
         return render(request, 'posts/post_create.html', {'error': error}, status=401)
@@ -26,11 +26,8 @@ def post_create(request, author_id):
         return render(request, 'posts/post_create.html', {'form': form})
 
     elif request.method == "POST":
-        if request.user.author != author:
-            error = "401 Unauthorized"
-            return render(request, 'posts/post_create.html', {'error': error}, status=401)
-
-        updated_request = request.POST.copy()
+        
+        updated_request = request.POST.copy()  # using deepcopy() to make a mutable copy of the object
         updated_request.update(
             {
                 'author': author,
@@ -42,6 +39,15 @@ def post_create(request, author_id):
         if form.is_valid():
             post = form.save(commit=False)
             post.save()
+            if post.visibility == "public":
+                # send public posts to follower. Since friends are also followers so friends also receive then in their inboxes
+                for follower in author.followers.all():
+                    follower.inbox.posts.add(post)
+            elif post.visibility == "friends":
+                friends = author.followers.all() & author.followings.all()
+                for friend in friends:
+                    friend.inbox.posts.add(post)
+            # TODO: inbox private posts
             return redirect('posts:post_detail', author_id, post.id)
         else:
             print(form.errors)
@@ -170,7 +176,7 @@ class PostsAPI(APIView):
         friends = followings & followers
         friend_posts = Post.objects.filter(author__in=friends, visibility="friends", unlisted=False).order_by(
             '-published')
-        my_posts = Post.objects.filter(author=author).order_by('-published')
+        my_posts = Post.objects.filter(author=author, unlisted=False).order_by('-published')
         posts = public_posts | my_posts | friend_posts
         for post in posts:
             if post.content_type == 'text/markdown':

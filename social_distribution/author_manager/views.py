@@ -1,6 +1,4 @@
 from email.errors import MessageError
-import re
-from tkinter import E
 from django.contrib import messages
 from django.shortcuts import redirect, render
 

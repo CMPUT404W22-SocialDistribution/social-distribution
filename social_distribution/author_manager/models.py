@@ -56,3 +56,5 @@ class Inbox(models.Model):
     type = models.CharField(max_length=30, default='inbox', editable=False)
     author = models.OneToOneField(Author, on_delete=models.CASCADE, primary_key=True)
     follows = models.ManyToManyField(FriendRequest, blank=True)
+    # send posts to inbox
+    posts = models.ManyToManyField('posts.Post', blank=True)
