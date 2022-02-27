@@ -92,17 +92,19 @@ def post_edit(request, author_id, post_id):
 def post_detail(request, author_id, post_id):
     # TODO: permission for posts visible to friends
     if request.method == "GET":
-        user = request.user
+        current_user = request.user.author
         # Using user name to get author 
-        current_user = Author.objects.get(user=user)
+        # current_user = Author.objects.get(user=user)
         author = Author.objects.get(id=author_id)
         post = get_object_or_404(Post, id=post_id)
         if request.user.author == author:
             isAuthor = True
         else:
             isAuthor = False
+            print(current_user.user)
+            print(post.visibleTo)
             if post.visibility == "private":
-                if post.visibleTo == current_user.id:
+                if post.visibleTo == str(current_user.user):
                     context = {
                         "post": post,
                         "isAuthor": isAuthor
@@ -179,7 +181,7 @@ class PostsAPI(APIView):
         friends = followings & followers
         friend_posts = Post.objects.filter(author__in=friends, visibility="friends", unlisted=False).order_by(
             '-published')
-        private_posts = Post.objects.filter(visibility="private", visibleTo=author.id ,unlisted=False).order_by('-published')
+        private_posts = Post.objects.filter(visibility="private", visibleTo=author.user ,unlisted=False).order_by('-published')
         my_posts = Post.objects.filter(author=author, unlisted=False).order_by('-published')
         posts = public_posts | my_posts | friend_posts | private_posts
         for post in posts:
