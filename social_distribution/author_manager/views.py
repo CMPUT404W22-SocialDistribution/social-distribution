@@ -1,10 +1,6 @@
 from email.errors import MessageError
-import re
-from tkinter import E
 from django.contrib import messages
 from django.shortcuts import redirect, render
-
-# import idna
 from .forms import SignUpForm, EditProfileForm
 from .models import *
 from django.contrib.auth import authenticate, login, logout

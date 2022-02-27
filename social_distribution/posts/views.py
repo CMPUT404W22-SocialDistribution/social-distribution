@@ -180,7 +180,7 @@ class PostsAPI(APIView):
         friend_posts = Post.objects.filter(author__in=friends, visibility="friends", unlisted=False).order_by(
             '-published')
         private_posts = Post.objects.filter(visibility="private", visibleTo=author.id ,unlisted=False).order_by('-published')
-        my_posts = Post.objects.filter(author=author).order_by('-published')
+        my_posts = Post.objects.filter(author=author, unlisted=False).order_by('-published')
         posts = public_posts | my_posts | friend_posts | private_posts
         for post in posts:
             if post.content_type == 'text/markdown':
