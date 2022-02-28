@@ -1,8 +1,6 @@
 from email.errors import MessageError
 from django.contrib import messages
 from django.shortcuts import redirect, render
-
-# import idna
 from .forms import SignUpForm, EditProfileForm
 from .models import *
 from django.contrib.auth import authenticate, login, logout
@@ -15,30 +13,47 @@ from .serializers import ProfileSerializer
 from django.shortcuts import get_object_or_404
 from rest_framework import status
 import requests
+import datetime 
 
 def sign_up(request):
+    '''
+    The function defines a view that allows account creation
+
+    Method:
+        POST:   - check if data is valid using default form set.
+                - set user's active status to False upon save.
+                - create an Inbox object for each Author user.
+    '''
+
     if request.method == 'POST':
         form = SignUpForm(request.POST)
         if form.is_valid():
             user = form.save(commit=True)
-            inbox = Inbox(author=user.author)
-            followers = FollowerList(author=user.author)
+            inbox = Inbox(author=user.author)  # create inbox object
             inbox.save()
-            followers.save()
             messages.success(request, 'Your account has been created.')
-            return redirect('author_manager:login')
+            return redirect('author_manager:login')  # redirects back to login page
         else:
             errors = list(form.errors.values())
             for error in errors:
                 mess = error[0] 
                 break
-            messages.warning(request, mess)
+            messages.warning(request, mess)  
     else:
-        form = SignUpForm()
+        form = SignUpForm()  # get form
     return render(request, 'registration/signup.html', {'form': form})     
            
 def sign_in(request):
+    '''
+    The function defines a view that allows user to login
+
+    Method:
+        POST:   - checks if data is valid using default form set.
+                - signs user into a session with Django session cookie.
+    '''
+
     if request.user.is_authenticated:
+        # check if user already authenticated, if so redirects to homepage 
         return redirect('author_manager:home')
     form = AuthenticationForm()
     if request.method == 'POST':
@@ -51,14 +66,19 @@ def sign_in(request):
                 login(request, user)
                 return redirect('author_manager:home')
         else:
+            # if the authentication fails, get the same template form
             messages.warning(request, 'Sorry, we could not find your account.')
     return render(request, 'registration/login.html', {'form': form})
 
 
 @login_required
 def home(request):
+    '''
+    The function gets homepage view. Require authorization.
+    '''
     if request.method == "GET":
-        author = get_object_or_404(Author, user=request.user)
+        author = get_object_or_404(Author, user=request.user)  # get author objects of logged in Django user
+        # get counts of followers, following, and friends to display in homepage
         followers = author.followers.all()
         followings = author.followings.all()
         friends = followings & followers
@@ -67,9 +87,12 @@ def home(request):
 
 @login_required
 def sign_out(request):
+    '''
+    The function logs out the authenticated user, and cleans out the session data. Require authorization.
+    Redirect to login page.
+    '''
     if request.method == 'GET':
         logout(request)
-        print(request.user)
         return redirect('author_manager:login')
 
 @login_required
@@ -331,25 +354,45 @@ class GetAllAuthors(APIView):
         }
         return Response(response, status=status.HTTP_200_OK)
 
+
+def format_timestamp(timestamp):
+    '''
+    Helper function to beautify github timestamp based on system's locale and language settings
+    Params: timestamp - github timestamp in ISO 8601 format
+    Return: beautified Python date object
+    '''
+    date = datetime.datetime.strptime(str(timestamp), "%Y-%m-%dT%H:%M:%SZ")
+    date = date.strftime('%c')
+    return date
+
 @login_required
 def github_events(request):
+    '''
+    The function handles get request and fetches all github public activities with given github username.
+    Send request to github developer API.
+    Handles event of types: WatchEvent, CreateEvent, DeleteEvent, ForkEvent, 
+        PushEvent, PullRequestEvent, IssuesEvent.
+    '''
     current_author = request.user.author
     if request.method =='GET':
         try:
-            github_username = current_author.github
-            # github developer API doc: https://docs.github.com/en/rest/reference/activity#events
+            github_username = current_author.github  # get current author github's username
+            # github API doc: https://docs.github.com/en/rest/reference/activity#events
             github_url = f"https://api.github.com/users/{github_username}/events/public"
             response = requests.get(github_url)
-    
+            # attempt validating if github username exists
             if response.status_code == 404:
                 error = "404 User Not Found"
                 return render(request, 'author_manager/github.html', {'error': error}, status=404)
-            data = response.json()
+            
+            # process data to customized json response   
+            data = response.json()  
 
             events = []
             for item in data:
                 event = {}
-                event["timestamp"] = item["created_at"]
+                event["timestamp"] = str(format_timestamp(item["created_at"]) 
+
                 repo = item["repo"]["name"]
                 event["url"] = item["repo"]["url"].replace('api.', '').replace('repos/', '')
                 payload = item["payload"]
@@ -377,7 +420,6 @@ def github_events(request):
                     # username forked repo from forkee
                     event["type"] = "Fork"
                     forkee = payload["forkee"]["full_name"]
-                    #event["forkee_url"] = [payload]["forkee"]["url"]
                     event["message"] = f"{github_username} forked {repo} from {forkee}"
                     events.append(event)
             

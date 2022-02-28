@@ -5,9 +5,11 @@ import random
 
 class Author(models.Model):
     def short_uuid():
+        # return a shortened ID of only first 8 uuid4 characters 
         return uuid.uuid4().hex[:8]
 
     def randomImage():
+        # randomize profile images 
         return str(random.randint(0,6))+'.svg'
 
     user = models.OneToOneField(User, on_delete=models.CASCADE, related_name='author')
@@ -18,10 +20,12 @@ class Author(models.Model):
     github = models.CharField(max_length=200, blank=True)
     profileImage = models.CharField(max_length=10, default=randomImage)
 
+    # extra information
     birthday = models.CharField(max_length=100, null=True, blank=True)
     email = models.EmailField(max_length=100, unique=True, blank=True, null=True, default=None)
     about = models.CharField(max_length=1000, blank=True, null=True)
 
+    # list of all followers and following authors. Used to get friends
     followings = models.ManyToManyField('self', symmetrical=False, blank=True, related_name='my_followings')
     followers = models.ManyToManyField('self', symmetrical=False, blank=True, related_name='my_followers')
 

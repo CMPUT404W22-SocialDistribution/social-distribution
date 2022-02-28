@@ -15,12 +15,20 @@ from .serializers import PostSerializer
 
 @login_required
 def post_create(request, author_id):
+    '''
+    This function allows creating new post for given author ID.
+
+    Method:
+        GET:  - get form.
+        POST: - save form if valid.
+    '''
     author = Author.objects.get(id=author_id)
     # check if the current user is authorized to create post with the author_id
     if request.user.author != author:
         error = "401 Unauthorized"
         return render(request, 'posts/post_create.html', {'error': error}, status=401)
-
+    
+    # get a new form
     if request.method == "GET":
         form = PostForm()
         return render(request, 'posts/post_create.html', {'form': form})
@@ -50,12 +58,20 @@ def post_create(request, author_id):
             # TODO: inbox private posts
             return redirect('posts:post_detail', author_id, post.id)
         else:
+            # if form is invalid, return the same html page
             print(form.errors)
             return redirect('posts:post_create', author_id)
 
 
 @login_required
 def post_edit(request, author_id, post_id):
+    '''
+    This function allows editing a post of post_id for given author_id.
+
+    Method:
+        GET:  - get the current version of post.
+        POST: - validate new changes with Django form and save.
+    '''
     author = Author.objects.get(id=author_id)
 
     if request.method == "GET":
@@ -73,7 +89,7 @@ def post_edit(request, author_id, post_id):
             error = "401 Unauthorized"
             return render(request, 'posts/post_create.html', {'error': error}, status=401)
 
-        updated_request = request.POST.copy()
+        updated_request = request.POST.copy()  # using deepcopy() to make a mutable copy of the object
 
         updated_request.update(
             {
@@ -96,27 +112,37 @@ def post_edit(request, author_id, post_id):
 
 @login_required
 def post_detail(request, author_id, post_id):
-    # TODO: permission for posts visible to friends
+    '''
+    This function allows viewing detail of a post of post_id of author_id.
+
+    Method:
+        GET:    - get the current version of post.
+                - check if user is authorized to see post.
+            
+    '''
+    # TODO: permission for DM posts (Jun)
 
     if request.method == "GET":
         author = Author.objects.get(id=author_id)
         post = get_object_or_404(Post, id=post_id)
+        # check if logged in user is author of post
         if request.user.author == author:
             isAuthor = True
         else:
+            # auth user is not user
             isAuthor = False
             if post.visibility == "private":
+                # post only visible if owner shared post with user
                 error = "404 Not Found"
                 return render(request, 'posts/post_create.html', {'error': error}, status=404)
 
             elif post.visibility == "friends":
-                # TODO:
-                # if request.user is not friend to author:
-                #       error = "404 Not Found"
-                # return render(request, 'posts/post_detail.html', {'error': error})
-                pass
+                # post only visible if user is friend to owner
+                if not (request.user.author in author.followings.all() and request.user.author in author.followers.all()):
+                    error = "404 Not Found"
+                    return render(request, 'posts/post_create.html', {'error': error}, status=404)
         if post.content_type == 'text/markdown':
-            post.content = commonmark.commonmark(post.content)
+            post.content = commonmark.commonmark(post.content)  # parse and render markdown content
         context = {
             "post": post,
             "isAuthor": isAuthor
@@ -126,6 +152,14 @@ def post_detail(request, author_id, post_id):
 
 @login_required
 def post_delete(request, author_id, post_id):
+    '''
+    This function allows deleting a post of post_id of author_id.
+
+    Method:
+        GET:    - check if current user is post's owner.
+                - delete post.
+            
+    '''
     if request.method == "GET":
         author = Author.objects.get(id=author_id)
         post = get_object_or_404(Post, id=post_id)
@@ -139,11 +173,31 @@ def post_delete(request, author_id, post_id):
 
 @login_required
 def my_posts(request, author_id):
+    '''
+    This function gets all posts of an author of author_id.
+
+    Method:
+        GET:    - check if current user has author_id and fetch all posts.
+                - returns error if unauthorized.
+            
+    '''
     if request.method == "GET":
-        return render(request, 'posts/my_posts.html', {'author_id': author_id})
+        if request.user.author == author:
+            return render(request, 'posts/my_posts.html', {'author_id': author_id})
+        else:
+            error = "401 Unauthorized"
+            return render(request, 'posts/post_create.html', {'error': error}, status=401)
 
 
 class SearchView(ListView):
+    '''
+    This function allows searching for posts.
+
+    Method:
+        GET:    - filers public posts that contain given input.
+                - input can be title, description, author username, author name.
+            
+    '''
     model = Post
     template_name = 'posts/search_results.html'
 
@@ -160,7 +214,15 @@ class SearchView(ListView):
 
 
 class PostsAPI(APIView):
-    # API endpoint that gathers all public posts, friends posts, my posts in my node 
+    '''
+    API endpoint that gathers all public posts, friends posts, my posts to display in stream.
+    
+    Method: 
+        GET:    - check if user is authenticated.
+                - get all posts visible to current user.
+                - respond to requests with information and status code.
+    '''
+    # basic auth for remote nodes, session auth for local node
     authentication_classes = [authentication.BasicAuthentication, authentication.SessionAuthentication]
     permission_classes = [permissions.IsAuthenticated]
     serializer_class = PostSerializer
@@ -168,25 +230,41 @@ class PostsAPI(APIView):
     def get(self, request):
         user = request.user
         author = Author.objects.get(user=request.user)
-        # public posts
+        # get public posts
         public_posts = Post.objects.filter(visibility='public', unlisted=False).order_by('-published')
-        # get friends: friends = author.following.all() & author.follower.all()
+        # get friends of current user
         followers = author.followers.all()
         followings = author.followings.all()
         friends = followings & followers
+        # get friends' posts that have visibility= friends
         friend_posts = Post.objects.filter(author__in=friends, visibility="friends", unlisted=False).order_by(
             '-published')
+        # get my posts
         my_posts = Post.objects.filter(author=author, unlisted=False).order_by('-published')
         posts = public_posts | my_posts | friend_posts
         for post in posts:
             if post.content_type == 'text/markdown':
-                post.content = commonmark.commonmark(post.content)
+                post.content = commonmark.commonmark(post.content)  # parse and render content of type markdown
         serializer = PostSerializer(posts, many=True)
         return Response(serializer.data, 200)
 
 
 class MyPostsAPI(generics.GenericAPIView):
-    # API endpoint that has to do with one's posts
+    '''
+    The class defines and API endpoint that allows user to get all posts of author of given author_id,
+    and add post if current user has author_id
+
+    Method: 
+        GET:    - handle get requests from external APIs.
+                - checks for authorization header of request or session cookie.
+                - get all posts of author_id that can be visible to current user.
+
+        POST:   - handle post requests.
+                - post and validate data with default serializer.
+                - responds to requests with status code.
+
+    '''
+    
     authentication_classes = [authentication.BasicAuthentication, authentication.SessionAuthentication]
     permission_classes = [permissions.IsAuthenticated]
     serializer_class = PostSerializer
@@ -198,8 +276,7 @@ class MyPostsAPI(generics.GenericAPIView):
         posts = author.posts.filter().order_by('-published')
         current_user = Author.objects.get(user=request.user)
         if current_user.id != author.id:
-            # TODO: if friend: posts = post.objects.get(Q(visibility='public')|Q(visibility='friends'), unlisted=False)
-            # elif not friend: 
+            # local 
             posts = posts.filter(visibility='public', unlisted=False)
 
         for post in posts:
@@ -232,6 +309,28 @@ class MyPostsAPI(generics.GenericAPIView):
 
 
 class PostDetailAPI(generics.GenericAPIView):
+    '''
+    The class defines and API endpoint that allows user to get detail of post of post_id.
+    Owner of author id and post of post_id can add, edit, delete that post. 
+
+    Method: 
+        GET:    - handle get requests from external APIs.
+                - checks for authorization header of request or session cookie.
+                - get post of post_id if it can be visible to current user.
+
+        POST:   - handle post requests.
+                - update and validate data with default serializer.
+                - responds to requests with status code.
+        
+        PUT:    - handle put requests.
+                - create new post with post_id if it doesn't exist in db (Abram's spec).
+                - responds to requests with status code.
+
+        DELETE: - handle delete requests.
+                - delete post with post_id if it existed in db.
+                - respons to requests with status code.
+
+    '''
     authentication_classes = [authentication.BaseAuthentication]
     permission_classes = [permissions.IsAuthenticated]
     serializer_class = PostSerializer
@@ -254,6 +353,7 @@ class PostDetailAPI(generics.GenericAPIView):
         try:
             post = get_object_or_404(Post, id=post_id)
         except Post.DoesNotExist:
+            # cannot edit post as post doesn't exist
             return Response({'detail': 'Post Does Not Exist'}, 404)
 
         current_user = request.user
@@ -295,6 +395,7 @@ class PostDetailAPI(generics.GenericAPIView):
         else:
             author = Author.objects.get(id=author_id)
             post, created = Post.objects.get_or_create(id=post_id, author=author)
+            # if post was just created, update the post with new data in payload.
             if created:
                 serializer = PostSerializer(post, data=request.data)
                 if serializer.is_valid():
