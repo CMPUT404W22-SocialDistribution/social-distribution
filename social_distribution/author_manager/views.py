@@ -332,29 +332,26 @@ class GetAllAuthors(APIView):
         return Response(response, status=status.HTTP_200_OK)
 
 @login_required
-def github_events(request, author_id):
+def github_events(request):
     current_author = request.user.author
-    if not request.user.author.id.equals(author_id):
-        error = "401 Unauthorized"
-        return render(request, 'author_manager/github.html', {'error': error}, status=401)
-    
     if request.method =='GET':
         try:
             github_username = current_author.github
             # github developer API doc: https://docs.github.com/en/rest/reference/activity#events
             github_url = f"https://api.github.com/users/{github_username}/events/public"
             response = requests.get(github_url)
+    
             if response.status_code == 404:
                 error = "404 User Not Found"
                 return render(request, 'author_manager/github.html', {'error': error}, status=404)
-            data = reponse.json()
+            data = response.json()
+
             events = []
-            #event_types = ['WatchEvent', 'CreateEvent', 'DeleteEvent', 'ForkEvent', 'PushEvent', 'IssuesEvent']
             for item in data:
                 event = {}
                 event["timestamp"] = item["created_at"]
                 repo = item["repo"]["name"]
-                event["url"] = item["repo"]["url"]
+                event["url"] = item["repo"]["url"].replace('api.', '').replace('repos/', '')
                 payload = item["payload"]
 
                 if item["type"] == "WatchEvent":
@@ -408,10 +405,10 @@ def github_events(request, author_id):
                     event["url"] = payload["html_url"]
                     event["message"] = f"Issue opened: #{number} {title} in {repo}"
                     events.append(event)
-                
-            return render(request, 'author_manager/github.html', {'events': event})
+
+            return render(request, 'author_manager/github.html', {'events': events})
         
-        except:
+        except Exception as e:
             return render(request, 'author_manager/github.html')
 
                 

@@ -8,6 +8,7 @@ urlpatterns = [
     path('signup/', views.sign_up, name ="sign_up"),
     path('login/', views.sign_in, name='login'),
     path('', views.home, name='home'),
+    path('github/', views.github_events, name='github'),
     path('logout/', views.sign_out, name='logout'),
     path('authors/<str:id>/',  ProfileAPI.as_view(), name='profile'),
     path('authors/', GetAllAuthors.as_view(), name='getAllAuthors'),
