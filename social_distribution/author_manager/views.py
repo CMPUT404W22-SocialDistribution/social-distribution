@@ -14,7 +14,7 @@ from rest_framework.renderers import TemplateHTMLRenderer
 from .serializers import ProfileSerializer
 from django.shortcuts import get_object_or_404
 from rest_framework import status
-
+import requests
 
 def sign_up(request):
     if request.method == 'POST':
@@ -330,3 +330,92 @@ class GetAllAuthors(APIView):
             'items': serializer.data
         }
         return Response(response, status=status.HTTP_200_OK)
+
+@login_required
+def github_events(request, author_id):
+    current_author = request.user.author
+    if not request.user.author.id.equals(author_id):
+        error = "401 Unauthorized"
+        return render(request, 'author_manager/github.html', {'error': error}, status=401)
+    
+    if request.method =='GET':
+        try:
+            github_username = current_author.github
+            # github developer API doc: https://docs.github.com/en/rest/reference/activity#events
+            github_url = f"https://api.github.com/users/{github_username}/events/public"
+            response = requests.get(github_url)
+            if response.status_code == 404:
+                error = "404 User Not Found"
+                return render(request, 'author_manager/github.html', {'error': error}, status=404)
+            data = reponse.json()
+            events = []
+            #event_types = ['WatchEvent', 'CreateEvent', 'DeleteEvent', 'ForkEvent', 'PushEvent', 'IssuesEvent']
+            for item in data:
+                event = {}
+                event["timestamp"] = item["created_at"]
+                repo = item["repo"]["name"]
+                event["url"] = item["repo"]["url"]
+                payload = item["payload"]
+
+                if item["type"] == "WatchEvent":
+                    event["type"] = "Watch"
+                    event["message"] = f"{github_username} starred {repo}" 
+                    events.append(event)
+
+                if item["type"] == "CreateEvent":
+                    event["type"] = "Create"
+                    ref_type = payload["ref_type"]
+                    ref = payload["ref"]
+                    event["message"] =f"Created new {ref_type} {ref} within {repo}"
+                    events.append(event)
+                
+                if item["type"] == "DeleteEvent":
+                    event["type"] = "Delete"
+                    ref_type = payload["ref_type"]
+                    ref = payload["ref"]
+                    event["message"] =f"Deleted {ref_type} {ref} within {repo}"
+                    events.append(event)
+
+                if item["type"] == "ForkEvent":
+                    # username forked repo from forkee
+                    event["type"] = "Fork"
+                    forkee = payload["forkee"]["full_name"]
+                    #event["forkee_url"] = [payload]["forkee"]["url"]
+                    event["message"] = f"{github_username} forked {repo} from {forkee}"
+                    events.append(event)
+            
+                if item["type"] == "PushEvent":
+                    event["type"] = "Push"
+                    head = payload["head"]
+                    event["url"] = f"https://github.com/{repo}/commit/{head}"
+                    event["message"] = f"{github_username} pushed to {repo}"
+                    events.append(event)
+
+                if item["type"] == "PullRequestEvent":
+                    event["type"] = "PullRequest"
+                    payload = payload["pull_request"]
+                    number = payload["number"]
+                    title = payload["title"]    
+                    event["url"] = payload["html_url"]
+                    event["message"] = f"Pull request opened: #{number} {title} in {repo}"
+                    events.append(event)
+
+                if item["type"] == "IssueEvent":
+                    event["type"] = "Issue"
+                    payload = payload["issue"]
+                    number = payload["number"]
+                    title = payload["title"]    
+                    event["url"] = payload["html_url"]
+                    event["message"] = f"Issue opened: #{number} {title} in {repo}"
+                    events.append(event)
+                
+            return render(request, 'author_manager/github.html', {'events': event})
+        
+        except:
+            return render(request, 'author_manager/github.html')
+
+                
+
+
+                    
+
