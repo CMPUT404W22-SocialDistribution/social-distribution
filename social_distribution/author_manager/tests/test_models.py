@@ -12,11 +12,6 @@ class AuthorTest(TestCase):
     def test_host_set_on_creation(self):
         self.assertEquals(self.author.host, 'http://127.0.0.1:8000/')
     
-    def test_url_set_on_creation(self):
-        author_id = self.author.id
-        url = 'http://127.0.0.1:8000/authors/'+str(author_id)
-        self.assertEquals(self.author.url, url)
-
     def test_author_one_to_one_user(self):
         user = User.objects.get(username='cmput404')
         self.assertEquals(user, self.author.user)

@@ -33,6 +33,9 @@ def sign_up(request):
                 user.author.host =  request.scheme + '://' + request.META['HTTP_HOST'] + '/'
                 user.author.url = user.author.host + 'authors/' + str(user.author.id)
                 user.author.save()
+            else: 
+                user.author.url = user.author.host + 'authors/' + str(user.author.id)
+                user.author.save()
             inbox = Inbox(author=user.author)  # create inbox object
             inbox.save()
             messages.success(request, 'Your account has been created.')
