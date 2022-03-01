@@ -1,0 +1,25 @@
+# from django.test import TestCase
+# from django.contrib.auth.models import User
+# from author_manager.models import Author
+# from posts.models import Post
+# from django.test import TestCase
+
+# class PostTest(TestCase):
+#     def setUp(self):
+#         user = User.objects.create_user(username='cmput404', password='cmput404')
+#         self.author = Author.objects.create(user=user)
+#         self.post = Post.objects.create(author=self.author)
+
+#     def test_type_set_on_creation(self):
+#         self.assertEqual(self.post.type, 'post')
+    
+#     def test_description_set_on_creation(self):
+#         self.assertEqual(self.post.description, 'No description')
+    
+#     def test_content_type_set_on_creation(self):
+#         self.assertEqual(self.post.content_type, 'text/plain')
+    
+#     def test_visibility_set_on_creation(self):
+#         self.assertEqual(self.post.visibility, 'public')
+    
+        

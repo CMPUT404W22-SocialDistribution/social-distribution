@@ -180,8 +180,9 @@ def my_posts(request, author_id):
         GET:    - check if current user has author_id and fetch all posts.
                 - returns error if unauthorized.
             
-    '''
+    '''    
     if request.method == "GET":
+        author = Author.objects.get(id=author_id)
         if request.user.author == author:
             return render(request, 'posts/my_posts.html', {'author_id': author_id})
         else:
