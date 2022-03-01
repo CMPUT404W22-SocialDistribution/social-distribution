@@ -6,81 +6,81 @@ from author_manager.models import Author
 from django.test import TestCase, Client
 from django.urls import reverse 
 
-# class PostCreateTest(TestCase):
-#     def setUp(self):
-#         self.client = Client()
-#         user = User.objects.create_user(username='test1', password='password1', is_active=True)
-#         self.author = Author.objects.create(user=user)
-#         self.client.login(username='test1', password='password1')
-#         self.url = reverse('posts:post_create', args=[self.author.id])
+class PostCreateTest(TestCase):
+    def setUp(self):
+        self.client = Client()
+        user = User.objects.create_user(username='test1', password='password1', is_active=True)
+        self.author = Author.objects.create(user=user)
+        self.client.login(username='test1', password='password1')
+        self.url = reverse('posts:post_create', args=[self.author.id])
         
-#     def test_create_post_form_get(self):
-#         response = self.client.get(self.url)
-#         self.assertEqual(response.status_code, 200)
-#         self.assertTemplateUsed(response,'posts/post_create.html')
+    def test_create_post_form_get(self):
+        response = self.client.get(self.url)
+        self.assertEqual(response.status_code, 200)
+        self.assertTemplateUsed(response,'posts/post_create.html')
     
-#     def test_create_post_post(self):
+    def test_create_post_post(self):
 
-#         request_body = {
-#                         'title':'Test Post',
-#                         'content_type':'text/plain',
-#                         'content':'Test post content',
-#                         'visibility':'public'
-#                         }
-#         response = self.client.post(self.url, request_body)
-#         self.assertEqual(response.status_code, 302)
+        request_body = {
+                        'title':'Test Post',
+                        'content_type':'text/plain',
+                        'content':'Test post content',
+                        'visibility':'public'
+                        }
+        response = self.client.post(self.url, request_body)
+        self.assertEqual(response.status_code, 302)
         
-#         new_post = Post.objects.all().order_by('-published')[0]
+        new_post = Post.objects.all().order_by('-published')[0]
         
-#         self.assertEqual(new_post.title, 'Test Post')
-#         self.assertEqual(new_post.author, self.author)
-#         self.assertEqual(new_post.content, 'Test post content')
+        self.assertEqual(new_post.title, 'Test Post')
+        self.assertEqual(new_post.author, self.author)
+        self.assertEqual(new_post.content, 'Test post content')
 
-# class PostEditTest(TestCase):
+class PostEditTest(TestCase):
 
-#     def setUp(self):
+    def setUp(self):
 
-#         self.client = Client()
-#         user = User.objects.create_user(username='test1', password='password1', is_active=True)
-#         self.author = Author.objects.create(user=user)
-#         self.post = Post.objects.create(author=self.author, title='Test Post', content='Test post content', content_type='text/plain', visibility='public')
+        self.client = Client()
+        user = User.objects.create_user(username='test1', password='password1', is_active=True)
+        self.author = Author.objects.create(user=user)
+        self.post = Post.objects.create(author=self.author, title='Test Post', content='Test post content', content_type='text/plain', visibility='public')
         
-#         # author2 with post2
-#         user2 = User.objects.create_user(username='test2', password='password2', is_active=True)
-#         self.author2 = Author.objects.create(user=user2)
-#         self.post2 = Post.objects.create(author=self.author2)
-#         # login user1 account
-#         self.client.login(username='test1', password='password1')
-#         self.url = reverse('posts:post_edit', args=[self.author.id, self.post.id])
+        # author2 with post2
+        user2 = User.objects.create_user(username='test2', password='password2', is_active=True)
+        self.author2 = Author.objects.create(user=user2)
+        self.post2 = Post.objects.create(author=self.author2)
+        # login user1 account
+        self.client.login(username='test1', password='password1')
+        self.url = reverse('posts:post_edit', args=[self.author.id, self.post.id])
     
-#     def test_edit_post_form_get(self):
-#         response = self.client.get(self.url)
-#         self.assertEqual(response.status_code, 200)
-#         self.assertTemplateUsed(response, 'posts/post_create.html')
+    def test_edit_post_form_get(self):
+        response = self.client.get(self.url)
+        self.assertEqual(response.status_code, 200)
+        self.assertTemplateUsed(response, 'posts/post_create.html')
 
-#     def test_edit_post_unauthorized_post(self):
-#         # user1 attempts to edit post2 of user2
+    def test_edit_post_unauthorized_post(self):
+        # user1 attempts to edit post2 of user2
 
-#         self.url = self.url = reverse('posts:post_edit', args=[self.author2.id, self.post2.id])
-#         request_body = {
-#                         'title': 'New title',
-#                         'content': 'Update post content',
-#                         'content_type': 'text/plain',
-#                         'visibility': 'public'
-#                         }
-#         response = self.client.post(self.url, request_body)
-#         self.assertEqual(response.status_code, 401)
+        self.url = self.url = reverse('posts:post_edit', args=[self.author2.id, self.post2.id])
+        request_body = {
+                        'title': 'New title',
+                        'content': 'Update post content',
+                        'content_type': 'text/plain',
+                        'visibility': 'public'
+                        }
+        response = self.client.post(self.url, request_body)
+        self.assertEqual(response.status_code, 401)
 
-#     def test_edit_post_authorized_post(self):
-#         request_body = {
-#                         'title': self.post.title,
-#                         'content': 'Update post content',
-#                         'content_type': self.post.content_type,
-#                         'visibility': self.post.visibility
-#                         }
-#         response = self.client.post(self.url, request_body)
-#         redirect_url = reverse('posts:post_detail', args=[self.author.id, self.post.id])
-#         self.assertRedirects(response, redirect_url, status_code=302, target_status_code=200)
+    def test_edit_post_authorized_post(self):
+        request_body = {
+                        'title': self.post.title,
+                        'content': 'Update post content',
+                        'content_type': self.post.content_type,
+                        'visibility': self.post.visibility
+                        }
+        response = self.client.post(self.url, request_body)
+        redirect_url = reverse('posts:post_detail', args=[self.author.id, self.post.id])
+        self.assertRedirects(response, redirect_url, status_code=302, target_status_code=200)
 
 class PostDeleteTest(TestCase):
 
