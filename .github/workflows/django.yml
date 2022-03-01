@@ -28,6 +28,7 @@ jobs:
       working-directory: ./social_distribution/
       run: |
           python manage.py migrate
+          python manage.py collectstatic
     - name: Run Tests
       working-directory: ./social_distribution/
       run: |
