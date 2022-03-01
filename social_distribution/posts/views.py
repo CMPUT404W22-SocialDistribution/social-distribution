@@ -377,7 +377,7 @@ class PostDetailAPI(generics.GenericAPIView):
         try:
             post = get_object_or_404(Post, id=post_id)
         except Post.DoesNotExist:
-            return Response({'detail': 'Post Does Not Exist'}, 404)
+            return Response({'detail': 'Post Does Not Exist'}, 400)
 
         current_user = request.user
         if current_user.author.id==author_id:
