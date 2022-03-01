@@ -28,7 +28,7 @@ jobs:
     - name: Run Tests
       run: |
         
-        echo "/home/runner/work/social-distribution/social-distribution/social_distribution" >> $GITHUB_PATH
+        echo "/home/runner/work/social-distribution/social-distribution/social_distribution" >> $PYTHON_PATH
         python manage.py runserver
         python manage.py test
  
