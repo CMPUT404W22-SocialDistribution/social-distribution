@@ -15,7 +15,8 @@ class Author(models.Model):
     user = models.OneToOneField(User, on_delete=models.CASCADE, related_name='author')
     type = models.CharField(max_length=50, default="author")
     id = models.CharField(primary_key=True, default=short_uuid, max_length = 8, editable=False, unique=True)
-    host = models.CharField(max_length=500, default='http://127.0.0.1:8000/', blank=True)
+    host = models.CharField(max_length=200, default='http://127.0.0.1:8000/', blank=True)
+    url = models.CharField(max_length=500, blank=True, null=True)
     displayName = models.CharField(max_length=200, default=f"{str(user)}")
     github = models.CharField(max_length=200, blank=True)
     profileImage = models.CharField(max_length=10, default=randomImage)
@@ -28,10 +29,7 @@ class Author(models.Model):
     # list of all followers and following authors. Used to get friends
     followings = models.ManyToManyField('self', symmetrical=False, blank=True, related_name='my_followings')
     followers = models.ManyToManyField('self', symmetrical=False, blank=True, related_name='my_followers')
-
-    @property
-    def url(self):
-        return self.host + 'authors/' + str(self.id)    
+   
 
     def __str__(self):
         return self.displayName

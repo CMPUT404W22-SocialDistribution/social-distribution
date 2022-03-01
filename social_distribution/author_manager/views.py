@@ -29,6 +29,9 @@ def sign_up(request):
         form = SignUpForm(request.POST)
         if form.is_valid():
             user = form.save(commit=True)
+            user.author.host =  request.scheme + '://' + request.META['HTTP_HOST'] + '/'
+            user.author.url = user.author.host + 'authors/' + str(user.author.id)
+            user.author.save()
             inbox = Inbox(author=user.author)  # create inbox object
             inbox.save()
             messages.success(request, 'Your account has been created.')
@@ -377,7 +380,7 @@ def github_events(request):
     if request.method =='GET':
         try:
             github_username = current_author.github  # get current author github's username
-            
+
             # github API doc: https://docs.github.com/en/rest/reference/activity#events
             github_url = f"https://api.github.com/users/{github_username}/events/public"
             response = requests.get(github_url)
