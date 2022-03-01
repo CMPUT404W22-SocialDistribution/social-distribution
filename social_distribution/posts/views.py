@@ -325,7 +325,6 @@ def create_comment(request, author_id, post_id):
         author = Author.objects.get(user=request.user) # Obtain the instance
 
         comment = Comment.objects.create(author=author, post=post, comment=comment)
-        data =[{'published': comment.published}]
         return JsonResponse({"bool":True, 'published': comment.published})
 
 

@@ -13,7 +13,7 @@ class PostSerializer(serializers.ModelSerializer):
     author_username = serializers.SerializerMethodField('get_author_username')
     author_displayName = serializers.SerializerMethodField('get_author_displayName')
     author_image = serializers.SerializerMethodField('get_author_image')
-
+  
     def get_author_image(self, obj):
         return obj.author.profileImage
 
@@ -27,18 +27,29 @@ class PostSerializer(serializers.ModelSerializer):
     class Meta:
         model = Post
         fields = ['type', 'author_username', 'author_displayName', 'title', 'id', 'source', 'origin', 'description', 'content_type',
-                    'content', 'author', 'categories', 'published', 'visibility', 'unlisted', 'author_image', 'image']
+                    'content', 'author', 'categories', 'published', 'visibility', 'unlisted', 'author_image', 'image', 'comments']
     
     # def to_representation(self, instance):
     #     data =  super().to_representation(instance)
     #     data['author'] = AuthorSerializer(Author.objects.get(pk=data['author'])).data
     #     return data
+    def to_representation(self, instance):
+        response =  super().to_representation(instance)
+        if "comments" in response:
+            comments= response["comments"]
+            for i in range(len(comments)):
+                post_comment = Comment.objects.get(id=comments[i])
+                comments[i] = CommentSerializer(post_comment).data
+            response["comments"] = comments[::-1]
+        return response
 
-        
 class CommentSerializer(serializers.ModelSerializer):
+    author_displayName = serializers.SerializerMethodField('get_author_displayName')
+    def get_author_displayName(self, obj):
+        return obj.author.displayName
     class Meta:
         model = Comment
-        fields = ['type', 'author', 'comment', 'contentType', 'published', 'id']
+        fields = ['type', 'author', 'author_displayName', 'comment', 'contentType', 'published', 'id']
 
     def __init__(self, *args, **kwargs):
         remove_fields = kwargs.pop('remove_fields', None)
