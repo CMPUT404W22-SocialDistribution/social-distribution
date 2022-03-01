@@ -377,7 +377,7 @@ def github_events(request):
     if request.method =='GET':
         try:
             github_username = current_author.github  # get current author github's username
-            print(github_username)
+            
             # github API doc: https://docs.github.com/en/rest/reference/activity#events
             github_url = f"https://api.github.com/users/{github_username}/events/public"
             response = requests.get(github_url)

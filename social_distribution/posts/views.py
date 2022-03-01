@@ -59,7 +59,6 @@ def post_create(request, author_id):
             return redirect('posts:post_detail', author_id, post.id)
         else:
             # if form is invalid, return the same html page
-            print(form.errors)
             return redirect('posts:post_create', author_id)
 
 
@@ -106,7 +105,6 @@ def post_edit(request, author_id, post_id):
             post_updated.save()
             return redirect('posts:post_detail', author_id, post_id)
         else:
-            print(form.errors)
             return redirect('posts:post_create', author_id)
 
 
@@ -332,14 +330,14 @@ class PostDetailAPI(generics.GenericAPIView):
                 - respons to requests with status code.
 
     '''
-    authentication_classes = [authentication.BaseAuthentication]
+    authentication_classes = [authentication.BasicAuthentication, authentication.SessionAuthentication]
     permission_classes = [permissions.IsAuthenticated]
     serializer_class = PostSerializer
 
     def get(self, request, author_id, post_id):
         # TODO: remote
         current_user = request.user
-        if current_user.id.equals(author_id):
+        if current_user.author.id==author_id:
             post = get_object_or_404(Post, id=post_id)
         else:
             post = get_object_or_404(Post, id=post_id, visibility='public')
@@ -358,7 +356,9 @@ class PostDetailAPI(generics.GenericAPIView):
             return Response({'detail': 'Post Does Not Exist'}, 404)
 
         current_user = request.user
-        if current_user.id.equals(author_id):
+        if current_user.author.id != author_id:
+            return Response({'detail': 'Current user is not authorized to do this operation'}, 401)
+        elif current_user.author.id==author_id:
             # authenticated
             serializer = PostSerializer(post, data=request.data, partial=True)
             if serializer.is_valid():
@@ -370,7 +370,8 @@ class PostDetailAPI(generics.GenericAPIView):
                 return Response(content, 200)
             else:
                 return Response(serializer.errors, 400)
-        return ({'detail': 'Current user is not authorized to do this operation'}, 401)
+            
+        
 
     def delete(self, request, author_id, post_id):
         try:
@@ -379,7 +380,7 @@ class PostDetailAPI(generics.GenericAPIView):
             return Response({'detail': 'Post Does Not Exist'}, 404)
 
         current_user = request.user
-        if current_user.id.equals(author_id):
+        if current_user.author.id==author_id:
             post.delete()
             content = {
                 'status': 0,
@@ -387,26 +388,27 @@ class PostDetailAPI(generics.GenericAPIView):
             }
             return Response(content, 200)
         else:
-            return ({'detail': 'Current user is not authorized to do this operation'}, 401)
+            return Response({'detail': 'Current user is not authorized to do this operation'}, 401)
 
     def put(self, request, author_id, post_id):
         current_user = request.user
-        if not current_user.id.equals(author_id):
+        if not current_user.author.id==author_id:
             return Response({'detail': 'Current user is not authorized to do this operation'}, 401)
         else:
             author = Author.objects.get(id=author_id)
             post, created = Post.objects.get_or_create(id=post_id, author=author)
+        
             # if post was just created, update the post with new data in payload.
-            if created:
+            if not created:
+                return Response({'detail': 'Post with this id already exists'}, 400)
+            else: 
                 serializer = PostSerializer(post, data=request.data)
                 if serializer.is_valid():
                     serializer.save()
                     return Response(serializer.data, 200)
                 else:
                     return Response(serializer.errors, 400)
-            else:
-                return Response({'detail': 'Post with this id already exists'}, 400)
-
+            
 
 class PostImageAPI(generics.GenericAPIView):
     authentication_classes = [authentication.BasicAuthentication, authentication.SessionAuthentication]
