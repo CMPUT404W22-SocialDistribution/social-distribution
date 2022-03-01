@@ -1,1 +1,1 @@
-web: gunicorn squawker.wsgi
+web: gunicorn social_distribution.wsgi
