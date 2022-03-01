@@ -119,7 +119,10 @@ def post_detail(request, author_id, post_id):
                 pass
         if post.content_type == 'text/markdown':
             post.content = commonmark.commonmark(post.content)
+        comments = post.commentsSrc.all().order_by('-published')
+
         context = {
+            "comments": comments,
             "post": post,
             "isAuthor": isAuthor
         }
@@ -313,7 +316,7 @@ class PostDetailAPI(generics.GenericAPIView):
 def create_comment(request, author_id, post_id):
     current_author = Author.objects.get(id=author_id)
     post = get_object_or_404(Post, id=post_id)
-    comments = post.comments.all()  #get all comments from that post_id
+    comments = post.commentsSrc.all()  #get all comments from that post_id
 
     if request.method == "POST":
         comment=request.POST['comment']
@@ -335,11 +338,11 @@ class CommentsAPI(APIView):
         # US: Comments on friend posts are private only to me the original author.
         if (currentUserID == author_id):
             post = get_object_or_404(Post, id=post_id)
-            comments = post.comments.all()  #get all comments from that post_id
+            comments = post.commentsSrc.all()  #get all comments from that post_id
             serializer = CommentSerializer(comments, many=True,  remove_fields=['author_displayName'])  #many=True
             #page,id
             response = {
-            'type':  "comment",
+            'type':  "comments",
             'size':len(serializer.data),
             'post': post_id,
             'comments': serializer.data,

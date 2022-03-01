@@ -7,7 +7,7 @@
             return new Date(time).toLocaleString('en-US', {
                 day: 'numeric', // numeric, 2-digit
                 year: 'numeric', // numeric, 2-digit
-                month: 'numeric', // numeric, 2-digit, long, short, narrow
+                month: 'short', // numeric, 2-digit, long, short, narrow
                 hour: 'numeric', // numeric, 2-digit
                 minute: 'numeric', // numeric, 2-digit
             });
@@ -113,7 +113,7 @@
                             <div class=" card justify-content-center pb-2 comment-wrapper-${post.id}">
                                 
                                     
-                                        ${post.comments.map( comment =>
+                                        ${post.commentsSrc.comments.map( comment =>
                                             `
                                             <div class=" justify-content-center py-2">
                                                 <div class="pb-2 px-2 mx-2"

@@ -86,6 +86,6 @@ class Comment(models.Model):
 
     published = models.DateTimeField(auto_now_add=True)
     id = models.CharField(primary_key=True, default=short_uuid, max_length = 8, editable=False, unique=True)
-    post = models.ForeignKey(Post, on_delete=models.CASCADE, related_name = "comments")
+    post = models.ForeignKey(Post, on_delete=models.CASCADE, related_name = "commentsSrc")
     
     
