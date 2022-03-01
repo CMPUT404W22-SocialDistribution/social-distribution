@@ -6,7 +6,7 @@ from author_manager.models import Author
 class AuthorSerializer(serializers.ModelSerializer):
     class Meta:
         model = Author
-        fields = '__all__'
+        fields = ['id', 'type', 'host', 'displayName', 'github', 'profileImage', 'url']
 
 
 class PostSerializer(serializers.ModelSerializer):
@@ -58,3 +58,11 @@ class CommentSerializer(serializers.ModelSerializer):
         if remove_fields:
             for field in remove_fields:
                 self.fields.pop(field)
+
+    def to_representation(self, instance):
+        response =  super().to_representation(instance)
+        if "author" in response:
+            comment_author = response["author"]
+            author= Author.objects.get(id=comment_author)
+        response["author"] = AuthorSerializer(author).data
+        return response

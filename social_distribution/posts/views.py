@@ -315,15 +315,12 @@ def create_comment(request, author_id, post_id):
     post = get_object_or_404(Post, id=post_id)
     comments = post.comments.all()  #get all comments from that post_id
 
-
-    if request.method == "GET":
-        return render(request, 'comments/create_comment.html', {'comments': comments, 'author':current_author, 'post':post})
-    elif request.method == "POST":
+    if request.method == "POST":
         comment=request.POST['comment']
         postID=request.POST['post']
         post=Post.objects.get(id=postID) # Obtain the instance
         author = Author.objects.get(user=request.user) # Obtain the instance
-
+        
         comment = Comment.objects.create(author=author, post=post, comment=comment)
         return JsonResponse({"bool":True, 'published': comment.published})
 
@@ -339,9 +336,15 @@ class CommentsAPI(APIView):
         if (currentUserID == author_id):
             post = get_object_or_404(Post, id=post_id)
             comments = post.comments.all()  #get all comments from that post_id
-            serializer = CommentSerializer(comments, many=True)  #many=True
-            #type, page, size, post, id, comments in the response
-            return Response(serializer.data, status=status.HTTP_200_OK)
+            serializer = CommentSerializer(comments, many=True,  remove_fields=['author_displayName'])  #many=True
+            #page,id
+            response = {
+            'type':  "comment",
+            'size':len(serializer.data),
+            'post': post_id,
+            'comments': serializer.data,
+            }
+            return Response(response, status=status.HTTP_200_OK)
         return Response({'detail': 'Not Found!'}, status=status.HTTP_400_BAD_REQUEST)
 
     def post(self, request, author_id, post_id):
