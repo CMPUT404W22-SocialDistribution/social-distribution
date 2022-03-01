@@ -27,6 +27,6 @@ jobs:
         pip install -r requirements.txt
     - name: Run Tests
       run: |
-        export PYTHONPATH="${PYTHONPATH}:/home/runner/work/social-distribution/social-distribution/social_distribution/manage.py"
+        export PYTHONPATH="$PYTHONPATH:/home/runner/work/social-distribution/social-distribution/social_distribution/manage.py"
         python manage.py test
  
