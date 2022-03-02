@@ -39,7 +39,11 @@ class PostForm(forms.ModelForm):
             Row(
                 Column('content_type', css_class=col4),
                 Column('visibility', css_class=col4),
-                Column('categories', css_class=col4),
+                Column('visibleTo', css_class=col4),
+                # Column('categories', css_class=col4),
+            ),
+            Row(
+                Column('categories', css_class=col12),
             ),
             Row(
                 Column('content', css_class=col12),
