@@ -181,6 +181,8 @@ class PostsAPI(APIView):
         friends = followings & followers
         friend_posts = Post.objects.filter(author__in=friends, visibility="friends", unlisted=False).order_by(
             '-published')
+        # private post only visible to certain people that author shared to
+        # eg. visibleTo is eqaul to certain author.
         private_posts = Post.objects.filter(visibility="private", visibleTo=author.user ,unlisted=False).order_by('-published')
         my_posts = Post.objects.filter(author=author, unlisted=False).order_by('-published')
         posts = public_posts | my_posts | friend_posts | private_posts
