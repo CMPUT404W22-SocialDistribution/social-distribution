@@ -1,6 +1,7 @@
 from django.urls import path
 
-from .views import *
+from .views import MyPostsAPI, PostsAPI, PostImageAPI, SearchView, PostDetailAPI, my_posts, post_create, post_edit, post_detail, \
+    post_delete, CommentsAPI, create_comment
 
 app_name = 'posts'
 urlpatterns = [
@@ -15,4 +16,5 @@ urlpatterns = [
     path('api/authors/<str:author_id>/posts/<str:post_id>/comments', CommentsAPI.as_view(), name="comments_api"),
     path('authors/<str:author_id>/posts/<str:post_id>/comments', create_comment, name="comments"),
     path('api/authors/<str:author_id>/posts/<str:post_id>/image', PostImageAPI.as_view(), name="post_image"),
+    path('api/authors/<str:author_id>/posts/<str:post_id>', PostDetailAPI.as_view(), name="post_detail_api")
 ]

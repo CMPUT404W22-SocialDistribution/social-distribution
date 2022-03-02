@@ -2,58 +2,91 @@
 {% load static %}
 {% block content %}
 
-<style type="text/css">
-	/* .profile-image{
-		max-height: 100px;
-		max-width: 100px;
-	}
-	.profile-image{
-		border-radius: 12px;
-	} */
-</style>
 
-<div class="container" style="padding-top: 20px; font-family: roboto">
-    <div class="text-center mb-5">
-        <h1 class="card-title">My Inbox</h1>  
+<div class="container-fluid" style="font-family: roboto">
+    <div class="text-center mb-5 mt-4">
+        <h2 class="card-title font-weight-bold">My Inbox</h2>  
     </div>
-
-    <div class="card friend-requests shadow mb-4" style="width: 500px;">
-        <h2 class="card-header mb-2">Friend Requests</h2>
-        <div class="card-body">
-            <div class="card-text">
-                {% if follows %}
-                    <ol class="list-group">
-                        {% for follow in follows %}
-                            <div class="card flex-row flex-grow-1 p-2 mx-2 my-2 align-items-center shadow-sm">
-                                <a href="{{follow.actor.url}}">
-                                    <div class="d-flex justify-content-between align-items-center">
-                                        <div class="mr-2">
-                                            <img class="rounded-circle" width="60px" src="/static/img/{{follow.actor.profileImage}}" alt="profile picture">
+    <div class="row">
+        <div class="col-md-6"> 
+            <div class="card friend-requests shadow mb-4" style="margin-left: 100px; width: 500px;">
+                <h3 class="card-header mb-2 bg-secondary text-white">Friend Requests</h3>
+                <div class="card-body">
+                    <div class="card-text">
+                        {% if follows %}
+                            <ol class="list-group">
+                                {% for follow in follows %}
+                                    <div class="card flex-row flex-grow-1 p-2 mx-2 my-2 align-items-center shadow-sm">
+                                        <a href="{{follow.actor.url}}">
+                                            <div class="d-flex justify-content-between align-items-center">
+                                                <div class="mr-2">
+                                                    <img class="rounded-circle" width="60px" src="/static/img/{{follow.actor.profileImage}}" alt="profile picture">
+                                                </div>
+                                            </div>
+                                        </a>
+                                        <a href="{{follow.actor.url}}" style="color:black; text-decoration: none;">
+                                            <div class="d-flex justify-content-between align-items-center">
+                                                <div class="ml-2">
+                                                    <h5>{{follow.actor}}</h5>
+                                                </div>
+                                            </div>
+                                        </a>
+                                        <div class="d-flex flex-row card-right flex-grow-1 justify-content-end mx-1">
+                                            <form method="post">
+                                                {% csrf_token %}
+                                                <input type="hidden" name="type" value="befriend">
+                                                <input type="hidden" name="actor_id" value="{{follow.actor.id}}">
+                                                <button type="submit" class="btn btn-outline-primary">Accept</button>
+                                            </form>
                                         </div>
                                     </div>
-                                </a>
-                                <a href="{{follow.actor.url}}" style="color:black; text-decoration: none;">
-                                    <div class="d-flex justify-content-between align-items-center">
-                                        <div class="ml-2">
-                                            <h5>{{follow.actor}}</h5>
+                                {% endfor %}
+                          </ol>
+                        {% else %}
+                            <h5 class="form-text" style="font-size: 16px">You have no friend requests!</h5>
+                        {% endif %}
+                            
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-6">
+            <div class="card post-updates shadow mb-4" style="margin-left:100px; width: 500px;">
+                <h3 class="card-header mb-2 bg-secondary text-white">Post Updates</h3>
+                <div class="card-body">
+                    <div class="card-text">
+                        {% if posts %}
+                            <ol class="list-group">
+                                {% for post in posts %}
+                                    <div class="card flex-row flex-grow-1 p-2 mx-2 my-2 align-items-center shadow-sm">
+                                        <a href="{{post.author.url}}">
+                                            <div class="d-flex justify-content-between align-items-center">
+                                                <div class="mr-2">
+                                                    <img class="rounded-circle" width="60px" src="/static/img/{{post.author.profileImage}}" alt="profile picture">
+                                                </div>
+                                            </div>
+                                        </a>
+                                        <a href="{{post.author.url}}" style="color:black; text-decoration: none;">
+                                            <div class="d-flex justify-content-between align-items-center">
+                                                <div class="ml-2">
+                                                    <h5>{{post.author}}</h5>
+                                                </div>
+                                            </div>
+                                        </a>
+                                        <div class="d-flex flex-row card-right flex-grow-1 justify-content-end mx-1">
+                                            <button type="button">
+                                                <a class="nav-link" href="{% url 'posts:post_detail' post.author.id post.id %}">View detail</a>
+                                            </button>
                                         </div>
                                     </div>
-                                </a>
-                                <div class="d-flex flex-row card-right flex-grow-1 justify-content-end mx-1">
-                                    <form method="post">
-                                        {% csrf_token %}
-                                        <input type="hidden" name="type" value="befriend">
-                                        <input type="hidden" name="actor_id" value="{{follow.actor.id}}">
-                                        <button type="submit" class="btn btn-outline-primary">Accept</button>
-                                    </form>
-                                </div>
-                            </div>
-                        {% endfor %}
-                  </ol>
-                {% else %}
-                    <h5 class="form-text" style="font-size: 16px">Have no friend requests !</h5>
-                {% endif %}
-                    
+                                {% endfor %}
+                          </ol>
+                        {% else %}
+                            <h5 class="form-text" style="font-size: 16px">You have no post updates!</h5>
+                        {% endif %}
+                            
+                    </div>
+                </div>
             </div>
         </div>
     </div>

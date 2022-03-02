@@ -78,8 +78,49 @@
                                 </li>
                             </ul>
                         </li>
+<<<<<<< HEAD
                     </button>
                 </ul>
+=======
+                        <li class="nav-item active">
+                            <a class="nav-link font-weight-bold" href="{% url 'author_manager:github' %}">GitHub</a>
+                        </li>
+                    </ul>
+                    &nbsp;&nbsp;&nbsp;
+                    <a href="{% url 'posts:post_create' user.author.id %}">
+                        <button class="navbar-btn btn btn-sm btn-secondary font-weight-bold"
+                                style='width:10em'>Create Post</button>
+                    </a>
+                    <ul class="navbar-nav ms-auto">
+                        <button type="button"
+                                class="btn btn-sm btn-outline-secondary border-2 rounded-pill">
+                            <li class="nav-item active">
+                                <a class="nav-link" href="{% url 'author_manager:inbox' user.author.id %}"><i class="fa-solid fa-envelope"></i></a>
+                            </li>
+                        </button>
+                        &nbsp;&nbsp;
+                        <button type="button"
+                                class="btn btn-sm btn-outline-secondary border-2 rounded-pill">
+                            <li class="nav-item dropdown">
+                                <a id="username"
+                                   class="nav-link dropdown-toggle"
+                                   href="#"
+                                   role="button"
+                                   data-bs-toggle="dropdown"
+                                   style="font-size: 18;"><i class="fa-solid fa-user"></i> &nbsp;{{ user.username }}&nbsp; &nbsp; &nbsp;</a>
+                                <ul class="dropdown-menu">
+                                    <li>
+                                        <a class="dropdown-item" href="{% url 'author_manager:profile' user.author.id %}">Profile</a>
+                                    </li>
+                                    <li>
+                                        <a class="dropdown-item" href="{% url 'author_manager:logout' %}">Logout</a>
+                                    </li>
+                                </ul>
+                            </li>
+                        </button>
+                    </ul>
+                </div>
+>>>>>>> 7c817e446a27cc6c2727b340768273d728dde06c
             </div>
         </div>
     </nav>
