@@ -1,5 +1,6 @@
+from dataclasses import fields
 from rest_framework import serializers
-from .models import Author
+from .models import Author, FriendRequest
 
 
 class ProfileSerializer(serializers.ModelSerializer):
@@ -15,3 +16,8 @@ class ProfileSerializer(serializers.ModelSerializer):
         if remove_fields:
             for field in remove_fields:
                 self.fields.pop(field)
+
+class FriendRequestSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = FriendRequest
+        fields = '__all__'
