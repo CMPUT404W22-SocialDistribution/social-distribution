@@ -41,6 +41,7 @@ INSTALLED_APPS = [
     'posts',
     'nested_admin',
     'crispy_forms',
+    'django_cleanup.apps.CleanupConfig'
 ]
 
 CRISPY_TEMPLATE_PACK = 'bootstrap4'
