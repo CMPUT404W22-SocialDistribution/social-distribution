@@ -89,8 +89,8 @@ aria-controls="collapseExample">
             <a href="#" class="card-link text-muted" style="text-decoration: none;"><i class="fa-solid fa-retweet"></i> Share</a>
         </div>
 
-        <div class="collapse" id="collapseComments">
-            <div class="card  " >
+        <div class="collapse show" id="collapseComments">
+            <div class="card" >
                     <div class= " input-group ">
                         <textarea  placeholder="Type your comment here" rows="1" class="form-control comment-text" ></textarea>
                         <button type="submit" data-answer="{{post.id}}" class="btn-floating save-comment"><i class="bi bi-plus"></i> </button>
@@ -104,7 +104,7 @@ aria-controls="collapseExample">
                         style="background-color: #00000008; box-shadow: 5px 5px 2px #cccccc;">  
                         <p class="card-text"> {{comment.comment}}</p>
                         <div class=" d-flex justify-content-between py-1 pt-2" style="font-size: 13px";>
-                            <span ><a href="{% url 'author_manager:profile' user.author.id %}">
+                            <span ><a href="{% url 'author_manager:profile' comment.author.id %}">
                                 {{comment.author}}</a></span>
                             <span>{{comment.published}} </span>
                         </div>
