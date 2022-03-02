@@ -12,6 +12,7 @@
     <div>
         <img src="{% static 'img/'|add:profile.profileImage %}" alt="profile_picture">
         <h3> {{ profile.displayName }}</h3>
+        <h3>THIS IS A TEST</h3>
         <a href="{% url 'author_manager:editProfile' user.author.id %}"><button type="button" class="btn btn-warning mt-3" id= "edit_btn">Edit Profile</button></a>
     </div>
 
