@@ -14,7 +14,7 @@
             
             <img class="rounded-circle border border-secondary" width="150" src="{% static 'img/'|add:profile.profileImage %}" alt="profile_picture">
             <div class="mt-4">
-                <div class="h3 m-0">@{{user.username}}</div>
+                <div class="h3 m-0">@{{profile.user.username}}</div>
                 <div class="h5 text-muted">{{profile.displayName}}</div>
             </div>
            

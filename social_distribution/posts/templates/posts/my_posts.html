@@ -120,7 +120,7 @@
                                                 style="background-color: #00000008; box-shadow: 5px 5px 2px #cccccc;"
                                                 >  <p class="card-text"> ${comment.comment}</p>
                                                     <div class=" d-flex justify-content-between py-1 pt-2" style="font-size: 13px";>
-                                                        <span ><a href="{% url 'author_manager:profile' user.author.id %}">
+                                                        <span ><a href="/authors/${comment.author.id}">
                                                          ${comment.author_displayName}</a></span>
                                                         <span>${Timestamp(comment.published)} </span>
                                                     </div>

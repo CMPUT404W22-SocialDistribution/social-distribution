@@ -431,10 +431,7 @@ class PostDetailAPI(generics.GenericAPIView):
                     return Response(serializer.data, 200)
                 else:
                     return Response(serializer.errors, 400)
-         
-                
-
-
+        
 
 @login_required
 def create_comment(request, author_id, post_id):
