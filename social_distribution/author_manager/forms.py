@@ -9,7 +9,7 @@ from .models import Author
 
 class SignUpForm(UserCreationForm):
     username = forms.CharField()
-    displayName = forms.CharField(max_length=200)
+    displayName = forms.CharField(max_length=200, required=False)
     github = forms.CharField(required=False, help_text='Optional')    
 
     class Meta: 

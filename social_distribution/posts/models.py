@@ -3,13 +3,14 @@ from django.db import models
 import uuid
 from author_manager.models import Author
 
-
+# categories of post
 class Category(models.Model):
     text = models.CharField(max_length=30)
 
 
 class Post(models.Model):
     def short_uuid():
+        # return a shortened version of uuid4 with only the first 8 characters
         return uuid.uuid4().hex[:8]
 
     def image_upload_path(instance, filename):
@@ -19,7 +20,9 @@ class Post(models.Model):
     type = models.CharField(max_length=50, default='post')
     title = models.CharField(max_length=200)
     id = models.CharField(primary_key=True, default=short_uuid, max_length=8, editable=False, unique=True)
+    # where the post was shared from 
     source = models.CharField(max_length=300, blank=True)
+    # where the post was originated 
     origin = models.CharField(max_length=300, blank=True)
     description = models.CharField(max_length=300, blank=True, null=True, default="No description")
 
@@ -44,17 +47,23 @@ class Post(models.Model):
         related_name='posts'
     )
     categories = models.ManyToManyField(Category, blank=True)
+    # timestamp
     published = models.DateTimeField(auto_now_add=True)
 
     class VisibilityType(models.TextChoices):
         PUBLIC = 'public',
         PRIVATE = 'private',
         FRIENDS = 'friends'
-
+    
+    # post has 4 different types of visibility: public, friends, private, and private to specified friend 
     visibility = models.CharField(
         max_length=30,
         choices=VisibilityType.choices,
         default=VisibilityType.PUBLIC
     )
+
     visibleTo = models.CharField(max_length=200, blank=True)
+    # if post is unlisted, it can only be seen with URI
+    # image posts are set to unlisted automatically 
+    # owner can see the post in My Posts page
     unlisted = models.BooleanField(default=False)
