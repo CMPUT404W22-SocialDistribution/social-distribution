@@ -1,0 +1,29 @@
+{% extends 'author_manager/base.html' %}
+{% load static %}
+{% block content %}
+
+    <div class="row justify-content-center container-fluid" >
+        <div class="text-center mb-5 mt-4">
+            <h2 class="card-title font-weight-bold ">My Github Activities</h2>  
+        </div>
+        <div class="col-md-8 align-self-center">
+            {% if events %}
+                <ul class="list-group">
+                    {% for event in events %}
+                    <div class="card h-70">
+                        <div class="card-body">
+                            <h5 class="card-title"><a href="{{event.url}}", style="text-decoration: none;">{{event.message}}</a></h5>
+                            <p>Type: {{event.type}}</p>
+                            <p>Created at: {{event.timestamp}}</p>
+                        </div>
+                    </div>
+                    {% endfor %}
+                </ul>
+            {% else %}
+                <h4 class="text-center" style="padding-top: 20px; font-family: roboto">Github username not found</h4>
+            {% endif %}
+        </div> 
+    </div> 
+    
+{% endblock %}
+       

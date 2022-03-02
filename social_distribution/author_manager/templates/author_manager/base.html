@@ -47,7 +47,7 @@
                             href="{% url 'author_manager:friends' user.author.id %}">Friends</a>
                     </li>
                     <li class="nav-item active">
-                        <a class="nav-link font-weight-bold" href="#">GitHub</a>
+                        <a class="nav-link font-weight-bold" href="{% url 'author_manager:github' %}">GitHub</a>
                     </li>
                 </ul>
                 &nbsp;&nbsp;&nbsp;
@@ -78,6 +78,7 @@
                                 </li>
                             </ul>
                         </li>
+
                     </button>
                 </ul>
             </div>

@@ -50,6 +50,7 @@ var/
 .installed.cfg
 *.egg
 venv/
+staticfiles/
 
 
 # PyInstaller
