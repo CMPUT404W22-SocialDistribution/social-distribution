@@ -2,24 +2,6 @@
 
 {% block content %}
 <div class="container" style="padding-top: 35px; font-family: roboto; width: 600px;">
-    <!-- <div class="card send-request shadow mb-5">
-        <h2 class="card-header">Send Follow Request</h2>
-        <div class="card-body">
-            <div class="card-text">
-                <form class = "justify-content-between" method="post">
-                    {% csrf_token %}
-                    <div class="form-text mb-3">
-                        <input type="hidden" name="type" value="send_friend_request">
-                        <label style="font-size: 16px">Author ID</label>
-                        <input type="text" class="form-control" name="object_id">
-                    </div>
-                    <div class="d-flex justify-content-end">
-                        <button type="submit" class="btn btn-outline-primary">Send</button>
-                    </div>
-                </form>
-            </div>
-        </div>
-    </div> -->
 
     <div class="search_author mb-5">
         <form action="{% url 'author_manager:search_author' %}" method="get">

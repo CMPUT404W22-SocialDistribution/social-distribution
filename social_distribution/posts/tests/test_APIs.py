@@ -68,7 +68,7 @@ class MyPostsTest(APITestCase):
                         'title':'Test Post',
                         'content_type':'text/plain',
                         'content':'Test post content',
-                        'visibility':'public'
+                        'visibility':'public',
                         }
         response = self.client.post(
                         self.url, 
@@ -77,13 +77,14 @@ class MyPostsTest(APITestCase):
                     )
         self.assertEqual(response.status_code, 401)       
         
-    def test_post_my_posts_unauthorized(self):
+    def test_post_my_posts_authorized(self):
         self.url = reverse('posts:my_posts_api', args=[self.author2.id])
         request_body = {
                         'title':'Test Post',
                         'content_type':'text/plain',
                         'content':'Test post content',
-                        'visibility':'public'
+                        'visibility':'public',
+                        'commentsSrc': []
                         }
         response = self.client.post(
                         self.url, 
@@ -194,7 +195,8 @@ class PostDetailTest(APITestCase):
                         'title': 'New Title',
                         'content': 'New content',
                         'content_type': 'text/plain',
-                        'visibility': 'public'
+                        'visibility': 'public',
+                        'commentsSrc': []
                         }
         response = self.client.put(
                         self.url,

@@ -104,28 +104,6 @@ def sign_out(request):
         logout(request)
         return redirect('author_manager:login')
 
-@login_required
-def profile_edit(request, id):
-    
-    author = Author.objects.get(id=id)
-    if request.user.author != author:
-            error = "401 Unauthorized"
-            return render(request, 'author_profile/edit_profile.html', {'error': error})
-    if request.method == "GET":
-        form = EditProfileForm(instance=author)
-        return render(request, 'author_profile/edit_profile.html', {'form':form})
-        # return render(request, 'author_profile/edit_profile.html', {'profile':author})
-        
-    elif request.method == "POST":
-        updated_request = request.POST.copy()
-        form = EditProfileForm(updated_request, instance=author)        
-        if form.is_valid():
-            post = form.save(commit=False)
-            post.save()
-            return redirect('author_manager:profile', id)
-        else:
-            print(form.errors)
-            return redirect('author_manager:editProfile', id)
 
 @login_required
 def friends_view(request, author_id):
@@ -134,47 +112,10 @@ def friends_view(request, author_id):
         followers = current_author.followers.all()
         followings = current_author.followings.all()
         friends = followings & followers
-        # print(followers)
-        # print(followings)
-        # print(friends)
         return render(request, 'friends/friends.html', {'followings': followings, 'followers': followers, 'friends': friends})
     
     if request.method == "POST":
         requested_id = request.POST['object_id']
-        # MOVE TO SEARCH AUTHOR RESULT PAGE
-        # if request.POST['type'] == 'send_friend_request':
-        #     # print(1) 
-        #     if requested_id == author_id:
-        #         messages.warning(request, 'You cannot be friend with yourself')
-        #         return redirect('author_manager:friends', author_id)
-        #     try: 
-        #         requested_author = get_object_or_404(Author, id=requested_id)
-                
-        #         if requested_author in current_author.followings.all():
-        #             messages.warning(request, 'You already followed this author.')
-        #             return redirect('author_manager:friends', author_id)
-
-        #         friend_request, created = FriendRequest.objects.get_or_create(actor=current_author, object=requested_author)
-
-        #         if created: 
-        #             inbox = Inbox.objects.get(author=requested_author)
-        #             inbox.follows.add(friend_request)
-        #             # For simplicity, if userA request follow userB -> userA follows userB
-        #             # current_author.followings.add(requested_author)
-        #             # requested_author.followers.add(current_author)
-        #             messages.success(request, 'Your friend request has been sent.')
-        #             return redirect('author_manager:friends', author_id)
-
-        #         else:
-        #             messages.warning(request, 'You already sent a friend request to this author.')
-        #             return redirect('author_manager:friends', author_id)
-                
-        #     except Author.DoesNotExist:
-        #         messages.warning(request, 'Sorry, we could not find this author.')
-        #         return redirect('author_manager:friends', author_id)
-
-        # # unfriend
-        # else:
         try:
             requested_author = get_object_or_404(Author, id=requested_id)
             current_author.followings.remove(requested_author)
@@ -265,7 +206,36 @@ def inbox_view(request, author_id):
             messages.success(request, 'Success to accept friend request.')
             return redirect('author_manager:inbox', author_id)
 
-            
+
+
+@login_required
+def profile_edit(request, id):
+    
+    author = Author.objects.get(id=id)
+    current_user = Author.objects.get(user=request.user)
+    if current_user.id != id:
+            error = "401 Unauthorized"
+            return render(request, 'author_profile/edit_profile.html', {'error': error})
+    if request.method == "GET":
+        form = EditProfileForm(instance=author)
+        return render(request, 'author_profile/edit_profile.html', {'form':form})
+        
+    elif request.method == "POST":
+        updated_request = request.POST.copy()
+        form = EditProfileForm(updated_request, instance=author)        
+        if form.is_valid():
+            post = form.save(commit=False)
+            post.save()
+            return redirect('author_manager:profile', id)
+        else:
+            print(form.errors)
+            return redirect('author_manager:editProfile', id)
+
+@login_required
+def get_profile(request, id):
+    profile = Author.objects.get(id=id)
+    return render(request, 'author_profile/profile.html', {'profile': profile})
+
 class ProfileAPI(APIView):
     """
     An API endpoint allows viewing and updating a profile.
@@ -277,9 +247,6 @@ class ProfileAPI(APIView):
             update an author's profile.
     """
 
-    renderer_classes = [TemplateHTMLRenderer]
-    template_name = 'author_profile/profile.html'
-
     def get(self, request, id):
         """
         Handling GET request. Showing the author's profile.
@@ -288,10 +255,8 @@ class ProfileAPI(APIView):
                 Status 200 and the author's basic information.
         """
         profile = Author.objects.get(id=id)
-        # profile = get_object_or_404(Author, id=id)
         serializer = ProfileSerializer(profile, remove_fields=['user'] )
-        return Response({'profile': profile})
-        # return Response(serializer.data, status=status.HTTP_200_OK)
+        return Response(serializer.data, status=status.HTTP_200_OK)
 
     def post(self, request, id):
         #Get object we want to update
