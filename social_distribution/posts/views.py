@@ -3,14 +3,22 @@ from django.contrib.auth.decorators import login_required
 from django.db.models import Q
 from django.shortcuts import get_object_or_404, render, redirect
 from django.views.generic import ListView
+from django.http import JsonResponse
+from rest_framework.views import APIView
+from posts.forms import PostForm
 from rest_framework import generics, authentication, permissions
 from rest_framework.response import Response
 from rest_framework.views import APIView
 
+from .serializers import PostSerializer, CommentSerializer
+from .models import Post, Comment
 from author_manager.models import *
-from posts.forms import PostForm
-from .models import Post
-from .serializers import PostSerializer
+from rest_framework.response import Response
+from django.contrib.auth.decorators import login_required
+from django.db.models import Q
+from rest_framework import status
+
+
 
 
 @login_required
@@ -151,8 +159,11 @@ def post_detail(request, author_id, post_id):
                     error = "404 Not Found"
                     return render(request, 'posts/post_create.html', {'error': error}, status=404)
         if post.content_type == 'text/markdown':
-            post.content = commonmark.commonmark(post.content)  # parse and render markdown content
+            post.content = commonmark.commonmark(post.content)
+        comments = post.commentsSrc.all().order_by('-published')
+
         context = {
+            "comments": comments,
             "post": post,
             "isAuthor": isAuthor
         }
@@ -280,7 +291,6 @@ class MyPostsAPI(generics.GenericAPIView):
     authentication_classes = [authentication.BasicAuthentication, authentication.SessionAuthentication]
     permission_classes = [permissions.IsAuthenticated]
     serializer_class = PostSerializer
-
     def get(self, request, author_id):
 
         author = Author.objects.get(id=author_id)
@@ -421,7 +431,58 @@ class PostDetailAPI(generics.GenericAPIView):
                     return Response(serializer.data, 200)
                 else:
                     return Response(serializer.errors, 400)
-            
+        
+
+@login_required
+def create_comment(request, author_id, post_id):
+    current_author = Author.objects.get(id=author_id)
+    post = get_object_or_404(Post, id=post_id)
+    comments = post.commentsSrc.all()  #get all comments from that post_id
+
+    if request.method == "POST":
+        comment=request.POST['comment']
+        postID=request.POST['post']
+        post=Post.objects.get(id=postID) # Obtain the instance
+        author = Author.objects.get(user=request.user) # Obtain the instance
+        
+        comment = Comment.objects.create(author=author, post=post, comment=comment)
+        return JsonResponse({"bool":True, 'published': comment.published})
+
+
+class CommentsAPI(APIView):
+    """
+    GET [local, remote] get the list of comments of the post whose id is POST_ID (paginated)
+    """
+    
+    def get(self, request, author_id, post_id):
+        currentUserID = Author.objects.get(user=request.user).id
+        # US: Comments on friend posts are private only to me the original author.
+        if (currentUserID == author_id):
+            post = get_object_or_404(Post, id=post_id)
+            comments = post.commentsSrc.all()  #get all comments from that post_id
+            serializer = CommentSerializer(comments, many=True,  remove_fields=['author_displayName'])  #many=True
+            #page,id
+            response = {
+            'type':  "comments",
+            'size':len(serializer.data),
+            'post': post_id,
+            'comments': serializer.data,
+            }
+            return Response(response, status=status.HTTP_200_OK)
+        return Response({'detail': 'Not Found!'}, status=status.HTTP_400_BAD_REQUEST)
+
+    def post(self, request, author_id, post_id):
+        author = Author.objects.get(user=request.user)
+        post = Post.objects.get(id=post_id)
+
+        comment = Comment.objects.create(author=author, post=post)
+        serializer = CommentSerializer(comment, data=request.data)
+        if serializer.is_valid():
+            serializer.save()
+            return Response(serializer.data, status=status.HTTP_200_OK)
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+
 
 class PostImageAPI(generics.GenericAPIView):
     authentication_classes = [authentication.BasicAuthentication, authentication.SessionAuthentication]

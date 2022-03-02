@@ -3,6 +3,15 @@
 {% block content %}
     <div id="root"></div>
     <script>
+        function Timestamp(time) {
+            return new Date(time).toLocaleString('en-US', {
+                day: 'numeric', // numeric, 2-digit
+                year: 'numeric', // numeric, 2-digit
+                month: 'short', // numeric, 2-digit, long, short, narrow
+                hour: 'numeric', // numeric, 2-digit
+                minute: 'numeric', // numeric, 2-digit
+            });
+        }
         function createPostCard(post) {
             var postTimestamp = new Date(post.published).toLocaleString('en-US', {
                 weekday: 'short', // long, short, narrow
@@ -26,6 +35,7 @@
                     postVisibilityIcon = `<i class="card-link fa-solid text-primary fa-user-group"></i>`;
                     break;
             }
+          
             var postCardHtmlParts = [`
                 <div class = "row justify-content-center container-fluid" id="${post.id}">
         <div class="col-5 align-self-center" style="padding: 20px;">
@@ -80,10 +90,52 @@
                 </div>
                 <div class="card-footer">
                     <a href="#" class="card-link text-muted" style="text-decoration: none;"><i class="fa-solid fa-thumbs-up"></i> Like</a>
-                    <a href="#" class="card-link text-muted" style="text-decoration: none;"><i class="fa-solid fa-comment-dots"></i> Comment</a>
+                    
+                    <a class="card-link text-muted" style="text-decoration: none;" 
+                                data-bs-toggle="collapse" 
+                                href="#collapseComments-${post.id}"
+                                aria-expanded="false"  
+                                >
+                                <i class="fa-solid fa-comment-dots"></i> Comment</a>
+
                     <a href="#" class="card-link text-muted" style="text-decoration: none;"><i class="fa-solid fa-retweet"></i> Share</a>
                 </div>
             </div>
+
+            <div class="collapse" id="collapseComments-${post.id}">
+                            <div class="card  " >
+                                    <div class= " input-group ">
+                                        <textarea  placeholder="Type your comment here" rows="1" class="form-control comment-text-${post.id}" ></textarea>
+            
+                                        <button type="submit" data-answer="${post.id}" class="btn-floating save-comment"><i class="bi bi-plus"></i> </button>
+                                    </div>
+                            </div>
+                            <div class=" card justify-content-center pb-2 comment-wrapper-${post.id}">
+                                
+                                    
+                                        ${post.commentsSrc.comments.map( comment =>
+                                            `
+                                            <div class=" justify-content-center py-2">
+                                                <div class="pb-2 px-2 mx-2"
+                                                style="background-color: #00000008; box-shadow: 5px 5px 2px #cccccc;"
+                                                >  <p class="card-text"> ${comment.comment}</p>
+                                                    <div class=" d-flex justify-content-between py-1 pt-2" style="font-size: 13px";>
+                                                        <span ><a href="/authors/${comment.author.id}">
+                                                         ${comment.author_displayName}</a></span>
+                                                        <span>${Timestamp(comment.published)} </span>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                            `
+                                        ).join('')} 
+                                    
+                                
+                            </div>
+                                            
+            </div>
+
+
+
             </div>
         </div>
             `];
@@ -126,6 +178,53 @@
                 }
             });
             setTimeout(fetchPosts, 5000);
+
+
+
+            
+            $(document).ready(function ClickOnComment(){
+            $(".save-comment").off('click').on('click', function(){
+                var _postid=$(this).data('answer')
+                var _comment=$(".comment-text-postID".replace("postID", _postid)).val();
+                
+                // AJX
+                $.ajax({
+                    url:"/authors/{{user.author.id}}/posts/postid/comments".replace("postid", _postid),
+                    type: "post",
+                    data:{
+                        comment:_comment,
+                        post:_postid,
+                        csrfmiddlewaretoken:"{{csrf_token}}"
+                    },
+                    dataType: 'json',
+                    
+                    success:function(res){
+                        console.log(res.bol)
+                        if(res.bool==true){
+                            $(".comment-text-postID".replace("postID", _postid)).val('')
+
+                            // Added new comment
+                            var _url = "{% url 'author_manager:profile' user.author.id%}";
+                            var _html=' <div class=" justify-content-center py-2">\
+                                                <div class="pb-2 px-2 mx-2" \
+                                                style="background-color: #00000008; box-shadow: 5px 5px 2px #cccccc;" \
+                                                >  <span class="card-text"> '+_comment+'</span> \
+                                                    <div class="d-flex justify-content-between py-1 pt-2" style="font-size: 13px";> \
+                                                        <span ><a href='+_url+'> \
+                                                        {{request.user.author}}</a></span> \
+                                                        <span>'+Timestamp(res.published)+'</span> \
+                                                    </div> \
+                                                </div> \
+                                        </div> \
+                                        ';
+                            
+                            $(".comment-wrapper-postID".replace("postID", _postid)).prepend(_html);
+                        }
+                        $(".save-comment").removeClass('disabled');
+                    }
+                })
+            }) 
+        })
         }
         fetchPosts();
 

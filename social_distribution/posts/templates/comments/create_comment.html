@@ -1,0 +1,83 @@
+{% extends 'posts/post_detail.html' %}
+
+
+{% block content %}
+<h3 class="my-4 text-center"> Comment</h3>
+
+<!-- This wrapper is to show all current comments -->
+<div class="comment-wrapper"> 
+    {% for comment in comments %}
+    <div class="card mb-3 mx-auto" style="width:40rem;">
+        <div class="card-body">
+            <p>{{comment.comment}}</p>
+            <p>
+                <a href="{% url 'author_manager:profile' user.author.id %}">
+                @{{request.user}}</a>
+            </p>
+            <p>{{comment.published}}</p>
+        </div>
+    </div>
+    {% csrf_token %}
+    {% endfor %}
+
+</div>
+
+<!-- Comment form -->
+<div class="card mb-3 mx-auto" style="width:40rem;">
+    <h6 class="card-header"> Add Comment</h6>
+    <div class= "card-body ">
+        <textarea class="form-control comment-text"></textarea>
+        <button type="button" data-answer="{{post.id}}" class="btn btn-warning my-3 save-comment">Submit</button>
+    </div>
+</div>
+
+<scrip >
+    <script>
+        $(document).ready(function(){
+            $(".save-comment").on('click', function(){
+                var _comment=$(".comment-text").val();
+                // console.log(_comment);
+                var _postid=$(this).data('answer')
+                // console.log(_comment, _answerid);
+
+                // AJX
+                $.ajax({
+                    url:"comments",
+                    type: "post",
+                    data:{
+                        comment:_comment,
+                        post:_postid,
+                        csrfmiddlewaretoken:"{{csrf_token}}"
+                    },
+                    dataType: 'json',
+                    beforeSend:function() {
+                        $(".save-comment").addClass('disabled').text('saving..');
+                    },
+                    success:function(res){
+                        console.log(res.comment)
+                        if(res.bool==true){
+                            $(".comment-text").val('')
+
+                            // Apped new comment
+                            var _url = "{% url 'author_manager:profile' user.author.id%}";
+                            var _html='<div class="card mb-3 mx-auto" style="width:40rem";>\
+                                        <div class="card-body">\
+                                            <p>'+_comment+'</p>\
+                                            <p>\
+                                            <a href='+_url+'>\
+                                            @{{request.user}}</a>\
+                                            </p>\
+                                            <p>'+res.published+' <\p>\
+                                        </div>\
+                                    </div>';
+                            
+                            $(".comment-wrapper").append(_html);
+                        }
+                        $(".save-comment").removeClass('disabled').text('Submit');
+                    }
+                })
+            }) 
+        })
+    </script>
+</scrip>
+{% endblock %}

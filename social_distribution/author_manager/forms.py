@@ -39,10 +39,17 @@ class SignUpForm(UserCreationForm):
         return user
 
 
+class DateInput(forms.DateInput):
+    input_type= 'date'
+    
 
-col12 = 'form-group col-md-12 mb-0'
 
+col12 = 'form-group col-md-12 mb-2'
+submit = 'text-center mt-2 mb-2 btn btn-warning mt-3'
 class EditProfileForm(forms.ModelForm):
+    about = forms.CharField(required=False, widget=forms.Textarea(attrs={
+            'rows' : 4,}))
+    birthday = forms.DateField(required=False, widget=DateInput)
     class Meta:
         model = Author
         fields = ['displayName', 'github', 'birthday', 'email', 'about']
@@ -52,8 +59,7 @@ class EditProfileForm(forms.ModelForm):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self.helper = FormHelper()
-        self.helper.layout = Layout(
-            
+        self.helper.layout = Layout(  
             Row(
                 Column('displayName', css_class=col12),
             ),
@@ -68,8 +74,9 @@ class EditProfileForm(forms.ModelForm):
             ),
             Row(
                 Column('about', css_class=col12),
+               
             ),
-            Submit('submit', 'Edit Profile')
+            Submit('submit', 'Edit Profile', css_class=submit)
         )
 
     

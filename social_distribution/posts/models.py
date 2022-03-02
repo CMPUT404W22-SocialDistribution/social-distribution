@@ -67,3 +67,35 @@ class Post(models.Model):
     # image posts are set to unlisted automatically 
     # owner can see the post in My Posts page
     unlisted = models.BooleanField(default=False)
+    
+
+
+class Comment(models.Model):
+    def short_uuid():
+        return uuid.uuid4().hex[:8]
+
+    class ContentType(models.TextChoices):
+        MARKDOWN = 'text/markdown',
+        PLAIN = 'text/plain'
+
+
+
+    type = models.CharField(max_length=50, default='comment')
+    author = models.ForeignKey(
+                Author,
+                on_delete=models.CASCADE,
+                null = True,
+                related_name='post_comments'
+            )
+    comment = models.CharField(max_length=300, null=True)
+
+    contentType = models.CharField(
+                max_length=50,
+                choices=ContentType.choices,
+                default=ContentType.PLAIN)
+
+    published = models.DateTimeField(auto_now_add=True)
+    id = models.CharField(primary_key=True, default=short_uuid, max_length = 8, editable=False, unique=True)
+    post = models.ForeignKey(Post, on_delete=models.CASCADE, related_name = "commentsSrc")
+    
+    

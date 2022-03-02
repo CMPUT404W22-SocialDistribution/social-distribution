@@ -102,28 +102,6 @@ def sign_out(request):
         logout(request)
         return redirect('author_manager:login')
 
-@login_required
-def profile_edit(request, id):
-    
-    author = Author.objects.get(id=id)
-    if request.user.author != author:
-            error = "401 Unauthorized"
-            return render(request, 'author_profile/edit_profile.html', {'error': error})
-    if request.method == "GET":
-        form = EditProfileForm(instance=author)
-        return render(request, 'author_profile/edit_profile.html', {'form':form})
-        # return render(request, 'author_profile/edit_profile.html', {'profile':author})
-        
-    elif request.method == "POST":
-        updated_request = request.POST.copy()
-        form = EditProfileForm(updated_request, instance=author)        
-        if form.is_valid():
-            post = form.save(commit=False)
-            post.save()
-            return redirect('author_manager:profile', id)
-        else:
-            print(form.errors)
-            return redirect('author_manager:editProfile', id)
 
 @login_required
 def friends_view(request, author_id):
@@ -294,7 +272,34 @@ def inbox_view(request, author_id):
             # # messages.success(request, 'Success to accept friend request.')
             # return redirect('author_manager:inbox', author_id)
 
+@login_required
+def profile_edit(request, id):
     
+    author = Author.objects.get(id=id)
+    current_user = Author.objects.get(user=request.user)
+    if current_user.id != id:
+            error = "401 Unauthorized"
+            return render(request, 'author_profile/edit_profile.html', {'error': error})
+    if request.method == "GET":
+        form = EditProfileForm(instance=author)
+        return render(request, 'author_profile/edit_profile.html', {'form':form})
+        
+    elif request.method == "POST":
+        updated_request = request.POST.copy()
+        form = EditProfileForm(updated_request, instance=author)        
+        if form.is_valid():
+            post = form.save(commit=False)
+            post.save()
+            return redirect('author_manager:profile', id)
+        else:
+            print(form.errors)
+            return redirect('author_manager:editProfile', id)
+
+@login_required
+def get_profile(request, id):
+    profile = Author.objects.get(id=id)
+    return render(request, 'author_profile/profile.html', {'profile': profile})
+
 
 class ProfileAPI(APIView):
     """
@@ -307,9 +312,6 @@ class ProfileAPI(APIView):
             update an author's profile.
     """
 
-    renderer_classes = [TemplateHTMLRenderer]
-    template_name = 'author_profile/profile.html'
-
     def get(self, request, id):
         """
         Handling GET request. Showing the author's profile.
@@ -318,10 +320,8 @@ class ProfileAPI(APIView):
                 Status 200 and the author's basic information.
         """
         profile = Author.objects.get(id=id)
-        # profile = get_object_or_404(Author, id=id)
         serializer = ProfileSerializer(profile, remove_fields=['user'] )
-        return Response({'profile': profile})
-        # return Response(serializer.data, status=status.HTTP_200_OK)
+        return Response(serializer.data, status=status.HTTP_200_OK)
 
     def post(self, request, id):
         #Get object we want to update
