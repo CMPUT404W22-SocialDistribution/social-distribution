@@ -12,7 +12,7 @@ https://docs.djangoproject.com/en/4.0/ref/settings/
 
 from pathlib import Path
 import os
-
+import django_on_heroku
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
 
@@ -137,8 +137,9 @@ LOGOUT_URL = 'author_manager:logout'
 LOGIN_REDIRECT_URL = 'author_manager:home'
 
 STATIC_URL = '/static/'
+STATIC_ROOT = os.path.join(BASE_DIR, 'staticfiles')
 STATICFILES_DIRS = [
-    os.path.join(BASE_DIR, "author_manager/static/"),
+    os.path.join(BASE_DIR, 'author_manager/static'),
 ]
 
 # Default primary key field type
@@ -148,3 +149,6 @@ DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
 MEDIA_ROOT = os.path.join(BASE_DIR, 'media')
 MEDIA_URL = '/media/'
+
+
+django_on_heroku.settings(locals(), test_runner=False)
