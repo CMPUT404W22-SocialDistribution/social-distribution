@@ -143,7 +143,7 @@ def post_detail(request, author_id, post_id):
                     return render(request, 'posts/post_detail.html', context)
                 else:
                     error = "404 Not Found"
-                    return render(request, 'posts/post_create.html', {'error': error}, status=404
+                    return render(request, 'posts/post_create.html', {'error': error}, status=404)
                                   
             elif post.visibility == "friends":
                 # post only visible if user is friend to owner
