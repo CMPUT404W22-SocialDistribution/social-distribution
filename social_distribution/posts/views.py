@@ -129,6 +129,9 @@ def post_detail(request, author_id, post_id):
     # TODO: permission for DM posts (Jun)
 
     if request.method == "GET":
+        current_user = request.user.author
+        # Using user name to get author 
+        # current_user = Author.objects.get(user=user)
         author = Author.objects.get(id=author_id)
         post = get_object_or_404(Post, id=post_id)
         # check if logged in user is author of post
@@ -137,11 +140,19 @@ def post_detail(request, author_id, post_id):
         else:
             # auth user is not user
             isAuthor = False
+            print(current_user.user)
+            print(post.visibleTo)
             if post.visibility == "private":
-                # post only visible if owner shared post with user
-                error = "404 Not Found"
-                return render(request, 'posts/post_create.html', {'error': error}, status=404)
-
+                if post.visibleTo == str(current_user.user):
+                    context = {
+                        "post": post,
+                        "isAuthor": isAuthor
+                    }
+                    return render(request, 'posts/post_detail.html', context)
+                else:
+                    error = "404 Not Found"
+                    return render(request, 'posts/post_create.html', {'error': error}, status=404)
+                                  
             elif post.visibility == "friends":
                 # post only visible if user is friend to owner
                 if not (request.user.author in author.followings.all() and request.user.author in author.followers.all()):
@@ -249,9 +260,11 @@ class PostsAPI(APIView):
         # get friends' posts that have visibility= friends
         friend_posts = Post.objects.filter(author__in=friends, visibility="friends", unlisted=False).order_by(
             '-published')
-        # get my posts
+        # private post only visible to certain people that author shared to
+        # eg. visibleTo is eqaul to certain author.
+        private_posts = Post.objects.filter(visibility="private", visibleTo=author.user ,unlisted=False).order_by('-published')
         my_posts = Post.objects.filter(author=author, unlisted=False).order_by('-published')
-        posts = public_posts | my_posts | friend_posts
+        posts = public_posts | my_posts | friend_posts | private_posts
         for post in posts:
             if post.content_type == 'text/markdown':
                 post.content = commonmark.commonmark(post.content)  # parse and render content of type markdown

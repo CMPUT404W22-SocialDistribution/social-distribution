@@ -1,7 +1,7 @@
 from django.urls import path
 
 from .views import MyPostsAPI, PostsAPI, PostImageAPI, SearchView, PostDetailAPI, my_posts, post_create, post_edit, post_detail, \
-    post_delete, create_comment, CommentsAPI
+    post_delete, CommentsAPI, create_comment
 
 app_name = 'posts'
 urlpatterns = [

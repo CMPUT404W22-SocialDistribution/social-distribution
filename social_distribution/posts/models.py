@@ -61,6 +61,8 @@ class Post(models.Model):
         choices=VisibilityType.choices,
         default=VisibilityType.PUBLIC
     )
+
+    visibleTo = models.CharField(max_length=200, blank=True)
     # if post is unlisted, it can only be seen with URI
     # image posts are set to unlisted automatically 
     # owner can see the post in My Posts page
