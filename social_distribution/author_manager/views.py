@@ -1,4 +1,8 @@
+from doctest import Example
+from email import message
 from email.errors import MessageError
+import stat
+from urllib import response
 from django.contrib import messages
 from django.views.generic import ListView
 from django.shortcuts import redirect, render
@@ -11,7 +15,8 @@ from django.contrib.auth.forms import AuthenticationForm
 from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework.renderers import TemplateHTMLRenderer
-from .serializers import ProfileSerializer
+from rest_framework import generics, authentication, permissions
+from .serializers import *
 from django.shortcuts import get_object_or_404
 from rest_framework import status
 import requests
@@ -36,6 +41,7 @@ def sign_up(request):
                 user.author.url = user.author.host + 'authors/' + str(user.author.id)
                 user.author.save()
             else: 
+                user.author.host = request.get_host()
                 user.author.url = user.author.host + 'authors/' + str(user.author.id)
                 user.author.save()
             inbox = Inbox(author=user.author)  # create inbox object
@@ -107,6 +113,16 @@ def sign_out(request):
 
 @login_required
 def friends_view(request, author_id):
+    '''
+    The functions define a view that allow the author_id to view their followers, followings and true (bidirection) friends.
+    The view also allows the author_id to access searching authors and unfriend (unfolllow) with other authors.
+    Require authorization.
+
+    Method:
+        GET:    - the view of friends page that display the author_id's followings, followers and friends
+        POST:   - unfriend with the requested_author
+
+    '''
     current_author = Author.objects.get(id=author_id)
     if request.method == "GET":
         followers = current_author.followers.all()
@@ -128,6 +144,13 @@ def friends_view(request, author_id):
             return redirect('author_manager:friends', author_id)
 
 class SearchAuthorView(ListView):
+    '''
+    The class define a result view of searching for authors as well as allow sending friend request to the found authors 
+
+    Method:
+        GET:    - filter authors by username/displayName with the given input
+        POST:   - send a friend request to the requested_id
+    '''
     model = Author
     template_name = 'friends/search_results.html'
 
@@ -163,9 +186,6 @@ class SearchAuthorView(ListView):
             if created: 
                 inbox = Inbox.objects.get(author=requested_author)
                 inbox.follows.add(friend_request)
-                # For simplicity, if userA request follow userB -> userA follows userB
-                # current_author.followings.add(requested_author)
-                # requested_author.followers.add(current_author)
                 messages.success(request, 'Your friend request has been sent.')
                 return redirect('author_manager:friends', author_id)
 
@@ -396,8 +416,51 @@ def github_events(request):
         except Exception as e:
             return render(request, 'author_manager/github.html')
 
-                
+
+class FriendsAPI(APIView):
+    """
+    An API endpoint allows viewing all the followers and followings of the requested author
+    ...
+    Methods:
+        GET:
+            Retrieve a list of followers and a list of followings of an author
+    """
+    
+    def get(self, request, id):
+        try:
+            author = Author.objects.get(id=id)
+        except:
+            return Response({'detail': 'Not Found!'}, status=status.HTTP_404_NOT_FOUND)
+
+        followers = author.followers.all()
+        followings = author.followings.all()
+        followers_serializer = ProfileSerializer(followers, remove_fields=['user'], many=True)
+        followings_serializer = ProfileSerializer(followings, remove_fields=['user'], many=True)
+        return Response({'type': 'friends', 'followers': followers_serializer.data, 'followings': followings_serializer.data}, status=status.HTTP_200_OK)
 
 
-                    
+class FriendRequestsAPI(APIView):
+    """
+    An API endpoint allows viewing all the friend requests and create a friend request
+    ...
+    Methods:
+        GET:
+            Retrieve a list of friend requests 
+        POST:
+            Create a friend requests
+    """
+    def get(self, request):
+        friendrequests = FriendRequest.objects.all()
+        serializer = FriendRequestSerializer(friendrequests, many=True)
+        response = {
+            'type':  "follows",
+            'items': serializer.data
+        }
+        return Response(response, status=status.HTTP_200_OK)
 
+    def post(self, request):
+        serializer = FriendRequestSerializer(data=request.data)
+        if serializer.is_valid():
+            serializer.save()
+            return Response(serializer.data, status=status.HTTP_201_CREATED)
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
