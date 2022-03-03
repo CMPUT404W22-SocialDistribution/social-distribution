@@ -72,3 +72,24 @@ class ViewsTest(TestCase):
         url = reverse('author_manager:github')
         response = self.client.get(url)
         self.assertEqual(response.status_code, 200)
+
+    def test_profile_get(self):
+        url = reverse('author_manager:profile', args=[self.author.id])
+        response = self.client.get(url)
+        self.assertEqual(response.status_code, 200)
+        self.assertTemplateUsed(response, 'author_profile/profile.html')
+
+    def test_profile_edit_authorized(self):
+        url = reverse('author_manager:editProfile', args=[self.author.id])
+        request = {
+            'displayName': 'NEW JOHN DOE',
+            'github': 'johndoe'
+        }
+        response = self.client.post(
+            url,
+            request
+        )
+        redirect_url = reverse('author_manager:profile', args=[self.author.id])
+        self.assertRedirects(response, redirect_url, status_code=302, target_status_code=200, fetch_redirect_response=True)
+    
+    
