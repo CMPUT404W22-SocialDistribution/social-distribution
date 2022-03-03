@@ -254,24 +254,28 @@ class ProfileAPI(APIView):
             - If successful:
                 Status 200 and the author's basic information.
         """
-        profile = Author.objects.get(id=id)
+        profile = get_object_or_404(Author, id=id)
         serializer = ProfileSerializer(profile, remove_fields=['user'] )
         return Response(serializer.data, status=status.HTTP_200_OK)
 
     def post(self, request, id):
         #Get object we want to update
-        profile = Author.objects.get(id=id)
-        serializer = ProfileSerializer(profile, data=request.data, partial=True, remove_fields=['user'])
+        update_user = get_object_or_404(Author, id=id)   #make sure author in url exists
+        current_user = Author.objects.get(user=request.user)
 
-        if serializer.is_valid():
-            serializer.save()
-            return Response(serializer.data)
-        else:
-            response = {
-                "status": 1,
-                "message": serializer.errors,
-            }
-            return Response(response, status=status.HTTP_400_BAD_REQUEST)
+        if (current_user.id == id): #current user and user needs to be updated matched
+            serializer = ProfileSerializer(update_user, data=request.data, partial=True, remove_fields=['user'])
+
+            if serializer.is_valid():
+                serializer.save()
+                return Response(serializer.data, status=status.HTTP_200_OK)
+            else:
+                response = {
+                    "status": 1,
+                    "message": serializer.errors,
+                }
+                return Response(response, status=status.HTTP_400_BAD_REQUEST)
+        return Response({'detail': 'Current user is not authorized to do this operation'}, status=status.HTTP_401_UNAUTHORIZED)
 
 class GetAllAuthors(APIView):
     """

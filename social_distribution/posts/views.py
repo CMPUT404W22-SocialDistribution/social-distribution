@@ -436,7 +436,6 @@ class PostDetailAPI(generics.GenericAPIView):
 @login_required
 def create_comment(request, author_id, post_id):
 
-    post = Post.objects.get(id=post_id)
     if request.method == "POST":
         comment=request.POST['comment']
         postID=request.POST['post']

@@ -12,7 +12,7 @@ from rest_framework.test import APITestCase
 
 from author_manager.models import Author
 from posts.models import Post, Comment
-from base64 import b64encode
+
 
 
 class PostsTest(APITestCase):
