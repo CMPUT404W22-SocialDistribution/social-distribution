@@ -435,7 +435,7 @@ class PostDetailAPI(generics.GenericAPIView):
 
 @login_required
 def create_comment(request, author_id, post_id):
-    
+
     post = Post.objects.get(id=post_id)
     if request.method == "POST":
         comment=request.POST['comment']
@@ -471,22 +471,18 @@ class CommentsAPI(APIView):
 
     def post(self, request, author_id, post_id):
 
-        # public posts can have comments from friends
-        post_author = get_object_or_404(Author, id=author_id)
-        followers = post_author.followers.all()
-        followings = post_author.followings.all()
-        friends = followings & followers
-
-        current_author = Author.objects.get(user=request.user)
+        # public posts can have comments from friends ??
+        post_author = get_object_or_404(Author, id=author_id)  # check on post author id given in url
         post = get_object_or_404(Post, id=post_id)
-        if (current_author in friends or current_author == post_author):   #only original author or friends can post comments
-            comment = Comment.objects.create(author=current_author, post=post)
-            serializer = CommentSerializer(comment, data=request.data)
-            if serializer.is_valid():
-                serializer.save()
-                return Response(serializer.data, status=status.HTTP_200_OK)
-            return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
-        return Response({'detail': 'Current user is not authorized to do this operation'}, 401)  #NOT A FRIEND
+        current_author = Author.objects.get(user=request.user)
+
+        comment = Comment.objects.create(author=current_author, post=post)
+        serializer = CommentSerializer(comment, data=request.data)
+        if serializer.is_valid():
+            serializer.save()
+            return Response(serializer.data, status=status.HTTP_200_OK)
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+        
 
 
 class PostImageAPI(generics.GenericAPIView):
