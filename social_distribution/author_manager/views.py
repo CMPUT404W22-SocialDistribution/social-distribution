@@ -441,13 +441,14 @@ class FriendsAPI(APIView):
 
 class FriendRequestsAPI(APIView):
     """
-    An API endpoint allows viewing all the friend requests
+    An API endpoint allows viewing all the friend requests and create a friend request
     ...
     Methods:
         GET:
             Retrieve a list of friend requests 
+        POST:
+            Create a friend requests
     """
-    
     def get(self, request):
         friendrequests = FriendRequest.objects.all()
         serializer = FriendRequestSerializer(friendrequests, many=True)
@@ -456,3 +457,10 @@ class FriendRequestsAPI(APIView):
             'items': serializer.data
         }
         return Response(response, status=status.HTTP_200_OK)
+
+    def post(self, request):
+        serializer = FriendRequestSerializer(data=request.data)
+        if serializer.is_valid():
+            serializer.save()
+            return Response(serializer.data, status=status.HTTP_201_CREATED)
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
