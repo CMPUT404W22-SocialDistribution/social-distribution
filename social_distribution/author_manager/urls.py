@@ -17,4 +17,6 @@ urlpatterns = [
     path('authors/<str:author_id>/friends', friends_view, name ="friends"),
     path('search/authors', SearchAuthorView.as_view(), name="search_author"),
     path('authors/<str:author_id>/inbox', inbox_view, name = "inbox"),
+    path('api/authors/<str:id>/friends',  FriendsAPI.as_view(), name='friends_api'),
+    path('api/friendrequests',  FriendRequestsAPI.as_view(), name='friendrequests_api'),
 ]

@@ -10,6 +10,5 @@ class AuthorAdmin(nested_admin.NestedModelAdmin):
 
 
 admin.site.register(Author, AuthorAdmin)
-admin.site.register(FollowerList)
 admin.site.register(FriendRequest)
 admin.site.register(Inbox)

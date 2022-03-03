@@ -30,7 +30,8 @@
                                 <a href="{{following.url}}" style="color:black; text-decoration: none;">
                                     <div class="d-flex justify-content-between align-items-center">
                                         <div class="ml-2">
-                                            <h5>{{following}}</h5>
+                                            <h5>@{{following.user.username}}</h5>
+                                            <h6 class="text-muted pl-2">{{following.displayName}}</h6>
                                         </div>
                                     </div>
                                 </a>
@@ -70,7 +71,8 @@
                                 <a href="{{follower.url}}" style="color:black; text-decoration: none;">
                                     <div class="d-flex justify-content-between align-items-center">
                                         <div class="ml-2">
-                                            <h5>{{follower}}</h5>
+                                            <h5>@{{follower.user.username}}</h5>
+                                            <h6 class="text-muted pl-2">{{follower.displayName}}</h6>
                                         </div>
                                     </div>
                                 </a>
@@ -102,7 +104,8 @@
                                 <a href="{{friend.url}}" style="color:black; text-decoration: none;">
                                     <div class="d-flex justify-content-between align-items-center">
                                         <div class="ml-2">
-                                            <h5>{{friend}}</h5>
+                                            <h5>@{{friend.user.username}}</h5>
+                                            <h6 class="text-muted pl-2">{{friend.displayName}}</h6>
                                         </div>
                                     </div>
                                 </a>
