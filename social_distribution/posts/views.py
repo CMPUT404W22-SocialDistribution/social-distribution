@@ -455,33 +455,40 @@ class CommentsAPI(APIView):
     """
     
     def get(self, request, author_id, post_id):
-        currentUserID = Author.objects.get(user=request.user).id
+       
         # US: Comments on friend posts are private only to me the original author.
-        if (currentUserID == author_id):
-            post = get_object_or_404(Post, id=post_id)
-            comments = post.commentsSrc.all()  #get all comments from that post_id
-            serializer = CommentSerializer(comments, many=True,  remove_fields=['author_displayName'])  #many=True
-            #page,id
-            response = {
+        post_author = get_object_or_404(Author, id=author_id) # Check if post author exist
+        post = get_object_or_404(Post, id=post_id)  # Check if post exist
+        comments = post.commentsSrc.all()  #get all comments from that post_id
+        serializer = CommentSerializer(comments, many=True,  remove_fields=['author_displayName'])  #many=True
+        #page,id
+        response = {
             'type':  "comments",
             'size':len(serializer.data),
             'post': post_id,
             'comments': serializer.data,
-            }
-            return Response(response, status=status.HTTP_200_OK)
-        return Response({'detail': 'Not Found!'}, status=status.HTTP_400_BAD_REQUEST)
+        }
+        return Response(response, status=status.HTTP_200_OK)
+       
 
     def post(self, request, author_id, post_id):
-        author = Author.objects.get(user=request.user)
-        post = Post.objects.get(id=post_id)
 
-        comment = Comment.objects.create(author=author, post=post)
-        serializer = CommentSerializer(comment, data=request.data)
-        if serializer.is_valid():
-            serializer.save()
-            return Response(serializer.data, status=status.HTTP_200_OK)
-        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+        # public posts can have comments from friends
+        post_author = get_object_or_404(Author, id=author_id)
+        followers = post_author.followers.all()
+        followings = post_author.followings.all()
+        friends = followings & followers
 
+        current_author = Author.objects.get(user=request.user)
+        post = get_object_or_404(Post, id=post_id)
+        if (current_author.id in friends):
+            comment = Comment.objects.create(author=current_author, post=post)
+            serializer = CommentSerializer(comment, data=request.data)
+            if serializer.is_valid():
+                serializer.save()
+                return Response(serializer.data, status=status.HTTP_200_OK)
+            return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+    
 
 
 class PostImageAPI(generics.GenericAPIView):

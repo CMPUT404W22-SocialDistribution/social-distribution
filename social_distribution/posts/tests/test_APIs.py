@@ -3,7 +3,7 @@ from django.urls import reverse
 from rest_framework.test import APITestCase
 from django.contrib.auth.models import User
 from author_manager.models import Author
-from posts.models import Post
+from posts.models import Post, Comment
 from base64 import b64encode
 import json
 
@@ -237,4 +237,49 @@ class PostDetailTest(APITestCase):
                         format='json'
         )
         self.assertEqual(response.status_code, 400)
-      
+
+
+
+class CommentsTest(APITestCase):
+
+    def setUp(self):
+        self.username = 'test'
+        self.password = 'password'
+        user = User.objects.create_user(username=self.username, password=self.password, is_active=True)
+        self.author = Author.objects.create(user=user)
+        self.post = Post.objects.create(author=self.author, title='POST TEST', 
+                    content='THIS IS A POST TEST CONTENT', content_type='text/plain', visibility='public')
+        self.comment1 = Comment.objects.create(author=self.author, comment='This is comment test 1',
+                    contentType= 'text/plain', post=self.post )
+       
+
+       # Create another author
+        user1 = User.objects.create_user(username='test1', password='password1', is_active=True)
+        self.author1 = Author.objects.create(user=user1)  # Create new author comment on the same post
+        self.comment2 = Comment.objects.create(author=self.author1, comment='This is comment test 2 by a different author',
+                    contentType= 'text/plain', post=self.post )
+        self.comment3 = Comment.objects.create(author=self.author1, comment='This is comment test 2',
+                    contentType= 'text/plain', post=self.post )
+        
+        # login user account
+        self.client.login(username='test', password='password')
+        self.url = reverse('posts:comments_api', args=[self.author.id, self.post.id])
+        self.credentials = b64encode(f'{self.username}:{self.password}'.encode('utf-8'))
+    def test_get_all_comments(self):
+        
+        response = self.client.get(
+                        self.url, 
+                        HTTP_AUTHORIZATION='Basic {}'.format(self.credentials.decode('utf-8')),
+                        )       
+        self.assertEqual(response.status_code, 200)
+
+    def test_post_comments(self): 
+        request_body = {'comment': 'This is my first comment',}
+        response = self.client.post(
+                    self.url,
+                    request_body,
+                    format='json'
+        )
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.data['comment'], 'This is my first comment')
+    
