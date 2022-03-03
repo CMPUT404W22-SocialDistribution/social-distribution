@@ -435,10 +435,8 @@ class PostDetailAPI(generics.GenericAPIView):
 
 @login_required
 def create_comment(request, author_id, post_id):
-    current_author = Author.objects.get(id=author_id)
-    post = get_object_or_404(Post, id=post_id)
-    comments = post.commentsSrc.all()  #get all comments from that post_id
-
+    
+    post = Post.objects.get(id=post_id)
     if request.method == "POST":
         comment=request.POST['comment']
         postID=request.POST['post']
@@ -481,14 +479,14 @@ class CommentsAPI(APIView):
 
         current_author = Author.objects.get(user=request.user)
         post = get_object_or_404(Post, id=post_id)
-        if (current_author.id in friends):
+        if (current_author in friends or current_author == post_author):   #only original author or friends can post comments
             comment = Comment.objects.create(author=current_author, post=post)
             serializer = CommentSerializer(comment, data=request.data)
             if serializer.is_valid():
                 serializer.save()
                 return Response(serializer.data, status=status.HTTP_200_OK)
             return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
-    
+        return Response({'detail': 'Current user is not authorized to do this operation'}, 401)  #NOT A FRIEND
 
 
 class PostImageAPI(generics.GenericAPIView):
