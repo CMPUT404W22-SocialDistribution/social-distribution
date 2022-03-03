@@ -448,10 +448,15 @@ def create_comment(request, author_id, post_id):
 class CommentsAPI(APIView):
     """
     GET [local, remote] get the list of comments of the post whose id is POST_ID (paginated)
+    Methods:
+        GET:
+            Retrieve a list of comments from a post
+        POST:
+            Create new comment
     """
     
     def get(self, request, author_id, post_id):
-       
+        # User see comments from posts they have access to 
         # US: Comments on friend posts are private only to me the original author.
         post_author = get_object_or_404(Author, id=author_id) # Check if post author exist
         post = get_object_or_404(Post, id=post_id)  # Check if post exist
@@ -468,8 +473,8 @@ class CommentsAPI(APIView):
        
 
     def post(self, request, author_id, post_id):
-
-        # public posts can have comments from friends ??
+        # For now, User can add comments for posts they have access to 
+        # OR public posts can have comments from friends ??
         post_author = get_object_or_404(Author, id=author_id)  # check on post author id given in url
         post = get_object_or_404(Post, id=post_id)
         current_author = Author.objects.get(user=request.user)
