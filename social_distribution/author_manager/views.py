@@ -40,6 +40,7 @@ def sign_up(request):
                 user.author.url = user.author.host + 'authors/' + str(user.author.id)
                 user.author.save()
             else: 
+                user.author.host = request.get_host()
                 user.author.url = user.author.host + 'authors/' + str(user.author.id)
                 user.author.save()
             inbox = Inbox(author=user.author)  # create inbox object
