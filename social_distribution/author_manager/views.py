@@ -1,6 +1,7 @@
 from doctest import Example
 from email import message
 from email.errors import MessageError
+import stat
 from urllib import response
 from django.contrib import messages
 from django.views.generic import ListView
@@ -435,4 +436,23 @@ class FriendsAPI(APIView):
         followings = author.followings.all()
         followers_serializer = ProfileSerializer(followers, remove_fields=['user'], many=True)
         followings_serializer = ProfileSerializer(followings, remove_fields=['user'], many=True)
-        return Response({'type': 'friends', 'followers': followers_serializer.data, 'followings': followings_serializer.data})
+        return Response({'type': 'friends', 'followers': followers_serializer.data, 'followings': followings_serializer.data}, status=status.HTTP_200_OK)
+
+
+class FriendRequestsAPI(APIView):
+    """
+    An API endpoint allows viewing all the friend requests
+    ...
+    Methods:
+        GET:
+            Retrieve a list of friend requests 
+    """
+    
+    def get(self, request):
+        friendrequests = FriendRequest.objects.all()
+        serializer = FriendRequestSerializer(friendrequests, many=True)
+        response = {
+            'type':  "follows",
+            'items': serializer.data
+        }
+        return Response(response, status=status.HTTP_200_OK)
