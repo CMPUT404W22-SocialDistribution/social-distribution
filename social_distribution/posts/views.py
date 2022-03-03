@@ -80,6 +80,9 @@ def post_edit(request, author_id, post_id):
         POST: - validate new changes with Django form and save.
     '''
     author = Author.objects.get(id=author_id)
+    if request.user.author != author:
+        error = "401 Unauthorized"
+        return render(request, 'posts/post_create.html', {'error': error}, status=401)
 
     if request.method == "GET":
         post = get_object_or_404(Post, id=post_id)
@@ -92,10 +95,6 @@ def post_edit(request, author_id, post_id):
         return render(request, 'posts/post_create.html', context)
 
     elif request.method == "POST":
-        if request.user.author != author:
-            error = "401 Unauthorized"
-            return render(request, 'posts/post_create.html', {'error': error}, status=401)
-
         updated_request = request.POST.copy()  # using deepcopy() to make a mutable copy of the object
 
         updated_request.update(
@@ -435,9 +434,6 @@ class PostDetailAPI(generics.GenericAPIView):
 
 @login_required
 def create_comment(request, author_id, post_id):
-    current_author = Author.objects.get(id=author_id)
-    post = get_object_or_404(Post, id=post_id)
-    comments = post.commentsSrc.all()  #get all comments from that post_id
 
     if request.method == "POST":
         comment=request.POST['comment']
@@ -452,36 +448,44 @@ def create_comment(request, author_id, post_id):
 class CommentsAPI(APIView):
     """
     GET [local, remote] get the list of comments of the post whose id is POST_ID (paginated)
+    Methods:
+        GET:
+            Retrieve a list of comments from a post
+        POST:
+            Create new comment
     """
     
     def get(self, request, author_id, post_id):
-        currentUserID = Author.objects.get(user=request.user).id
+        # User see comments from posts they have access to 
         # US: Comments on friend posts are private only to me the original author.
-        if (currentUserID == author_id):
-            post = get_object_or_404(Post, id=post_id)
-            comments = post.commentsSrc.all()  #get all comments from that post_id
-            serializer = CommentSerializer(comments, many=True,  remove_fields=['author_displayName'])  #many=True
-            #page,id
-            response = {
+        post_author = get_object_or_404(Author, id=author_id) # Check if post author exist
+        post = get_object_or_404(Post, id=post_id)  # Check if post exist
+        comments = post.commentsSrc.all()  #get all comments from that post_id
+        serializer = CommentSerializer(comments, many=True,  remove_fields=['author_displayName'])  #many=True
+        #page,id
+        response = {
             'type':  "comments",
             'size':len(serializer.data),
             'post': post_id,
             'comments': serializer.data,
-            }
-            return Response(response, status=status.HTTP_200_OK)
-        return Response({'detail': 'Not Found!'}, status=status.HTTP_400_BAD_REQUEST)
+        }
+        return Response(response, status=status.HTTP_200_OK)
+       
 
     def post(self, request, author_id, post_id):
-        author = Author.objects.get(user=request.user)
-        post = Post.objects.get(id=post_id)
+        # For now, User can add comments for posts they have access to 
+        # OR public posts can have comments from friends ??
+        post_author = get_object_or_404(Author, id=author_id)  # check on post author id given in url
+        post = get_object_or_404(Post, id=post_id)
+        current_author = Author.objects.get(user=request.user)
 
-        comment = Comment.objects.create(author=author, post=post)
+        comment = Comment.objects.create(author=current_author, post=post)
         serializer = CommentSerializer(comment, data=request.data)
         if serializer.is_valid():
             serializer.save()
             return Response(serializer.data, status=status.HTTP_200_OK)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
-
+        
 
 
 class PostImageAPI(generics.GenericAPIView):

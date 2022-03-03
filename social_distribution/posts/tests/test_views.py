@@ -1,7 +1,7 @@
 from django.shortcuts import redirect
 from django.test import TestCase
 from django.contrib.auth.models import User
-from posts.models import Post
+from posts.models import Post, Comment
 from author_manager.models import Author
 from django.test import TestCase, Client
 from django.urls import reverse 
@@ -182,5 +182,23 @@ class PostsListTest(TestCase):
         url = reverse('posts:posts', args=[self.author.id])
         response = self.client.get(url)
         self.assertEqual(response.status_code, 200)
+
+class CommentCreate(TestCase):
+    def setUp(self):
+        self.client = Client()
+        user = User.objects.create_user(username='test1', password='password1', is_active=True)
+        self.author = Author.objects.create(user=user)
+        self.post = Post.objects.create(author=self.author, title='Test Post', content='Test post content', content_type='text/plain', visibility='public')
         
+        self.client.login(username='test1', password='password1')
+        self.url = reverse('posts:comments', args=[self.author.id, self.post.id])  
+
+    def test_create_comment(self):
+
+        request_body = {'comment': 'This is my first comment in this post', 'post': self.post.id}
+        response = self.client.post(self.url, request_body)
+        self.assertEqual(response.status_code, 200)
+        
+        new_comment = Comment.objects.all().order_by('-published')[0]
+        self.assertEqual(new_comment.comment, 'This is my first comment in this post')
 
