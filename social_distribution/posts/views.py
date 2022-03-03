@@ -72,6 +72,9 @@ def post_edit(request, author_id, post_id):
         POST: - validate new changes with Django form and save.
     '''
     author = Author.objects.get(id=author_id)
+    if request.user.author != author:
+        error = "401 Unauthorized"
+        return render(request, 'posts/post_create.html', {'error': error}, status=401)
 
     if request.method == "GET":
         post = get_object_or_404(Post, id=post_id)
@@ -84,10 +87,6 @@ def post_edit(request, author_id, post_id):
         return render(request, 'posts/post_create.html', context)
 
     elif request.method == "POST":
-        if request.user.author != author:
-            error = "401 Unauthorized"
-            return render(request, 'posts/post_create.html', {'error': error}, status=401)
-
         updated_request = request.POST.copy()  # using deepcopy() to make a mutable copy of the object
 
         updated_request.update(

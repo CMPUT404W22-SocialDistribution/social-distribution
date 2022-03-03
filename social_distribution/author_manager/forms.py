@@ -27,8 +27,7 @@ class SignUpForm(UserCreationForm):
     
     def save(self, commit=True):
         user = super(SignUpForm, self).save(commit=False)
-        # This must be uncommented later!!!
-        #user.is_active = False
+        user.is_active = False
         if commit:
             user.save()
             author = Author.objects.create(user=user,
