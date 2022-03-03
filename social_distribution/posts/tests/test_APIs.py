@@ -11,14 +11,9 @@ from django.urls import reverse
 from rest_framework.test import APITestCase
 
 from author_manager.models import Author
-<<<<<<< HEAD
 from posts.models import Post, Comment
 from base64 import b64encode
-import json
-=======
-from posts.models import Post
 
->>>>>>> c5fc9e35846c2be2e9a9096b6a029edf7d3f0fd7
 
 class PostsTest(APITestCase):
 
