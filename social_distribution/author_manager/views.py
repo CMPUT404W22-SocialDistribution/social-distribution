@@ -41,7 +41,7 @@ def sign_up(request):
                 user.author.url = user.author.host + 'authors/' + str(user.author.id)
                 user.author.save()
             else: 
-                user.author.host = request.get_host()
+                user.author.host = request.scheme + '://' + request.get_host() + '/'
                 user.author.url = user.author.host + 'authors/' + str(user.author.id)
                 user.author.save()
             inbox = Inbox(author=user.author)  # create inbox object
@@ -466,5 +466,5 @@ class FriendRequestsAPI(APIView):
         serializer = FriendRequestSerializer(data=request.data)
         if serializer.is_valid():
             serializer.save()
-            return Response(serializer.data, status=status.HTTP_201_CREATED)
+            return Response(serializer.data, status=status.HTTP_200_OK)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
