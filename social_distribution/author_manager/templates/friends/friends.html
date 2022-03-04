@@ -38,7 +38,6 @@
                                 <div class="d-flex flex-row card-right flex-grow-1 justify-content-end mx-1">
                                     <form method="post">
                                         {% csrf_token %}
-                                        <!-- <input type="hidden" name="type" value="unfriend"> -->
                                         <input type="hidden" name="object_id" value="{{following.id}}">
                                         <button type="submit" class="btn btn-outline-danger">Unfollow</button>
                                     </form>

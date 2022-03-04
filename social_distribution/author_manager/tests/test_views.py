@@ -1,8 +1,9 @@
 from django.test import TestCase
 from django.contrib.auth.models import User
-from author_manager.models import Author
+from author_manager.models import Author, Inbox, FriendRequest
 from django.test import TestCase, Client
-from django.urls import reverse 
+from django.urls import reverse
+from django.shortcuts import redirect
 
 class AuthenticationTest(TestCase):
     def setUp(self):
@@ -60,6 +61,9 @@ class ViewsTest(TestCase):
         self.author = Author.objects.create(user=user, github='abramhindle')
         user.is_active = True
         user.save()
+        # create inbox object when signup
+        inbox = Inbox(author=self.author)
+        inbox.save()
         self.client.login(username="test1", password="password1")
 
     def test_home_get(self):
@@ -91,5 +95,83 @@ class ViewsTest(TestCase):
         )
         redirect_url = reverse('author_manager:profile', args=[self.author.id])
         self.assertRedirects(response, redirect_url, status_code=302, target_status_code=200, fetch_redirect_response=True)
+
+    def test_friends_get(self):
+        url = reverse('author_manager:friends', args=[self.author.id])
+        response = self.client.get(url)
+        self.assertEqual(response.status_code, 200)
+        self.assertTemplateUsed(response, 'friends/friends.html')
+
+    def test_inbox_get(self):
+        url = reverse('author_manager:inbox', args=[self.author.id])
+        response = self.client.get(url)
+        self.assertEqual(response.status_code, 200)
+        self.assertTemplateUsed(response, 'inbox/inbox.html')
+
+class FriendRequestSend(TestCase):
+    def setUp(self):
+        self.client = Client()
+        user = User.objects.create_user(username='test1', password='password1', is_active=True)
+        self.author = Author.objects.create(user=user)
+        self.client.login(username="test1", password="password1")
+
+        # create another author to send friend request to
+        user1 = User.objects.create_user(username='test2', password='password2', is_active=True)
+        self.author1 = Author.objects.create(user=user1)
+        Inbox.objects.create(author=self.author1)
+
+        self.url = str(self.author.host) + "search/authors?q=test2"
     
+    def test_send_friend_request(self):
+        requestbody={'object_id': self.author1.id}
+        response = self.client.post(self.url, requestbody)
+        self.assertEqual(response.status_code, 302)
+
+        friendrequest = FriendRequest.objects.get(actor=self.author)
+        self.assertEqual(friendrequest.actor.id, self.author.id)
+        self.assertEqual(friendrequest.object.id, self.author1.id)
+
+class FriendRequestAccept(TestCase):
+    def setUp(self):
+        self.client = Client()
+        user = User.objects.create_user(username='test1', password='password1', is_active=True)
+        self.author = Author.objects.create(user=user)
+        Inbox.objects.create(author=self.author)
+        self.client.login(username="test1", password="password1")
+
+        # create another author to accept friend request
+        user1 = User.objects.create_user(username='test2', password='password2', is_active=True)
+        self.author1 = Author.objects.create(user=user1)
+
+        # create a friend request to accept
+        self.friendrequest = FriendRequest.objects.create(actor=self.author1, object=self.author)
+
+        self.url = reverse('author_manager:inbox', args=[self.author.id])
     
+    def test_accept_friend_request(self):
+        requestbody={'type': 'befriend', 'actor_id': self.author1.id}
+        response = self.client.post(self.url, requestbody)
+        self.assertEqual(response.status_code, 302)
+
+        self.assertTrue(self.author1 in self.author.followers.all())
+
+class FriendUnfriend(TestCase):
+    def setUp(self):
+        self.client = Client()
+        user = User.objects.create_user(username='test1', password='password1', is_active=True)
+        self.author = Author.objects.create(user=user)
+        self.client.login(username="test1", password="password1")
+
+        # create another author to unfriend
+        user1 = User.objects.create_user(username='test2', password='password2', is_active=True)
+        self.author1 = Author.objects.create(user=user1)
+        self.author.followings.add(self.author1)
+
+        self.url = reverse('author_manager:friends', args=[self.author.id])
+    
+    def test_unfriend(self):
+        requestbody={'object_id': self.author1.id}
+        response = self.client.post(self.url, requestbody)
+        self.assertEqual(response.status_code, 302)
+
+        self.assertTrue(self.author1 not in self.author.followings.all())
