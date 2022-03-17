@@ -3,6 +3,7 @@ from django.db import models
 import uuid
 from author_manager.models import Author
 
+
 # categories of post
 class Category(models.Model):
     text = models.CharField(max_length=30)
@@ -54,7 +55,7 @@ class Post(models.Model):
         PUBLIC = 'public',
         PRIVATE = 'private',
         FRIENDS = 'friends'
-    
+
     # post has 4 different types of visibility: public, friends, private, and private to specified friend 
     visibility = models.CharField(
         max_length=30,
@@ -67,7 +68,6 @@ class Post(models.Model):
     # image posts are set to unlisted automatically 
     # owner can see the post in My Posts page
     unlisted = models.BooleanField(default=False)
-    
 
 
 class Comment(models.Model):
@@ -78,24 +78,20 @@ class Comment(models.Model):
         MARKDOWN = 'text/markdown',
         PLAIN = 'text/plain'
 
-
-
     type = models.CharField(max_length=50, default='comment')
     author = models.ForeignKey(
-                Author,
-                on_delete=models.CASCADE,
-                null = True,
-                related_name='post_comments'
-            )
+        Author,
+        on_delete=models.CASCADE,
+        null=True,
+        related_name='post_comments'
+    )
     comment = models.CharField(max_length=300, null=True)
 
     contentType = models.CharField(
-                max_length=50,
-                choices=ContentType.choices,
-                default=ContentType.PLAIN)
+        max_length=50,
+        choices=ContentType.choices,
+        default=ContentType.PLAIN)
 
     published = models.DateTimeField(auto_now_add=True)
-    id = models.CharField(primary_key=True, default=short_uuid, max_length = 8, editable=False, unique=True)
-    post = models.ForeignKey(Post, on_delete=models.CASCADE, related_name = "commentsSrc")
-    
-    
+    id = models.CharField(primary_key=True, default=short_uuid, max_length=8, editable=False, unique=True)
+    post = models.ForeignKey(Post, on_delete=models.CASCADE, related_name="commentsSrc")
