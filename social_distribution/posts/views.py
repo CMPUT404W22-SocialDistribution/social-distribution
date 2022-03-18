@@ -498,8 +498,7 @@ class PostLikesAPI(generics.GenericAPIView):
     serializer_class = LikeSerializer
 
     def get(self, request, author_id, post_id):
-        _ = get_object_or_404(Author, id=author_id)
-        post = get_object_or_404(Post, id=post_id)
+        post = get_object_or_404(Post, id=post_id, author_id__exact=author_id)
         likes = post.likes.all()
         serializer = self.serializer_class(likes, many=True)
         return Response(
@@ -517,9 +516,7 @@ class CommentLikesAPI(generics.GenericAPIView):
     serializer_class = LikeSerializer
 
     def get(self, request, author_id, post_id, comment_id):
-        _ = get_object_or_404(Author, id=author_id)
-        _ = get_object_or_404(Post, id=post_id)
-        comment = get_object_or_404(Comment, id=comment_id)
+        comment = get_object_or_404(Comment, id=comment_id, commentsSrc__exact=post_id, author__exact=author_id)
         likes = comment.likes.all()
         serializer = self.serializer_class(likes, many=True)
         return Response(
