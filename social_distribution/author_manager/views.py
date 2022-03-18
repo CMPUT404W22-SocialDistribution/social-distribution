@@ -6,6 +6,7 @@ from django.contrib.auth import authenticate, login, logout
 from django.contrib.auth.decorators import login_required
 from django.contrib.auth.forms import AuthenticationForm
 from django.db.models import Q
+from django.http import Http404
 from django.shortcuts import get_object_or_404
 from django.shortcuts import redirect, render
 from django.views.generic import ListView
@@ -15,6 +16,7 @@ from rest_framework.response import Response
 from rest_framework.views import APIView
 
 import posts.serializers
+from posts.models import Post
 from .forms import SignUpForm, EditProfileForm
 from .models import *
 from .serializers import *
@@ -493,3 +495,25 @@ class LikeAPI(APIView):
             return Response(posts.serializers.LikeSerializer().to_representation(serializer.instance),
                             status=status.HTTP_200_OK)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+
+class AuthorLikedAPI(APIView):
+    authentication_classes = [authentication.BasicAuthentication, authentication.SessionAuthentication]
+    permission_classes = [permissions.IsAuthenticated]
+    serializer_class = posts.serializers.LikeSerializer
+
+    def get(self, request, author_id):
+        # The requester should only be able to view likes of public posts or non-public posts that are visible to them
+        likes = Like.objects.filter(author__exact=author_id, post__visibility__exact=Post.VisibilityType.PUBLIC) | \
+                Like.objects.filter(author__exact=author_id, post__visibleTo__contains=request.user.author.id)
+        if not likes:
+            raise Http404
+
+        serializer = self.serializer_class(likes, many=True)
+        return Response(
+            data={
+                'type': 'liked',
+                'size': len(serializer.data),
+                'items': serializer.data
+            },
+            status=status.HTTP_200_OK)
