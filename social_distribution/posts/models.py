@@ -1,6 +1,7 @@
-from django.conf.global_settings import MEDIA_ROOT
-from django.db import models
 import uuid
+
+from django.db import models
+
 from author_manager.models import Author
 
 
@@ -95,3 +96,10 @@ class Comment(models.Model):
     published = models.DateTimeField(auto_now_add=True)
     id = models.CharField(primary_key=True, default=short_uuid, max_length=8, editable=False, unique=True)
     post = models.ForeignKey(Post, on_delete=models.CASCADE, related_name="commentsSrc")
+
+
+class PostLike(models.Model):
+    summary = models.CharField(max_length=300)
+    type = models.CharField(max_length=50, default='Like')
+    post = models.ForeignKey(Post, on_delete=models.CASCADE, related_name="likes")
+    author = models.ForeignKey(Author, on_delete=models.CASCADE)
