@@ -439,9 +439,16 @@ def create_comment(request, author_id, post_id):
         comment=request.POST['comment']
         postID=request.POST['post']
         post=Post.objects.get(id=postID) # Obtain the instance
+        postAuthor = post.author
         author = Author.objects.get(user=request.user) # Obtain the instance
         
         comment = Comment.objects.create(author=author, post=post, comment=comment)
+
+        # Add comment to post author's inbox
+        if (author.id != postAuthor.id):
+            postAuthor.inbox.comments.add(comment)
+        # postAuthor.inbox.comments.remove(comment)
+                
         return JsonResponse({"bool":True, 'published': comment.published})
 
 

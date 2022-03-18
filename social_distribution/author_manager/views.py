@@ -21,6 +21,7 @@ from django.shortcuts import get_object_or_404
 from rest_framework import status
 import requests
 import datetime 
+from posts.models import Comment
 
 def sign_up(request):
     '''
@@ -208,7 +209,7 @@ def inbox_view(request, author_id):
     if request.method == "GET":
         # follow request
         inbox = Inbox.objects.get(author=current_author)
-        return render(request, 'inbox/inbox.html', {'follows' : inbox.follows.all(), 'posts': inbox.posts.all()})
+        return render(request, 'inbox/inbox.html', {'follows' : inbox.follows.all(), 'posts': inbox.posts.all(), 'comments': inbox.comments.all()})
     
     if request.method == "POST":
         # Accept follow request -> follow back-> true friends
@@ -225,8 +226,14 @@ def inbox_view(request, author_id):
                 pass
             messages.success(request, 'Success to accept friend request.')
             return redirect('author_manager:inbox', author_id)
-
-
+        if request.POST['type'] == 'comment':
+            comment = request.POST['comment']
+            inbox_comment = Comment.objects.get(id=comment)
+            current_author.inbox.comments.remove(inbox_comment)
+            post_author = request.POST['post_author']
+            post =  request.POST['post']
+            return redirect('posts:post_detail', post_author, post)
+    
 
 @login_required
 def profile_edit(request, id):

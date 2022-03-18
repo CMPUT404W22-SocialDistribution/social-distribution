@@ -47,3 +47,5 @@ class Inbox(models.Model):
     follows = models.ManyToManyField(FriendRequest, blank=True)
     # send posts to inbox
     posts = models.ManyToManyField('posts.Post', blank=True)
+    # Send comment to inbox
+    comments = models.ManyToManyField('posts.Comment', blank=True)
