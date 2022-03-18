@@ -20,5 +20,5 @@ urlpatterns = [
     path('api/authors/<str:id>/friends', FriendsAPI.as_view(), name='friends_api'),
     path('api/friendrequests', FriendRequestsAPI.as_view(), name='friendrequests_api'),
     path('api/authors/<str:author_id>/inbox', LikeAPI.as_view(), name='like_api'),
-    path('api/authors/<str:author_id>/liked', AuthorLikesAPI.as_view(), name='author_likes_api')
+    path('api/authors/<str:author_id>/liked', AuthorLikedAPI.as_view(), name='author_liked_api')
 ]
