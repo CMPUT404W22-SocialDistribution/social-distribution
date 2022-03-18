@@ -11,8 +11,8 @@ from rest_framework.views import APIView
 
 from author_manager.models import *
 from posts.forms import PostForm
-from .models import Post, Comment, PostLike
-from .serializers import PostSerializer, CommentSerializer, PostLikeSerializer, CommentLikeSerializer
+from .models import Post, Comment
+from .serializers import PostSerializer, CommentSerializer, LikeSerializer
 
 
 @login_required
@@ -495,7 +495,7 @@ class PostImageAPI(generics.GenericAPIView):
 class PostLikesAPI(generics.GenericAPIView):
     authentication_classes = [authentication.BasicAuthentication, authentication.SessionAuthentication]
     permission_classes = [permissions.IsAuthenticated]
-    serializer_class = PostLikeSerializer
+    serializer_class = LikeSerializer
 
     def get(self, request, author_id, post_id):
         _ = get_object_or_404(Author, id=author_id)
@@ -514,7 +514,7 @@ class PostLikesAPI(generics.GenericAPIView):
 class CommentLikesAPI(generics.GenericAPIView):
     authentication_classes = [authentication.BasicAuthentication, authentication.SessionAuthentication]
     permission_classes = [permissions.IsAuthenticated]
-    serializer_class = CommentLikeSerializer
+    serializer_class = LikeSerializer
 
     def get(self, request, author_id, post_id, comment_id):
         _ = get_object_or_404(Author, id=author_id)

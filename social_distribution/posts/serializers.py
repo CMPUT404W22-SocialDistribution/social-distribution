@@ -1,7 +1,7 @@
 from rest_framework import serializers
 
 from author_manager.models import Author
-from .models import Post, Comment, PostLike
+from .models import Post, Comment, Like
 
 
 class AuthorSerializer(serializers.ModelSerializer):
@@ -84,11 +84,11 @@ class CommentSerializer(serializers.ModelSerializer):
         return response
 
 
-class PostLikeSerializer(serializers.ModelSerializer):
+class LikeSerializer(serializers.ModelSerializer):
     object = serializers.SerializerMethodField('get_object')
 
     class Meta:
-        model = PostLike
+        model = Like
         fields = ['summary', 'type', 'author', 'object']
 
     @staticmethod
@@ -98,29 +98,6 @@ class PostLikeSerializer(serializers.ModelSerializer):
     @staticmethod
     def get_object(obj):
         return obj.author.host + '/'.join(['api', 'authors', obj.author.id, 'posts', obj.post.id])
-
-    def to_representation(self, instance):
-        response = super().to_representation(instance)
-        response['@context'] = self.get_context()
-        author = Author.objects.get(id=response['author'])
-        response['author'] = AuthorSerializer(author).data
-        return response
-
-
-class CommentLikeSerializer(serializers.ModelSerializer):
-    object = serializers.SerializerMethodField('get_object')
-
-    class Meta:
-        model = PostLike
-        fields = ['summary', 'type', 'author', 'object']
-
-    @staticmethod
-    def get_context():
-        return "https://www.w3.org/ns/activitystreams"
-
-    @staticmethod
-    def get_object(obj):
-        return obj.author.host + '/'.join(['api', 'authors', obj.author.id, 'posts', obj.comment.post.id])
 
     def to_representation(self, instance):
         response = super().to_representation(instance)
