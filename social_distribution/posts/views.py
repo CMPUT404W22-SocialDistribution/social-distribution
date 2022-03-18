@@ -12,7 +12,7 @@ from rest_framework.views import APIView
 from author_manager.models import *
 from posts.forms import PostForm
 from .models import Post, Comment, PostLike
-from .serializers import PostSerializer, CommentSerializer, PostLikeSerializer
+from .serializers import PostSerializer, CommentSerializer, PostLikeSerializer, CommentLikeSerializer
 
 
 @login_required
@@ -501,7 +501,27 @@ class PostLikesAPI(generics.GenericAPIView):
         _ = get_object_or_404(Author, id=author_id)
         post = get_object_or_404(Post, id=post_id)
         likes = post.likes.all()
-        serializer = PostLikeSerializer(likes, many=True)
+        serializer = self.serializer_class(likes, many=True)
+        return Response(
+            data={
+                'type': 'likes',
+                'size': len(serializer.data),
+                'likes': serializer.data
+            },
+            status=status.HTTP_200_OK)
+
+
+class CommentLikesAPI(generics.GenericAPIView):
+    authentication_classes = [authentication.BasicAuthentication, authentication.SessionAuthentication]
+    permission_classes = [permissions.IsAuthenticated]
+    serializer_class = CommentLikeSerializer
+
+    def get(self, request, author_id, post_id, comment_id):
+        _ = get_object_or_404(Author, id=author_id)
+        _ = get_object_or_404(Post, id=post_id)
+        comment = get_object_or_404(Comment, id=comment_id)
+        likes = comment.likes.all()
+        serializer = self.serializer_class(likes, many=True)
         return Response(
             data={
                 'type': 'likes',
