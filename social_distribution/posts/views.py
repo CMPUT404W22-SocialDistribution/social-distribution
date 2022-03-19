@@ -58,16 +58,12 @@ def post_create(request, author_id):
                 for friend in friends:
                     friend.inbox.posts.add(post)
             elif post.visibility == "private":
-                friends = author.followers.all() & author.followings.all()
-                # if users are friend
-                for friend in friends:
-                    if post.visibleTo == str(friend.user):
-                        friend.inbox.posts.add(post)
-                # if the private post to user who are not friend
-                # send private posts to follower. Since friends are also followers so friends also receive then in their inboxes
-                for follower in author.followers.all():
-                    if post.visibleTo == str(follower.user):
-                        follower.inbox.posts.add(post)
+                visible_follower = post.visibleTo
+                visible_user = User.objects.get(username=visible_follower)
+                # since friends are included in followers, we only need to check followers
+                follower = author.followers.get(user=visible_user)
+                follower.inbox.posts.add(post)
+                
             return redirect('posts:post_detail', author_id, post.id)
         else:
             # if form is invalid, return the same html page
@@ -132,7 +128,7 @@ def post_detail(request, author_id, post_id):
     # TODO: permission for DM posts (Jun)
 
     if request.method == "GET":
-        current_user = request.user.author
+        current_user = request.user
         # Using user name to get author 
         # current_user = Author.objects.get(user=user)
         author = Author.objects.get(id=author_id)
@@ -144,8 +140,10 @@ def post_detail(request, author_id, post_id):
             # auth user is not user
             isAuthor = False
             if post.visibility == "private":
-                if post.visibleTo == str(current_user.user):
+                if post.visibleTo == current_user.username:
+                    comments = post.commentsSrc.all().order_by('-published')
                     context = {
+                        "comments": comments,
                         "post": post,
                         "isAuthor": isAuthor
                     }
