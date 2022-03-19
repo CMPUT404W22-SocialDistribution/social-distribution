@@ -63,7 +63,17 @@ def post_create(request, author_id):
                 friends = author.followers.all() & author.followings.all()
                 for friend in friends:
                     friend.inbox.posts.add(post)
-            # TODO: inbox private posts
+            elif post.visibility == "private":
+                friends = author.followers.all() & author.followings.all()
+                # if users are friend
+                for friend in friends:
+                    if post.visibleTo == str(friend.user):
+                        friend.inbox.posts.add(post)
+                # if the private post to user who are not friend
+                # send private posts to follower. Since friends are also followers so friends also receive then in their inboxes
+                for follower in author.followers.all():
+                    if post.visibleTo == str(follower.user):
+                        follower.inbox.posts.add(post)
             return redirect('posts:post_detail', author_id, post.id)
         else:
             # if form is invalid, return the same html page
@@ -139,8 +149,6 @@ def post_detail(request, author_id, post_id):
         else:
             # auth user is not user
             isAuthor = False
-            print(current_user.user)
-            print(post.visibleTo)
             if post.visibility == "private":
                 if post.visibleTo == str(current_user.user):
                     context = {
