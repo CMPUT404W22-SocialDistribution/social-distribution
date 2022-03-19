@@ -60,9 +60,8 @@ def post_create(request, author_id):
             elif post.visibility == "private":
                 visible_follower = post.visibleTo
                 visible_user = User.objects.get(username=visible_follower)
-                # since friends are included in followers, we only need to check followers
-                follower = author.followers.get(user=visible_user)
-                follower.inbox.posts.add(post)
+                notify_user = Author.objects.get(user=visible_user)
+                notify_user.inbox.posts.add(post)
                 
             return redirect('posts:post_detail', author_id, post.id)
         else:
