@@ -50,6 +50,48 @@
                     </div>
                 </div>
             </div>
+
+            <div class="card friend-requests shadow mb-4" style="margin-left: auto; width: 500px;">
+                <h3 class="card-header mb-2 bg-secondary text-white">Comments</h3>
+                <div class="card-body">
+                    <div class="card-text">
+                        {% if comments%}
+                        <ol class="list-group"></ol>
+                            {% for comment in comments %}
+                            <div class="card flex-row flex-grow-1 p-2 mx-2 my-2 align-items-center shadow-sm">
+                                <a href="#">
+                                    <div class="d-flex justify-content-start align-items-center">
+                                        <div class="mr-2">
+                                            <img class="rounded-circle" width=50px" src="/static/img/{{comment.author.profileImage}}" alt="profile picture">
+                                        </div>
+                                    </div>
+                                </a>
+                                <a href="#" style="color:black; text-decoration: none;">
+                                    <div class="d-flex justify-content-between align-items-center">
+                                        <div class="ml-2">
+                                            <p class="text-muted pl-2">{{comment.author.displayName}} commented on your post</p>
+                                        </div>
+                                    </div>
+                                </a>
+                                <div class="d-flex flex-row card-right flex-grow-1 justify-content-end " >
+                                    <form method="post">
+                                        {% csrf_token %}
+                                        <input type="hidden" name="type" value="comment">
+                                        <input type="hidden" name="comment" value="{{comment.id}}">
+                                        <input type="hidden" name="post_author" value="{{comment.post.author.id}}">
+                                        <input type="hidden" name="post" value="{{comment.post.id}}">
+                                        <button  type="submit"> View </button>
+                                    </form>
+                                   
+                                </div>
+                            </div>
+                            {% endfor %}
+                        </ol>
+                        {% endif %} 
+                    </div>
+                </div>
+            </div>
+
         </div>
         <div class="col-md-6 pl-5">
             <div class="card post-updates shadow mb-4" style="margin-right: auto; width: 500px;">
@@ -92,4 +134,6 @@
         </div>
     </div>
 </div>
+
+
 {% endblock content %}
