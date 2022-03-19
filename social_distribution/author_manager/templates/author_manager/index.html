@@ -235,7 +235,7 @@
                                 href="#collapseComments-${post.id}"
                                 aria-expanded="false"  
                                 >
-                                <i class="fa-solid fa-comment-dots"></i> Comment</a>
+                                <i class="fa-solid fa-comment-dots"></i> comment</a>
 
                                 <a href="#" class="card-link text-muted" style="text-decoration: none;"><i class="fa-solid fa-retweet"></i> Share</a>
                             </div>
@@ -252,21 +252,41 @@
                             <div class=" card justify-content-center pb-2 comment-wrapper-${post.id}">
                                 
                                     
-                                        ${post.commentsSrc.comments.map( comment =>
-                                            `
-                                            <div class=" justify-content-center py-2">
-                                                <div class="pb-2 px-2 mx-2"
-                                                style="background-color: #00000008; box-shadow: 5px 5px 2px #cccccc;"
-                                                >  <p class="card-text"> ${comment.comment}</p>
-                                                    <div class=" d-flex justify-content-between py-1 pt-2" style="font-size: 13px";>
-                                                        <span ><a href="/authors/${comment.author.id}">
-                                                         ${comment.author_displayName}</a></span>
-                                                        <span>${Timestamp(comment.published)} </span>
+                                        ${post.commentsSrc.comments.map( comment => {
+                                            if ( post.visibility != "friends" ) {
+                                                return `
+                                                <div class=" justify-content-center py-2">
+                                                    <div class="pb-2 px-2 mx-2"
+                                                    style="background-color: #00000008; box-shadow: 5px 5px 2px #cccccc;"
+                                                    >  <p class="card-text"> ${comment.comment}</p>
+                                                        <div class=" d-flex justify-content-between py-1 pt-2" style="font-size: 13px";>
+                                                            <span ><a href="/authors/${comment.author.id}">
+                                                            ${comment.author_displayName}</a></span>
+                                                            <span>${Timestamp(comment.published)} </span>
+                                                        </div>
                                                     </div>
                                                 </div>
-                                            </div>
-                                            `
-                                        ).join('')} 
+                                                `
+                                            }
+                                            //current user is the author of that post, or current user is comment author or that comment belongs to post author
+                                            else if ((post.author == `{{author.id}}`) || (comment.author.id == `{{author.id}}`) || (comment.author.id == post.author)) {
+                                                return `
+                                                    <div class=" justify-content-center py-2">
+                                                        <div class="pb-2 px-2 mx-2"
+                                                        style="background-color: #00000008; box-shadow: 5px 5px 2px #cccccc;"
+                                                        >  <p class="card-text"> ${comment.comment}</p>
+                                                        <div class=" d-flex justify-content-between py-1 pt-2" style="font-size: 13px";>
+                                                            <span ><a href="/authors/${comment.author.id}">
+                                                                ${comment.author_displayName}</a></span>
+                                                                <span>${Timestamp(comment.published)} </span>
+                                                            </div>
+                                                        </div>
+                                                    </div>
+                                                    `
+                                                
+    
+                                            }
+                                        }).join('')} 
                                     
                                 
                             </div>
