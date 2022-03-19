@@ -1,24 +1,18 @@
 import commonmark
 from django.contrib.auth.decorators import login_required
 from django.db.models import Q
+from django.http import JsonResponse
 from django.shortcuts import get_object_or_404, render, redirect
 from django.views.generic import ListView
-from django.http import JsonResponse
-from rest_framework.views import APIView
-from posts.forms import PostForm
 from rest_framework import generics, authentication, permissions
+from rest_framework import status
 from rest_framework.response import Response
 from rest_framework.views import APIView
 
-from .serializers import PostSerializer, CommentSerializer
-from .models import Post, Comment
 from author_manager.models import *
-from rest_framework.response import Response
-from django.contrib.auth.decorators import login_required
-from django.db.models import Q
-from rest_framework import status
-
-
+from posts.forms import PostForm
+from .models import Post, Comment
+from .serializers import PostSerializer, CommentSerializer, LikeSerializer
 
 
 @login_required
@@ -35,14 +29,14 @@ def post_create(request, author_id):
     if request.user.author != author:
         error = "401 Unauthorized"
         return render(request, 'posts/post_create.html', {'error': error}, status=401)
-    
+
     # get a new form
     if request.method == "GET":
         form = PostForm()
         return render(request, 'posts/post_create.html', {'form': form})
 
     elif request.method == "POST":
-        
+
         updated_request = request.POST.copy()  # using deepcopy() to make a mutable copy of the object
         updated_request.update(
             {
@@ -151,10 +145,11 @@ def post_detail(request, author_id, post_id):
                 else:
                     error = "404 Not Found"
                     return render(request, 'posts/post_create.html', {'error': error}, status=404)
-                                  
+
             elif post.visibility == "friends":
                 # post only visible if user is friend to owner
-                if not (request.user.author in author.followings.all() and request.user.author in author.followers.all()):
+                if not (
+                        request.user.author in author.followings.all() and request.user.author in author.followers.all()):
                     error = "404 Not Found"
                     return render(request, 'posts/post_create.html', {'error': error}, status=404)
         if post.content_type == 'text/markdown':
@@ -199,7 +194,7 @@ def my_posts(request, author_id):
         GET:    - check if current user has author_id and fetch all posts.
                 - returns error if unauthorized.
             
-    '''    
+    '''
     if request.method == "GET":
         author = Author.objects.get(id=author_id)
         if request.user.author == author:
@@ -261,7 +256,8 @@ class PostsAPI(APIView):
             '-published')
         # private post only visible to certain people that author shared to
         # eg. visibleTo is eqaul to certain author.
-        private_posts = Post.objects.filter(visibility="private", visibleTo=author.user ,unlisted=False).order_by('-published')
+        private_posts = Post.objects.filter(visibility="private", visibleTo=author.user, unlisted=False).order_by(
+            '-published')
         my_posts = Post.objects.filter(author=author, unlisted=False).order_by('-published')
         posts = public_posts | my_posts | friend_posts | private_posts
         for post in posts:
@@ -286,10 +282,11 @@ class MyPostsAPI(generics.GenericAPIView):
                 - responds to requests with status code.
 
     '''
-    
+
     authentication_classes = [authentication.BasicAuthentication, authentication.SessionAuthentication]
     permission_classes = [permissions.IsAuthenticated]
     serializer_class = PostSerializer
+
     def get(self, request, author_id):
 
         author = Author.objects.get(id=author_id)
@@ -359,7 +356,7 @@ class PostDetailAPI(generics.GenericAPIView):
     def get(self, request, author_id, post_id):
         # TODO: remote
         current_user = request.user
-        if current_user.author.id==author_id:
+        if current_user.author.id == author_id:
             post = get_object_or_404(Post, id=post_id)
         else:
             post = get_object_or_404(Post, id=post_id, visibility='public')
@@ -380,7 +377,7 @@ class PostDetailAPI(generics.GenericAPIView):
         current_user = request.user
         if current_user.author.id != author_id:
             return Response({'detail': 'Current user is not authorized to do this operation'}, 401)
-        elif current_user.author.id==author_id:
+        elif current_user.author.id == author_id:
             # authenticated
             serializer = PostSerializer(post, data=request.data, partial=True)
             if serializer.is_valid():
@@ -392,8 +389,6 @@ class PostDetailAPI(generics.GenericAPIView):
                 return Response(content, 200)
             else:
                 return Response(serializer.errors, 400)
-            
-        
 
     def delete(self, request, author_id, post_id):
         try:
@@ -402,7 +397,7 @@ class PostDetailAPI(generics.GenericAPIView):
             return Response({'detail': 'Post Does Not Exist'}, 400)
 
         current_user = request.user
-        if current_user.author.id==author_id:
+        if current_user.author.id == author_id:
             post.delete()
             content = {
                 'status': 0,
@@ -414,27 +409,26 @@ class PostDetailAPI(generics.GenericAPIView):
 
     def put(self, request, author_id, post_id):
         current_user = request.user
-        if not current_user.author.id==author_id:
+        if not current_user.author.id == author_id:
             return Response({'detail': 'Current user is not authorized to do this operation'}, 401)
         else:
             author = Author.objects.get(id=author_id)
             post, created = Post.objects.get_or_create(id=post_id, author=author)
-        
+
             # if post was just created, update the post with new data in payload.
             if not created:
                 return Response({'detail': 'Post with this id already exists'}, 400)
-            else: 
+            else:
                 serializer = PostSerializer(post, data=request.data)
                 if serializer.is_valid():
                     serializer.save()
                     return Response(serializer.data, 200)
                 else:
                     return Response(serializer.errors, 400)
-        
+
 
 @login_required
 def create_comment(request, author_id, post_id):
-
     if request.method == "POST":
         comment=request.POST['comment']
         postID=request.POST['post']
@@ -461,23 +455,22 @@ class CommentsAPI(APIView):
         POST:
             Create new comment
     """
-    
+
     def get(self, request, author_id, post_id):
         # User see comments from posts they have access to 
         # US: Comments on friend posts are private only to me the original author.
-        post_author = get_object_or_404(Author, id=author_id) # Check if post author exist
+        post_author = get_object_or_404(Author, id=author_id)  # Check if post author exist
         post = get_object_or_404(Post, id=post_id)  # Check if post exist
-        comments = post.commentsSrc.all()  #get all comments from that post_id
-        serializer = CommentSerializer(comments, many=True,  remove_fields=['author_displayName'])  #many=True
-        #page,id
+        comments = post.commentsSrc.all()  # get all comments from that post_id
+        serializer = CommentSerializer(comments, many=True, remove_fields=['author_displayName'])  # many=True
+        # page,id
         response = {
-            'type':  "comments",
-            'size':len(serializer.data),
+            'type': "comments",
+            'size': len(serializer.data),
             'post': post_id,
             'comments': serializer.data,
         }
         return Response(response, status=status.HTTP_200_OK)
-       
 
     def post(self, request, author_id, post_id):
         # For now, User can add comments for posts they have access to 
@@ -492,7 +485,6 @@ class CommentsAPI(APIView):
             serializer.save()
             return Response(serializer.data, status=status.HTTP_200_OK)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
-        
 
 
 class PostImageAPI(generics.GenericAPIView):
@@ -505,3 +497,39 @@ class PostImageAPI(generics.GenericAPIView):
             return redirect(post.image.url)
 
         return Response({'detail': 'Post Image Does Not Exist'}, 404)
+
+
+class PostLikesAPI(generics.GenericAPIView):
+    authentication_classes = [authentication.BasicAuthentication, authentication.SessionAuthentication]
+    permission_classes = [permissions.IsAuthenticated]
+    serializer_class = LikeSerializer
+
+    def get(self, request, author_id, post_id):
+        post = get_object_or_404(Post, id=post_id, author_id__exact=author_id)
+        likes = post.likes.all()
+        serializer = self.serializer_class(likes, many=True)
+        return Response(
+            data={
+                'type': 'likes',
+                'size': len(serializer.data),
+                'likes': serializer.data
+            },
+            status=status.HTTP_200_OK)
+
+
+class CommentLikesAPI(generics.GenericAPIView):
+    authentication_classes = [authentication.BasicAuthentication, authentication.SessionAuthentication]
+    permission_classes = [permissions.IsAuthenticated]
+    serializer_class = LikeSerializer
+
+    def get(self, request, author_id, post_id, comment_id):
+        comment = get_object_or_404(Comment, id=comment_id, commentsSrc__exact=post_id, author__exact=author_id)
+        likes = comment.likes.all()
+        serializer = self.serializer_class(likes, many=True)
+        return Response(
+            data={
+                'type': 'likes',
+                'size': len(serializer.data),
+                'likes': serializer.data
+            },
+            status=status.HTTP_200_OK)
