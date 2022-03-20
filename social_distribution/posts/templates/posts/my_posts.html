@@ -96,7 +96,7 @@
                 `
                 </div>
                 <div class="card-footer">
-                    <a href="#" class="card-link text-muted" style="text-decoration: none;"><i class="fa-solid fa-thumbs-up"></i> ${likesText}</a>
+                    <a href="javascript:void(0)" class="card-link text-muted" style="text-decoration: none;" onclick="likePost('${post.id}')"><i class="fa-solid fa-thumbs-up"></i> ${likesText}</a>
                     <a class="card-link text-muted" style="text-decoration: none;" 
                                 data-bs-toggle="collapse" 
                                 href="#collapseComments-${post.id}"
@@ -232,6 +232,21 @@
         })
         }
         fetchPosts();
+
+        async function likePost(postId) {
+            await fetch('{% url 'author_manager:like_api' user.author.id %}', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-CSRFToken': '{{ csrf_token }}'
+                    },
+                    body: JSON.stringify({
+                        summary: '{{ request.user.author }} Liked your post',
+                        author: '{{ request.user.author.id }}',
+                        post: postId,
+                    })
+            });
+        }
 
     </script>
 {% endblock %}

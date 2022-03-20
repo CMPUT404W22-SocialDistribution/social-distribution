@@ -78,7 +78,7 @@ aria-controls="collapseExample">
             {% endif %}
         </div>
         <div class="card-footer">
-            <a href="#" class="card-link text-muted" style="text-decoration: none;"><i class="fa-solid fa-thumbs-up"></i>
+            <a href="#" class="card-link text-muted" style="text-decoration: none;" onclick="likePost()"><i class="fa-solid fa-thumbs-up"></i>
                 {% if numLikes > 1 %}
                     {{ numLikes }}&nbsp;Likes
                 {% elif numLikes > 0 %}
@@ -87,9 +87,9 @@ aria-controls="collapseExample">
                     Like
                 {% endif %}
             </a>
-            
-            <a class="card-link text-muted" style="text-decoration: none;" 
-                data-bs-toggle="collapse" 
+
+            <a class="card-link text-muted" style="text-decoration: none;"
+                data-bs-toggle="collapse"
                 href="#collapseComments"
                 aria-expanded="false"  >
                 <i class="fa-solid fa-comment-dots"></i> Comment</a>
@@ -105,11 +105,11 @@ aria-controls="collapseExample">
                     </div>
             </div>
             <div class=" card justify-content-center pb-2 comment-wrapper">
-                
+
                 {% for comment in comments %}
                 <div class=" justify-content-center py-2">
                     <div class="pb-2 px-2 mx-2"
-                        style="background-color: #00000008; box-shadow: 5px 5px 2px #cccccc;">  
+                        style="background-color: #00000008; box-shadow: 5px 5px 2px #cccccc;">
                         <p class="card-text"> {{comment.comment}}</p>
                         <div class=" d-flex justify-content-between py-1 pt-2" style="font-size: 13px";>
                             <span ><a href="{% url 'author_manager:profile' comment.author.id %}">
@@ -118,11 +118,11 @@ aria-controls="collapseExample">
                         </div>
                     </div>
                 </div>
-                {% endfor %}           
-                    
-                
+                {% endfor %}
+
+
             </div>
-                            
+
         </div>
     </div>
     </div>
@@ -148,7 +148,7 @@ aria-controls="collapseExample">
             $(".save-comment").off('click').on('click', function(){
                 var _postid=$(this).data('answer')
                 var _comment=$(".comment-text").val();
-                
+
                 // AJX
                 $.ajax({
                     url:"/authors/{{user.author.id}}/posts/postid/comments".replace("postid", _postid),
@@ -159,7 +159,7 @@ aria-controls="collapseExample">
                         csrfmiddlewaretoken:"{{csrf_token}}"
                     },
                     dataType: 'json',
-                    
+
                     success:function(res){
                         if(res.bool==true){
                             $(".comment-text").val('')
@@ -178,13 +178,28 @@ aria-controls="collapseExample">
                                                 </div> \
                                         </div> \
                                         ';
-                            
+
                             $(".comment-wrapper").prepend(_html);
                         }
                         $(".save-comment").removeClass('disabled');
                     }
                 })
-            }) 
+            })
         })
+
+    async function likePost() {
+        await fetch('{% url 'author_manager:like_api' user.author.id %}', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRFToken': '{{ csrf_token }}'
+                },
+                body: JSON.stringify({
+                    summary: '{{ request.user.author }} Liked your post',
+                    author: '{{ request.user.author.id }}',
+                    post: '{{ post.id }}',
+                })
+        });
+    }
 </script>
 {% endblock %}

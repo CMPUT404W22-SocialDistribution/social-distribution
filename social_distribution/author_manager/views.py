@@ -488,6 +488,21 @@ class LikeAPI(APIView):
         inbox = get_object_or_404(Inbox, author__exact=author_id)
         serializer = LikeSerializer(data=request.data)
         if serializer.is_valid():
+            # Do not like the same object twice
+            post = serializer.validated_data['post']
+            like_query_set = Like.objects.filter(author__id__exact=author_id,
+                                                 post__id__exact=post.id,
+                                                 comment__id__isnull=True)
+            if 'comment' in serializer.validated_data:
+                comment = serializer.validated_data['comment']
+                like_query_set |= Like.objects.filter(author__id__exact=author_id,
+                                                      post__id__exact=post.id,
+                                                      comment__id__exact=comment.id)
+
+            if like_query_set:
+                return Response(LikeSerializer().to_representation(like_query_set[0]),
+                                status=status.HTTP_204_NO_CONTENT)
+
             serializer.save()
             # Send like object to other user's inbox
             inbox.likes.add(serializer.instance.id)
