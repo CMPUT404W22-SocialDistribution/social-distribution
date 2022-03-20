@@ -38,8 +38,11 @@ def post_create(request, author_id):
     elif request.method == "POST":
 
         updated_request = request.POST.copy()  # using deepcopy() to make a mutable copy of the object
-        origin = str(request.headers['Origin'])
-        print(request.headers)
+        print(updated_request)
+        if 'Origin' in request.headers:
+            origin = str(request.headers['Origin'])
+        else:
+            origin=''
         updated_request.update(
             {
                 'author': author,
