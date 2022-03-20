@@ -57,7 +57,12 @@ def post_create(request, author_id):
                 friends = author.followers.all() & author.followings.all()
                 for friend in friends:
                     friend.inbox.posts.add(post)
-            # TODO: inbox private posts
+            elif post.visibility == "private":
+                visible_follower = post.visibleTo
+                visible_user = User.objects.get(username=visible_follower)
+                notify_user = Author.objects.get(user=visible_user)
+                notify_user.inbox.posts.add(post)
+                
             return redirect('posts:post_detail', author_id, post.id)
         else:
             # if form is invalid, return the same html page
@@ -122,7 +127,7 @@ def post_detail(request, author_id, post_id):
     # TODO: permission for DM posts (Jun)
 
     if request.method == "GET":
-        current_user = request.user.author
+        current_user = request.user
         # Using user name to get author 
         # current_user = Author.objects.get(user=user)
         author = Author.objects.get(id=author_id)
@@ -133,11 +138,11 @@ def post_detail(request, author_id, post_id):
         else:
             # auth user is not user
             isAuthor = False
-            print(current_user.user)
-            print(post.visibleTo)
             if post.visibility == "private":
-                if post.visibleTo == str(current_user.user):
+                if post.visibleTo == current_user.username:
+                    comments = post.commentsSrc.all().order_by('-published')
                     context = {
+                        "comments": comments,
                         "post": post,
                         "isAuthor": isAuthor
                     }
