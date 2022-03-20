@@ -211,7 +211,11 @@ def inbox_view(request, author_id):
     if request.method == "GET":
         # follow request
         inbox = Inbox.objects.get(author=current_author)
-        return render(request, 'inbox/inbox.html', {'follows': inbox.follows.all(), 'posts': inbox.posts.all()})
+        return render(request, 'inbox/inbox.html', {
+            'follows': inbox.follows.all(),
+            'posts': inbox.posts.all(),
+            'likes': inbox.likes.all()
+        })
 
     if request.method == "POST":
         # Accept follow request -> follow back-> true friends
