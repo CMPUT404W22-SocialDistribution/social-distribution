@@ -1,4 +1,3 @@
-from turtle import pos
 import requests
 from django.contrib import messages
 from django.contrib.auth import authenticate, login, logout
@@ -207,8 +206,8 @@ class SearchAuthorView(ListView):
 
 
 @login_required
-def inbox_view(request, author_id):
-    current_author = Author.objects.get(id=author_id)
+def inbox_view(request, id):
+    current_author = Author.objects.get(id=id)
 
     if request.user.author != current_author:
         return redirect('author_manager:login')
@@ -233,7 +232,8 @@ def inbox_view(request, author_id):
             except:
                 pass
             messages.success(request, 'Success to accept friend request.')
-            return redirect('author_manager:inbox', author_id)
+            return redirect('author_manager:inbox', id)
+
         if request.POST['type'] == 'comment':
             comment = request.POST['comment']
             inbox_comment = Comment.objects.get(id=comment)
@@ -531,7 +531,10 @@ class AuthorLikedAPI(APIView):
             status=status.HTTP_200_OK)
 
 class CustomPagination(PageNumberPagination):
-    page_size = 100
+    '''
+    Helper Pagination class to paginate Inbox API by the query options: page, size 
+    '''
+    page_size = 1000
     page_size_query_param = 'size'
     max_page_size = 1000
 
@@ -546,6 +549,25 @@ class CustomPagination(PageNumberPagination):
         )
 
 class InboxAPI(generics.GenericAPIView):
+    """
+    An API endpoint allows viewing the inbox of the author id, send a post to the inbox and clear the inbox.
+    The post here can be type: post, follow, like, comment
+    Require authorization.
+    ...
+    Methods:
+        GET:
+            Retrieve all the posts that are sent to the author id
+            Support pagination 
+        POST:
+            Send/Add post to the author's inbox according to its type:
+                - type is “post” then add that post to the posts list of the inbox
+                - type is “follow” then add that follow/friend request to the follows list of the inbox: request is waiting for approve
+                - type is “like” then add that like to the likes list of the inbox
+                - type is “comment” then add that comment to the comments list of the inbox
+        DELETE:
+            clear the inbox: there is no posts/items in the inbox
+    """
+
     authentication_classes = [authentication.BasicAuthentication, authentication.SessionAuthentication]
     permission_classes = [permissions.IsAuthenticated]
     pagination_class = CustomPagination
@@ -570,11 +592,11 @@ class InboxAPI(generics.GenericAPIView):
         
         return self.paginator.get_paginated_response({'items': part_items, 'url': author.url})
 
-    
     def post(self, request, id):
         try:
             author = Author.objects.get(id=id)
             inbox = Inbox.objects.get(author=author)
+            print(request)
 
             if 'follows' in request.data:  
                 follow = FriendRequest.objects.get(id=request.data['follows'])
