@@ -30,10 +30,6 @@ class PostForm(forms.ModelForm):
                 Column('title', css_class=col12),
             ),
             Row(
-                Column('source', css_class=col6),
-                Column('origin', css_class=col6),
-            ),
-            Row(
                 Column('description', css_class=col12),
             ),
             Row(
