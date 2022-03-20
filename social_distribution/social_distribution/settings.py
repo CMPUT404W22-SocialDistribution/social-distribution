@@ -40,7 +40,7 @@ INSTALLED_APPS = [
     'rest_framework',
     'author_manager',
     'posts',
-    'node'
+    'node',
     'nested_admin',
     'crispy_forms',
     'django_cleanup.apps.CleanupConfig'
