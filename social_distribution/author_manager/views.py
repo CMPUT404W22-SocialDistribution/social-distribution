@@ -1,3 +1,4 @@
+from turtle import pos
 import requests
 from django.contrib import messages
 from django.contrib.auth import authenticate, login, logout
@@ -20,6 +21,7 @@ from rest_framework.views import APIView
 
 import posts.serializers
 from posts.models import Post
+# from social_distribution.posts.serializers import PostSerializer
 from .forms import SignUpForm, EditProfileForm
 from .models import *
 from .serializers import *
@@ -489,21 +491,21 @@ class FriendRequestsAPI(APIView):
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
 
-class LikeAPI(APIView):
-    authentication_classes = [authentication.BasicAuthentication, authentication.SessionAuthentication]
-    permission_classes = [permissions.IsAuthenticated]
+# class LikeAPI(APIView):
+#     authentication_classes = [authentication.BasicAuthentication, authentication.SessionAuthentication]
+#     permission_classes = [permissions.IsAuthenticated]
 
-    def post(self, request, author_id):
-        inbox = get_object_or_404(Inbox, author__exact=author_id)
-        serializer = LikeSerializer(data=request.data)
-        if serializer.is_valid():
-            serializer.save()
-            # Send like object to other user's inbox
-            inbox.likes.add(serializer.instance.id)
+#     def post(self, request, author_id):
+#         inbox = get_object_or_404(Inbox, author__exact=author_id)
+#         serializer = LikeSerializer(data=request.data)
+#         if serializer.is_valid():
+#             serializer.save()
+#             # Send like object to other user's inbox
+#             inbox.likes.add(serializer.instance.id)
 
-            return Response(posts.serializers.LikeSerializer().to_representation(serializer.instance),
-                            status=status.HTTP_200_OK)
-        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+#             return Response(posts.serializers.LikeSerializer().to_representation(serializer.instance),
+#                             status=status.HTTP_200_OK)
+#         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
 
 class AuthorLikedAPI(APIView):
@@ -526,3 +528,80 @@ class AuthorLikedAPI(APIView):
                 'items': serializer.data
             },
             status=status.HTTP_200_OK)
+
+
+from rest_framework import generics, authentication, permissions
+
+class InboxAPI(generics.GenericAPIView):
+    authentication_classes = [authentication.BasicAuthentication, authentication.SessionAuthentication]
+    permission_classes = [permissions.IsAuthenticated]
+    serializer_class = InboxSerializer
+
+    def get(self, request, id):
+        try:
+            author = Author.objects.get(id=id)
+            inbox = Inbox.objects.get(author=author)
+        except:
+            return Response({'detail': 'Not Found!'}, status=status.HTTP_404_NOT_FOUND)
+
+        follow_serializer = FriendRequestSerializer(inbox.follows, many=True)
+        post_serializer = FriendRequestSerializer(inbox.posts, many=True)
+        comment_serializer = FriendRequestSerializer(inbox.comments, many=True)
+        like_serializer = FriendRequestSerializer(inbox.likes, many=True)
+
+        items = follow_serializer.data + post_serializer.data + comment_serializer.data + like_serializer.data
+        response = {
+            'type': 'inbox',
+            'author': author.url,
+            'items': items
+        }
+        return Response(response, status=status.HTTP_200_OK)
+
+    
+    def post(self, request, id):
+        try:
+            author = Author.objects.get(id=id)
+            inbox = Inbox.objects.get(author=author)
+
+            if 'follows' in request.data:
+                follow = FriendRequest.objects.get(id=request.data['follows'])
+                
+                if author != follow.object or author == follow.actor:
+                    return Response({'detail': 'Fail to send the item!'}, status=status.HTTP_400_BAD_REQUEST)
+                inbox.follows.add(follow)
+                return Response({'message': 'Success to send item'}, status=status.HTTP_200_OK)
+
+            if 'posts' in request.data:
+                post = Post.objects.get(id=request.data['posts'])
+                inbox.posts.add(post)
+                return Response({'message': 'Success to send item'}, status=status.HTTP_200_OK)
+
+            if 'comments' in request.data:
+                comment = Comment.objects.get(id=request.data['comments'])
+                inbox.comments.add(comment)
+                return Response({'message': 'Success to send item'}, status=status.HTTP_200_OK)
+
+            if 'likes' in request.data:
+                like = Like.objects.get(id=request.data['likes'])
+                inbox.likes.add(like)
+                return Response({'message': 'Success to send item'}, status=status.HTTP_200_OK)
+
+            return Response({'detail': 'Fail to send the item!'}, status=status.HTTP_400_BAD_REQUEST)
+
+        except:
+            return Response({'detail': 'Fail to send the item!'}, status=status.HTTP_400_BAD_REQUEST)
+
+    def delete(self, request, id):
+        try:
+            author = Author.objects.get(id=id)
+            inbox = Inbox.objects.get(author=author)
+
+            inbox.follows.set([], clear=True)
+            inbox.posts.set([], clear=True)
+            inbox.comments.set([], clear=True)
+            inbox.likes.set([], clear=True)
+
+            return Response({'message': 'Success to clean inbox'}, status=status.HTTP_200_OK)
+        except:
+            return Response({'detail': 'Fail to clear inbox!'}, status=status.HTTP_400_BAD_REQUEST)
+        

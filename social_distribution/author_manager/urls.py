@@ -16,9 +16,10 @@ urlpatterns = [
     path('authors/<str:id>/edit', views.profile_edit, name='editProfile'),
     path('authors/<str:author_id>/friends', friends_view, name="friends"),
     path('search/authors', SearchAuthorView.as_view(), name="search_author"),
-    path('authors/<str:author_id>/inbox', inbox_view, name="inbox"),
+    path('authors/<str:id>/inbox', inbox_view, name="inbox"),
+    path('api/authors/<str:id>/inbox', InboxAPI.as_view(), name='inbox_api'),
     path('api/authors/<str:id>/friends', FriendsAPI.as_view(), name='friends_api'),
     path('api/friendrequests', FriendRequestsAPI.as_view(), name='friendrequests_api'),
-    path('api/authors/<str:author_id>/inbox', LikeAPI.as_view(), name='like_api'),
+    # path('api/authors/<str:author_id>/inbox', LikeAPI.as_view(), name='like_api'),
     path('api/authors/<str:author_id>/liked', AuthorLikedAPI.as_view(), name='author_liked_api')
 ]

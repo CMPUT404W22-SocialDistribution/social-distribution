@@ -1,7 +1,8 @@
+from dataclasses import field
 from rest_framework import serializers
 
 from posts.models import Like
-from .models import Author, FriendRequest
+from .models import Author, FriendRequest, Inbox
 
 
 class ProfileSerializer(serializers.ModelSerializer):
@@ -47,3 +48,8 @@ class LikeSerializer(serializers.ModelSerializer):
     def to_representation(self, instance):
         response = super().to_representation(instance)
         return response
+
+class InboxSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Inbox
+        fields = ['follows', 'posts', 'comments', 'likes']
