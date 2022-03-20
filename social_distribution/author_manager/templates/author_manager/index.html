@@ -169,7 +169,13 @@
                     postVisibilityIcon = `<i class="card-link fa-solid text-primary fa-user-group"></i>`;
                     break;
             }
-            
+
+            let likesText = "Like";
+            if (post.num_likes > 1) {
+                likesText = `${post.num_likes} Likes`;
+            } else if (post.num_likes > 0) {
+                likesText = `${post.num_likes} Like`;
+            }
 
             const postCardsHtmlParts = [`
                 <div class="row" id="${post.id}">
@@ -180,7 +186,7 @@
                             src="/static/img/${post.author_image}"
                             alt="profile picture">
                             <p class="text-end"><i class="fa-solid fa-turn-up fa-rotate-90 text-muted mt-2"></i></p>
-                            
+
                     </div>
                     <div class="col-md-9 mb-3 ml-1">
                         <div class="card shadow-sm">
@@ -228,12 +234,12 @@
                 `
                             </div>
                             <div class="card-footer">
-                                <a href="#" class="card-link text-muted" style="text-decoration: none;"><i class="fa-solid fa-thumbs-up"></i> Like</a>
+                                <a href="#" class="card-link text-muted" style="text-decoration: none;"><i class="fa-solid fa-thumbs-up"></i> ${likesText}</a>
 
-                                <a class="card-link text-muted" style="text-decoration: none;" 
-                                data-bs-toggle="collapse" 
+                                <a class="card-link text-muted" style="text-decoration: none;"
+                                data-bs-toggle="collapse"
                                 href="#collapseComments-${post.id}"
-                                aria-expanded="false"  
+                                aria-expanded="false"
                                 >
                                 <i class="fa-solid fa-comment-dots"></i> Comment</a>
 
@@ -245,13 +251,13 @@
                             <div class="card  " >
                                     <div class= " input-group ">
                                         <textarea  placeholder="Type your comment here" rows="1" class="form-control comment-text-${post.id}" ></textarea>
-            
+
                                         <button type="submit" data-answer="${post.id}" class="btn-floating save-comment"><i class="bi bi-plus"></i> </button>
                                     </div>
                             </div>
                             <div class=" card justify-content-center pb-2 comment-wrapper-${post.id}">
-                                
-                                    
+
+
                                         ${post.commentsSrc.comments.map( comment =>
                                             `
                                             <div class=" justify-content-center py-2">
@@ -266,17 +272,17 @@
                                                 </div>
                                             </div>
                                             `
-                                        ).join('')} 
-                                    
-                                
+                                        ).join('')}
+
+
                             </div>
-                                            
+
                         </div>
-                        
+
                     </div>
                 </div>
                 <br>
-                
+
                 `];
             return postCardsHtmlParts.join('');
         }
@@ -308,7 +314,7 @@
 
                     // Inject bootstrap class card-img-bottom to constrain inline image sizes
                     document.querySelectorAll("#post-content img:not(.card-img-bottom)").forEach(postContentInlineImg =>
-                        postContentInlineImg.classList.add('card-img-bottom')
+                        postContentInlineImg?.classList.add('card-img-bottom')
                     );
                 },
                 error: (error) => {

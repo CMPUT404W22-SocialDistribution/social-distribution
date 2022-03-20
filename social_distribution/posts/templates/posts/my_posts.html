@@ -35,7 +35,14 @@
                     postVisibilityIcon = `<i class="card-link fa-solid text-primary fa-user-group"></i>`;
                     break;
             }
-          
+
+            let likesText = "Like";
+            if (post.num_likes > 1) {
+                likesText = `${post.num_likes} Likes`;
+            } else if (post.num_likes > 0) {
+                likesText = `${post.num_likes} Like`;
+            }
+
             var postCardHtmlParts = [`
                 <div class = "row justify-content-center container-fluid" id="${post.id}">
         <div class="col-5 align-self-center" style="padding: 20px;">
@@ -89,8 +96,7 @@
                 `
                 </div>
                 <div class="card-footer">
-                    <a href="#" class="card-link text-muted" style="text-decoration: none;"><i class="fa-solid fa-thumbs-up"></i> Like</a>
-                    
+                    <a href="#" class="card-link text-muted" style="text-decoration: none;"><i class="fa-solid fa-thumbs-up"></i> ${likesText}</a>
                     <a class="card-link text-muted" style="text-decoration: none;" 
                                 data-bs-toggle="collapse" 
                                 href="#collapseComments-${post.id}"
@@ -170,7 +176,7 @@
 
                     // Inject bootstrap class card-img-bottom to constrain inline image sizes
                     document.querySelectorAll("#post-content img:not(.card-img-bottom)").forEach(postContentInlineImg =>
-                        postContentInlineImg.classList.add('card-img-bottom')
+                        postContentInlineImg?.classList.add('card-img-bottom')
                     );
                 },
                 error: (error) => {

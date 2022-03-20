@@ -11,7 +11,7 @@ from rest_framework.views import APIView
 
 from author_manager.models import *
 from posts.forms import PostForm
-from .models import Post, Comment
+from .models import Post, Comment, Like
 from .serializers import PostSerializer, CommentSerializer, LikeSerializer
 
 
@@ -127,6 +127,8 @@ def post_detail(request, author_id, post_id):
         # current_user = Author.objects.get(user=user)
         author = Author.objects.get(id=author_id)
         post = get_object_or_404(Post, id=post_id)
+        numLikes = Like.objects.filter(post__id__exact=post.id, comment__id__isnull=True).count()
+
         # check if logged in user is author of post
         if request.user.author == author:
             isAuthor = True
@@ -139,7 +141,8 @@ def post_detail(request, author_id, post_id):
                 if post.visibleTo == str(current_user.user):
                     context = {
                         "post": post,
-                        "isAuthor": isAuthor
+                        "isAuthor": isAuthor,
+                        "numLikes": numLikes
                     }
                     return render(request, 'posts/post_detail.html', context)
                 else:
@@ -159,7 +162,8 @@ def post_detail(request, author_id, post_id):
         context = {
             "comments": comments,
             "post": post,
-            "isAuthor": isAuthor
+            "isAuthor": isAuthor,
+            "numLikes": numLikes
         }
         return render(request, 'posts/post_detail.html', context)
 

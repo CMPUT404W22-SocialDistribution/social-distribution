@@ -15,6 +15,7 @@ class PostSerializer(serializers.ModelSerializer):
     author_displayName = serializers.SerializerMethodField('get_author_displayName')
     author_image = serializers.SerializerMethodField('get_author_image')
     comments = serializers.SerializerMethodField('get_comments_url')
+    num_likes = serializers.SerializerMethodField('get_num_likes')
 
     def get_author_image(self, obj):
         return obj.author.profileImage
@@ -28,13 +29,16 @@ class PostSerializer(serializers.ModelSerializer):
     def get_comments_url(self, obj):
         return obj.author.host + 'api/' + 'authors/' + obj.author.id + '/posts/' + obj.id + '/comments'
 
+    def get_num_likes(self, obj):
+        return Like.objects.filter(post__id__exact=obj.id, comment__id__isnull=True).count()
+
     # add comments, like,...
     class Meta:
         model = Post
         fields = ['type', 'author_username', 'author_displayName', 'title', 'id', 'source', 'origin', 'description',
                   'content_type',
                   'content', 'author', 'categories', 'published', 'visibility', 'unlisted', 'author_image', 'image',
-                  'comments', 'commentsSrc']
+                  'comments', 'commentsSrc', 'num_likes']
 
     # def to_representation(self, instance):
     #     data =  super().to_representation(instance)
