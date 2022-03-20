@@ -11,6 +11,8 @@ from django.shortcuts import redirect, render
 from django.views.generic import ListView
 from rest_framework import authentication, permissions
 from rest_framework import status
+from rest_framework import generics, authentication, permissions
+from rest_framework.pagination import PageNumberPagination
 
 import requests
 import datetime 
@@ -21,7 +23,6 @@ from rest_framework.views import APIView
 
 import posts.serializers
 from posts.models import Post
-# from social_distribution.posts.serializers import PostSerializer
 from .forms import SignUpForm, EditProfileForm
 from .models import *
 from .serializers import *
@@ -529,12 +530,25 @@ class AuthorLikedAPI(APIView):
             },
             status=status.HTTP_200_OK)
 
+class CustomPagination(PageNumberPagination):
+    page_size = 100
+    page_size_query_param = 'size'
+    max_page_size = 1000
 
-from rest_framework import generics, authentication, permissions
+    def get_paginated_response(self, data):
+        return Response(
+        {
+            'type': 'inbox',
+            'author': data['url'],
+            'items': data['items']
+        },  
+        status=status.HTTP_200_OK
+        )
 
 class InboxAPI(generics.GenericAPIView):
     authentication_classes = [authentication.BasicAuthentication, authentication.SessionAuthentication]
     permission_classes = [permissions.IsAuthenticated]
+    pagination_class = CustomPagination
     serializer_class = InboxSerializer
 
     def get(self, request, id):
@@ -550,12 +564,11 @@ class InboxAPI(generics.GenericAPIView):
         like_serializer = FriendRequestSerializer(inbox.likes, many=True)
 
         items = follow_serializer.data + post_serializer.data + comment_serializer.data + like_serializer.data
-        response = {
-            'type': 'inbox',
-            'author': author.url,
-            'items': items
-        }
-        return Response(response, status=status.HTTP_200_OK)
+
+        # Pagination:
+        part_items = self.paginator.paginate_queryset(items, request)
+        
+        return self.paginator.get_paginated_response({'items': part_items, 'url': author.url})
 
     
     def post(self, request, id):
@@ -563,11 +576,12 @@ class InboxAPI(generics.GenericAPIView):
             author = Author.objects.get(id=id)
             inbox = Inbox.objects.get(author=author)
 
-            if 'follows' in request.data:
+            if 'follows' in request.data:  
                 follow = FriendRequest.objects.get(id=request.data['follows'])
-                
+
                 if author != follow.object or author == follow.actor:
                     return Response({'detail': 'Fail to send the item!'}, status=status.HTTP_400_BAD_REQUEST)
+
                 inbox.follows.add(follow)
                 return Response({'message': 'Success to send item'}, status=status.HTTP_200_OK)
 
