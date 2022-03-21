@@ -1,5 +1,3 @@
-import datetime
-
 import requests
 from django.contrib import messages
 from django.contrib.auth import authenticate, login, logout
@@ -12,6 +10,11 @@ from django.shortcuts import redirect, render
 from django.views.generic import ListView
 from rest_framework import authentication, permissions
 from rest_framework import status
+
+import requests
+import datetime
+from posts.models import Comment
+
 from rest_framework.response import Response
 from rest_framework.views import APIView
 
@@ -20,7 +23,6 @@ from posts.models import Post
 from .forms import SignUpForm, EditProfileForm
 from .models import *
 from .serializers import *
-
 
 def sign_up(request):
     '''
@@ -214,6 +216,7 @@ def inbox_view(request, author_id):
         return render(request, 'inbox/inbox.html', {
             'follows': inbox.follows.all(),
             'posts': inbox.posts.all(),
+            'comments': inbox.comments.all(),
             'likes': inbox.likes.all().order_by('-id')
         })
 
@@ -232,7 +235,13 @@ def inbox_view(request, author_id):
                 pass
             messages.success(request, 'Success to accept friend request.')
             return redirect('author_manager:inbox', author_id)
-
+        if request.POST['type'] == 'comment':
+            comment = request.POST['comment']
+            inbox_comment = Comment.objects.get(id=comment)
+            current_author.inbox.comments.remove(inbox_comment)
+            post_author = request.POST['post_author']
+            post =  request.POST['post']
+            return redirect('posts:post_detail', post_author, post)
 
 @login_required
 def profile_edit(request, id):

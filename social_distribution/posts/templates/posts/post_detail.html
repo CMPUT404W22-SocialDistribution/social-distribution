@@ -107,6 +107,7 @@ aria-controls="collapseExample">
             <div class=" card justify-content-center pb-2 comment-wrapper">
 
                 {% for comment in comments %}
+                {%  if  post.visibility  != "friends" %}
                 <div class=" justify-content-center py-2">
                     <div class="pb-2 px-2 mx-2"
                         style="background-color: #00000008; box-shadow: 5px 5px 2px #cccccc;">
@@ -132,6 +133,20 @@ aria-controls="collapseExample">
                         </div>
                     </div>
                 </div>
+                {% elif post.author.id == request.user.author.id or comment.author.id ==  request.user.author.id or comment.author.id == post.author.id %}
+                <div class=" justify-content-center py-2">
+                    <div class="pb-2 px-2 mx-2"
+                        style="background-color: #00000008; box-shadow: 5px 5px 2px #cccccc;">
+                        <p class="card-text"> {{comment.comment}}</p>
+                        <div class=" d-flex justify-content-between py-1 pt-2" style="font-size: 13px";>
+                            <span ><a href="{% url 'author_manager:profile' comment.author.id %}">
+                                {{comment.author}}</a></span>
+                            <span>{{comment.published}} </span>
+                        </div>
+                    </div>
+                </div>
+
+                {% endif %}
                 {% endfor %}
 
 
