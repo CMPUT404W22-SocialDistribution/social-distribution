@@ -10,10 +10,10 @@ class Migration(migrations.Migration):
         ('author_manager', '0007_delete_followerlist'),
     ]
 
-    operations = [
-        migrations.AddField(
-            model_name='inbox',
-            name='likes',
-            field=models.ManyToManyField(blank=True, to='posts.Like'),
-        ),
-    ]
+    # operations = [
+    #     migrations.AddField(
+    #         model_name='inbox',
+    #         name='likes',
+    #         field=models.ManyToManyField(blank=True, to='posts.Like'),
+    #     ),
+    # ]

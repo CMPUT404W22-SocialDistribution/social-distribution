@@ -10,9 +10,9 @@ class Migration(migrations.Migration):
         ('posts', '0015_postlike_comment_delete_commentlike'),
     ]
 
-    operations = [
-        migrations.RenameModel(
-            old_name='PostLike',
-            new_name='Like',
-        ),
-    ]
+    # operations = [
+    #     migrations.RenameModel(
+    #         old_name='PostLike',
+    #         new_name='Like',
+    #     ),
+    # ]
