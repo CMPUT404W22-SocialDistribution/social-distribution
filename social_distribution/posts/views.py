@@ -8,6 +8,7 @@ from rest_framework import generics, authentication, permissions
 from rest_framework import status
 from rest_framework.response import Response
 from rest_framework.views import APIView
+from rest_framework.pagination import PageNumberPagination
 
 from author_manager.models import *
 from posts.forms import PostForm
@@ -239,6 +240,7 @@ class SearchView(ListView):
         return queryset
 
 
+
 class PostsAPI(APIView):
     '''
     API endpoint that gathers all public posts, friends posts, my posts to display in stream.
@@ -252,6 +254,7 @@ class PostsAPI(APIView):
     authentication_classes = [authentication.BasicAuthentication, authentication.SessionAuthentication]
     permission_classes = [permissions.IsAuthenticated]
     serializer_class = PostSerializer
+   
 
     def get(self, request):
         user = request.user
@@ -274,8 +277,16 @@ class PostsAPI(APIView):
         for post in posts:
             if post.content_type == 'text/markdown':
                 post.content = commonmark.commonmark(post.content)  # parse and render content of type markdown
-        serializer = PostSerializer(posts, many=True)
-        return Response(serializer.data, 200)
+        
+        
+        paginator = PageNumberPagination()
+        result_page = paginator.paginate_queryset(posts,request)
+        serializer = PostSerializer(result_page, many=True)
+        response = {
+            'count': len(posts),
+            'posts': serializer.data
+        }
+        return Response(response, 200)
 
 
 class MyPostsAPI(generics.GenericAPIView):

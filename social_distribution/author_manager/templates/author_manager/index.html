@@ -127,11 +127,15 @@
                         </div>
                         <br>
                     </div>
+                    <div class="col-md-5 ml-4 text-center" >
+                        <button class="bi bi-three-dots loadmoreBtn" ></button>
+                    </div>    
                 </div>
                 
                 
 
             </div>
+            
             
         </div>
     </div>
@@ -172,7 +176,7 @@
             
 
             const postCardsHtmlParts = [`
-                <div class="row" id="${post.id}">
+                <div class="row postCard" id="${post.id}">
                     <div class="col-md-1 mr-2">
                         <img class="rounded-circle border border-2 shadow-sm"
                             style="border-color: gray"
@@ -300,21 +304,22 @@
                 `];
             return postCardsHtmlParts.join('');
         }
+        var pageNumb = 1;
         function fetchPosts(){
             $.ajax({
                 type: 'GET',
                 url: "{% url 'posts:all_posts_api' %}",
                 dataType: 'json',
-                success: (data, status) => {
+                success: (data, status) => {                   
                     // Get the latest post from the API
-                    var postLatestFromApi = data[0];
+                    var postLatestFromApi = data.posts[0];
                     // Get the latest post from the DOM
                     var rootFirstChild = document.getElementById("my_node").firstChild;
                     var postLatestElement = rootFirstChild ? rootFirstChild.nextElementSibling : null;
                     var postLatestElementId = postLatestElement ? postLatestElement.id : "empty";
                     if (postLatestElementId == "empty") {
                         var postCardsHtml = '';
-                        data.map(post => {
+                        data.posts.map(post => {
                             postCardsHtml += createPostCard(post);
                             
                         });
@@ -322,6 +327,7 @@
                     }
                     else if (postLatestElementId != postLatestFromApi.id) {
                         console.log(postLatestElement)
+                        
                         var rootElement = document.getElementById("my_node")
                         rootElement.innerHTML = createPostCard(postLatestFromApi) + rootElement.innerHTML
                     }
@@ -338,7 +344,41 @@
                 
             });
             
-
+            
+           
+            $(document).ready(function OnClickLoadMore(){
+                $(".loadmoreBtn").off('click').on('click', function(){
+                    console.log("clicked");
+                    pageNumb++;
+                   
+                    $.ajax({
+                        type: 'GET',
+                        url: "{% url 'posts:all_posts_api' %}",
+                        data: {
+                            page: pageNumb,
+                        },
+                        dataType: 'json',
+                        success: (data, status) => {                   
+                            console.log(data.posts);
+                            console.log(pageNumb);
+                            
+                            var postCardsHtml = '';
+                            data.posts.map(post => {
+                                postCardsHtml += createPostCard(post);
+                            });
+                            document.getElementById("my_node").innerHTML += postCardsHtml;
+                            var countPosts =  $(".postCard").length;
+                            if (countPosts == data.count) {
+                                $(".loadmoreBtn").remove();
+                                
+                            }
+                        },
+                        error: (error) => {
+                            console.log(error);
+                        }
+                    });
+                })
+            });
             $(document).ready(function ClickOnComment(){
             $(".save-comment").off('click').on('click', function(){
                 var _postid=$(this).data('answer')
@@ -354,7 +394,6 @@
                         csrfmiddlewaretoken:"{{csrf_token}}"
                     },
                     dataType: 'json',
-                    
                     success:function(res){
                         if(res.bool==true){
                             $(".comment-text-postID".replace("postID", _postid)).val('')
@@ -383,11 +422,11 @@
         })
         
         setTimeout(fetchPosts, 5000);
-            
         }
+        
         fetchPosts();
-
-
+        
+        
         
        
 
