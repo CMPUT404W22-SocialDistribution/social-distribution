@@ -325,9 +325,7 @@
                         });
                         document.getElementById("my_node").innerHTML += postCardsHtml;
                     }
-                    else if (postLatestElementId != postLatestFromApi.id) {
-                        console.log(postLatestElement)
-                        
+                    else if (postLatestElementId != postLatestFromApi.id) {                        
                         var rootElement = document.getElementById("my_node")
                         rootElement.innerHTML = createPostCard(postLatestFromApi) + rootElement.innerHTML
                     }
@@ -348,7 +346,7 @@
            
             $(document).ready(function OnClickLoadMore(){
                 $(".loadmoreBtn").off('click').on('click', function(){
-                    console.log("clicked");
+                   
                     pageNumb++;
                    
                     $.ajax({
@@ -359,8 +357,6 @@
                         },
                         dataType: 'json',
                         success: (data, status) => {                   
-                            console.log(data.posts);
-                            console.log(pageNumb);
                             
                             var postCardsHtml = '';
                             data.posts.map(post => {
