@@ -1,3 +1,4 @@
+from email import header
 from gzip import BadGzipFile
 from urllib import response
 import commonmark
@@ -245,24 +246,55 @@ def RemotePostsAPI(request):
     for node in Node.objects.all():
         # Team 8
         if node.host == 'https://project-socialdistribution.herokuapp.com/':
+            # get all authors of the remote node
             authors_url = node.host + 'api/authors/'
             response = requests.get(authors_url, headers=HEADERS, auth=(node.outgoing_username, node.outgoing_password))
             if response.status_code == 200:
                 remote_authors = []
                 team8_authors = response.json()['results']
                 for author in team8_authors:
-                    remote_authors.append(str(author["id"]))
+                    new_id = str(author["id"])
+                    remote_authors.append(new_id.split('/')[-2])
             
-            for id in remote_authors:
-                posts_url = node.host + 'api/authors' + id + '/posts/'
+            for author_id in remote_authors:
+                # for each author, get all of their posts 
+                posts_url = node.host + 'api/authors' + author_id + '/posts/'
                 response = requests.get(posts_url, headers=HEADERS, auth=(node.outgoing_username, node.outgoing_password))
                 
                 if response.status_code == 200:
-                    team8_posts = response.json()['results']
+                    team8_posts = response.json()['items']
                     for post in team8_posts:
                         if post['visibility'] == 'PUBLIC':
                             # Need Comment API to create comment objects
                             # need to convert categories, comments to arr
+                            
+                            # for each post, get all comments
+                            # comments_url = str(post["comments"]) commented out since T08 hasn't have this field set yet
+                            comments = []
+                            post_id = str(post["id"])
+                            comments_url = node.host + 'api/authors' + author_id + '/posts/' + post_id +'/comments/'
+                            res = requests.get(comments_url, header=HEADERS, auth=(node.outgoing_username, node.outgoing_password))
+                            if res.status_code == 200:
+                                post_comments =  response.json['items']
+                                for comment in post_comments:
+                                    comment_id = str(comment["id"]).split('/')[-2]
+                                    comment_data = {
+                                        'author': {
+                                            'id': comment["author"]["id"],
+                                            'host': comment["author"]["host"],
+                                            'displayName': comment["author"]["displayName"],
+                                            'profileImage': 'profile_picture.png',
+                                            'url': comment["author"]["url"]
+                                        },
+                                        'author_displayName' : comment["author"]["displayName"],
+                                        'comment': comment["comment"],
+                                        'contentType': comment["contentType"],
+                                        'published': comment["published"],
+                                        'id': comment_id
+                                    }
+                                    comments.append(comment_data)
+                            
+                            # post with comments
                             post_data = {
                                 'author_username' : post["author"]["displayName"],
                                 'author_displayName' : post["author"]["displayName"],
@@ -273,16 +305,45 @@ def RemotePostsAPI(request):
                                 'content_type' : post["contentType"],
                                 'content' : post["content"],
                                 'author' : post["author"]["id"],
-                                'categories': [],
+                                'categories': post["categories"],
                                 'published': post["published"],
                                 'visibility': 'public',
                                 'unlisted': post['unlisted'],
                                 'author_image': "profile_picture.png",
                                 'comments': '',
-                                'commentsSrc': []
+                                'commentsSrc': comments
                             }
                             remote_posts.append(post_data)
+
                         elif post['visibility'] == 'FRIENDS' and id in request.user.remote_friends:
+                            # get all friends posts of my remote friend
+                            friend_url = node.host + '/authors/' + id +'/'
+                            # for each post, get my comments and the friend's comments only
+                            # comments_url = str(post["comments"]) commented out since T08 hasn't have this field set yet
+                            comments = []
+                            post_id = str(post["id"])
+                            comments_url = node.host + 'api/authors' + author_id + '/posts/' + post_id +'/comments/'
+                            res = requests.get(comments_url, header=HEADERS, auth=(node.outgoing_username, node.outgoing_password))
+                            if res.status_code == 200:
+                                post_comments =  response.json['items']
+                                for comment in post_comments:
+                                    comment_id = str(comment["id"]).split('/')[-2]
+                                    if str(comment["author"]["url"]) == request.user.author.url or str(comment["author"]["url"])== friend_url:                                    
+                                        comment_data = {
+                                            'author': {
+                                                'id': comment["author"]["id"],
+                                                'host': comment["author"]["host"],
+                                                'displayName': comment["author"]["displayName"],
+                                                'profileImage': 'profile_picture.png',
+                                                'url': comment["author"]["url"]
+                                            },
+                                            'author_displayName' : comment["author"]["displayName"],
+                                            'comment': comment["comment"],
+                                            'contentType': comment["contentType"],
+                                            'published': comment["published"],
+                                            'id': comment_id
+                                    }
+                                    comments.append(comment_data)
                             post_data = {
                                 'author_username' : post["author"]["displayName"],
                                 'author_displayName' : post["author"]["displayName"],
@@ -293,13 +354,13 @@ def RemotePostsAPI(request):
                                 'content_type' : post["contentType"],
                                 'content' : post["content"],
                                 'author' : post["author"]["id"],
-                                'categories': [],
+                                'categories': post["categories"],
                                 'published': post["published"],
                                 'visibility': 'friends',
                                 'unlisted': post['unlisted'],
                                 'author_image': "profile_picture.png",
                                 'comments': '',
-                                'commentsSrc': []
+                                'commentsSrc': comments
                             }
                             remote_posts.append(post_data)
 
