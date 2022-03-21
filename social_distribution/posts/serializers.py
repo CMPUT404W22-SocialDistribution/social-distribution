@@ -63,13 +63,17 @@ class PostSerializer(serializers.ModelSerializer):
 
 class CommentSerializer(serializers.ModelSerializer):
     author_displayName = serializers.SerializerMethodField('get_author_displayName')
+    num_likes = serializers.SerializerMethodField('get_num_likes')
 
     def get_author_displayName(self, obj):
         return obj.author.displayName
 
+    def get_num_likes(self, obj):
+        return Like.objects.filter(comment__id__exact=obj.id).count()
+
     class Meta:
         model = Comment
-        fields = ['type', 'author', 'author_displayName', 'comment', 'contentType', 'published', 'id']
+        fields = ['type', 'author', 'author_displayName', 'comment', 'contentType', 'published', 'id', 'num_likes']
 
     def __init__(self, *args, **kwargs):
         remove_fields = kwargs.pop('remove_fields', None)
@@ -93,7 +97,7 @@ class LikeSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = Like
-        fields = ['summary', 'type', 'author', 'object']
+        fields = ['summary', 'type', 'author', 'post', 'comment', 'object']
 
     @staticmethod
     def get_context():
