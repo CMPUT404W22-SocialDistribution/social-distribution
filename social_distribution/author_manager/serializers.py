@@ -1,4 +1,3 @@
-from dataclasses import field
 from rest_framework import serializers
 
 from posts.models import Like
@@ -30,12 +29,12 @@ class FriendRequestSerializer(serializers.ModelSerializer):
         if "actor" in response:
             actor = response["actor"]
             author = Author.objects.get(id=actor)
-        response["actor"] = ProfileSerializer(author, remove_fields=['user']).data
+            response["actor"] = ProfileSerializer(author, remove_fields=['user']).data
 
         if "object" in response:
             object = response["object"]
             author = Author.objects.get(id=object)
-        response["object"] = ProfileSerializer(author, remove_fields=['user']).data
+            response["object"] = ProfileSerializer(author, remove_fields=['user']).data
 
         return response
 
@@ -52,4 +51,6 @@ class LikeSerializer(serializers.ModelSerializer):
 class InboxSerializer(serializers.ModelSerializer):
     class Meta:
         model = Inbox
-        fields = ['follows', 'posts', 'comments', 'likes']
+        fields = ['item']  
+
+        
