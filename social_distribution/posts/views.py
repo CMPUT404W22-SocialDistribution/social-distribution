@@ -1,3 +1,5 @@
+from gzip import BadGzipFile
+from urllib import response
 import commonmark
 from django.contrib.auth.decorators import login_required
 from django.db.models import Q
@@ -8,12 +10,18 @@ from rest_framework import generics, authentication, permissions
 from rest_framework import status
 from rest_framework.response import Response
 from rest_framework.views import APIView
+from rest_framework.decorators import api_view
+import requests
 
 from author_manager.models import *
 from posts.forms import PostForm
 from .models import Post, Comment
 from .serializers import PostSerializer, CommentSerializer, LikeSerializer
+from node.models import Node
+from node.authentication import basic_authentication
 
+HEADERS = {'Referer': 'https://squawker-cmput404.herokuapp.com/', 'Mode': 'no-cors'}
+URL = 'https://squawker-cmput404.herokuapp.com/'
 
 @login_required
 def post_create(request, author_id):
@@ -228,7 +236,81 @@ class SearchView(ListView):
         return queryset
 
 
+@login_required
+@api_view()
+def RemotePostsAPI(request):
+    ''' API endpoint that gets all remote public and friend posts'''
+    # Team 8 hasn't had private posts yet 
+    remote_posts = []
+    for node in Node.objects.all():
+        # Team 8
+        if node.host == 'https://project-socialdistribution.herokuapp.com/':
+            authors_url = node.host + 'api/authors/'
+            response = requests.get(authors_url, headers=HEADERS, auth=(node.outgoing_username, node.outgoing_password))
+            if response.status_code == 200:
+                remote_authors = []
+                team8_authors = response.json()['results']
+                for author in team8_authors:
+                    remote_authors.append(str(author["id"]))
+            
+            for id in remote_authors:
+                posts_url = node.host + 'api/authors' + id + '/posts/'
+                response = requests.get(posts_url, headers=HEADERS, auth=(node.outgoing_username, node.outgoing_password))
+                
+                if response.status_code == 200:
+                    team8_posts = response.json()['results']
+                    for post in team8_posts:
+                        if post['visibility'] == 'PUBLIC':
+                            # Need Comment API to create comment objects
+                            # need to convert categories, comments to arr
+                            post_data = {
+                                'author_username' : post["author"]["displayName"],
+                                'author_displayName' : post["author"]["displayName"],
+                                'title' : post["title"],
+                                'id' : post["id"],
+                                'source' : post["source"],
+                                'origin' : "https://project-socialdistribution.herokuapp.com/",
+                                'content_type' : post["contentType"],
+                                'content' : post["content"],
+                                'author' : post["author"]["id"],
+                                'categories': [],
+                                'published': post["published"],
+                                'visibility': 'public',
+                                'unlisted': post['unlisted'],
+                                'author_image': "profile_picture.png",
+                                'comments': '',
+                                'commentsSrc': []
+                            }
+                            remote_posts.append(post_data)
+                        elif post['visibility'] == 'FRIENDS' and id in request.user.remote_friends:
+                            post_data = {
+                                'author_username' : post["author"]["displayName"],
+                                'author_displayName' : post["author"]["displayName"],
+                                'title' : post["title"],
+                                'id' : post["id"],
+                                'source' : post["source"],
+                                'origin' : "https://project-socialdistribution.herokuapp.com/",
+                                'content_type' : post["contentType"],
+                                'content' : post["content"],
+                                'author' : post["author"]["id"],
+                                'categories': [],
+                                'published': post["published"],
+                                'visibility': 'friends',
+                                'unlisted': post['unlisted'],
+                                'author_image': "profile_picture.png",
+                                'comments': '',
+                                'commentsSrc': []
+                            }
+                            remote_posts.append(post_data)
+
+        # Team 3
+        elif node.host == 'https://website404.herokuapp.com/':
+            pass
+
+    return JsonResponse({"posts": remote_posts}, status=200)
+
 class PostsAPI(APIView):
+    # local use
     '''
     API endpoint that gathers all public posts, friends posts, my posts to display in stream.
     
@@ -259,11 +341,12 @@ class PostsAPI(APIView):
         private_posts = Post.objects.filter(visibility="private", visibleTo=author.user, unlisted=False).order_by(
             '-published')
         my_posts = Post.objects.filter(author=author, unlisted=False).order_by('-published')
-        posts = public_posts | my_posts | friend_posts | private_posts
-        for post in posts:
+        local_posts = public_posts | my_posts | friend_posts | private_posts
+        
+        for post in local_posts:
             if post.content_type == 'text/markdown':
                 post.content = commonmark.commonmark(post.content)  # parse and render content of type markdown
-        serializer = PostSerializer(posts, many=True)
+        serializer = PostSerializer(local_posts, many=True)
         return Response(serializer.data, 200)
 
 
@@ -287,31 +370,45 @@ class MyPostsAPI(generics.GenericAPIView):
     permission_classes = [permissions.IsAuthenticated]
     serializer_class = PostSerializer
 
+    # local & remote
     def get(self, request, author_id):
+        local, remote = basic_authentication(request)
+        if not local and not remote:
+            return Response({'detail': 'Access denied'}, 401)
 
         author = Author.objects.get(id=author_id)
 
         posts = author.posts.filter().order_by('-published')
-        current_user = Author.objects.get(user=request.user)
-        if current_user.id != author.id:
-            # local 
+        if local: 
+            current_user = Author.objects.get(user=request.user)
+            if current_user.id != author.id:
+                # local 
+                posts = posts.filter(visibility='public', unlisted=False)
+
+            for post in posts:
+                if post.content_type == 'text/markdown':
+                    post.content = commonmark.commonmark(post.content)
+
+            serializer = PostSerializer(posts, many=True)
+            content = {
+                'current user': request.user.username,
+                'author': author.displayName,
+                'posts': serializer.data
+            }
+            return Response(content, 200)
+        
+        if remote:
             posts = posts.filter(visibility='public', unlisted=False)
-
-        for post in posts:
-            if post.content_type == 'text/markdown':
-                post.content = commonmark.commonmark(post.content)
-
-        serializer = PostSerializer(posts, many=True)
-        content = {
-            'current user': request.user.username,
-            'author': author.displayName,
-            'posts': serializer.data
-        }
-        return Response(content, 200)
+            for post in posts:
+                if post.content_type == 'text/markdown':
+                    post.content = commonmark.commonmark(post.content)
+            serializer = PostSerializer(posts, many=True)
+            return Response({'posts': serializer.data}, 200)
 
     def post(self, request, author_id):
         author = Author.objects.get(id=author_id)
-        if request.user.author != author:
+        local, remote = basic_authentication(request)
+        if not local or request.user.author != author:
             return Response({'detail': 'Access denied'}, 401)
 
         post = Post.objects.create(author=author)
@@ -354,20 +451,35 @@ class PostDetailAPI(generics.GenericAPIView):
     serializer_class = PostSerializer
 
     def get(self, request, author_id, post_id):
-        # TODO: remote
-        current_user = request.user
-        if current_user.author.id == author_id:
-            post = get_object_or_404(Post, id=post_id)
-        else:
-            post = get_object_or_404(Post, id=post_id, visibility='public')
+        local, remote = basic_authentication(request)
+        if not local and not remote:
+            return Response({'detail': 'Access denied'}, 401)
+        
+        if local:
+            # local user 
+            current_user = request.user
+            if current_user.author.id == author_id:
+                post = get_object_or_404(Post, id=post_id)
+            else:
+                post = get_object_or_404(Post, id=post_id, visibility='public')
 
-        if post:
-            serializer = PostSerializer(post)
-            return Response(serializer.data, 200)
-        return Response({'detail': 'Not Found!'}, 404)
+            if post:
+                serializer = PostSerializer(post)
+                return Response(serializer.data, 200)
+            return Response({'detail': 'Not Found!'}, 404)
+        if remote: 
+            post = get_object_or_404(Post, id=post_id, visibility='public')
+            if post:
+                serializer = PostSerializer(post)
+                return Response(serializer.data, 200)
+            return Response({'detail': 'Not Found!'}, 404)
 
     def post(self, request, author_id, post_id):
         # update post
+        local, remote = basic_authentication(request)
+        if not local:
+            return Response({'detail': 'Access denied'}, 401)
+
         try:
             post = get_object_or_404(Post, id=post_id)
         except Post.DoesNotExist:
@@ -391,6 +503,10 @@ class PostDetailAPI(generics.GenericAPIView):
                 return Response(serializer.errors, 400)
 
     def delete(self, request, author_id, post_id):
+        local, remote = basic_authentication(request)
+        if not local:
+            return Response({'detail': 'Access denied'}, 401)
+
         try:
             post = get_object_or_404(Post, id=post_id)
         except Post.DoesNotExist:
@@ -408,6 +524,10 @@ class PostDetailAPI(generics.GenericAPIView):
             return Response({'detail': 'Current user is not authorized to do this operation'}, 401)
 
     def put(self, request, author_id, post_id):
+        local, remote = basic_authentication(request)
+        if not local:
+            return Response({'detail': 'Access denied'}, 401)
+
         current_user = request.user
         if not current_user.author.id == author_id:
             return Response({'detail': 'Current user is not authorized to do this operation'}, 401)

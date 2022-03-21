@@ -7,10 +7,14 @@ INCOMING_USERNAME = 'cmput404'
 INCOMING_PASSWORD = 'cmput404'
 
 def basic_authentication(request):
-    if Author.objects.filter(user=request.user).exists():
-        return True
-    else:
-        try:
+    # local authentication
+    local, remote = False, False
+    try:
+        # local authentication
+        if Author.objects.filter(user=request.user).exists():
+            local = True
+            return local, remote
+        else:
             remote_url = request.META['HTTP_REFERER']
             remote_node = Node.objects.get(url=remote_url)
             auth_header = request.META['HTTP_AUTHORIZATION']
@@ -20,9 +24,10 @@ def basic_authentication(request):
             username, password = decoded_credentials.split(':')
 
             if username == INCOMING_USERNAME and password == INCOMING_PASSWORD:
-                return True
+                remote = True
+                return local, remote
             else:
-                return False
-        except:
-            return False
+                return local, remote
+    except:
+        return local, remote
     

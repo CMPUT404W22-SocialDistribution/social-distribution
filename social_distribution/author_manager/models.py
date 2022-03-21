@@ -3,7 +3,7 @@ import uuid
 
 from django.contrib.auth.models import User
 from django.db import models
-
+from django.core.validators import int_list_validator
 
 class Author(models.Model):
     def short_uuid():
@@ -32,6 +32,8 @@ class Author(models.Model):
     followings = models.ManyToManyField('self', symmetrical=False, blank=True, related_name='my_followings')
     followers = models.ManyToManyField('self', symmetrical=False, blank=True, related_name='my_followers')
 
+    # list of remote friends' id
+    remote_friends = models.TextField(validators=[int_list_validator], null=True, blank=True)
     def __str__(self):
         return self.displayName
 
