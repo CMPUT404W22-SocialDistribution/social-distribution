@@ -516,8 +516,8 @@ class MyPostsAPI(generics.GenericAPIView):
             for post in post_data:
                 post['id'] = author.url + '/posts/' + post['id']
                 post['author']['id'] = author.url
-                
-            return Response({'posts': serializer.data}, 200)
+
+            return Response({'posts': post_data}, 200)
 
     def post(self, request, author_id):
         author = Author.objects.get(id=author_id)
