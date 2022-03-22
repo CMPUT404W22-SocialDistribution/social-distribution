@@ -15,11 +15,9 @@ def basic_authentication(request):
             local = True
             return local, remote
         else:
-            remote_url = request.META['HTTP_REFERER']
-            remote_node = Node.objects.get(url=remote_url)
             auth_header = request.META['HTTP_AUTHORIZATION']
 
-            encoded_credentials = auth_header.split(' ')[1]  # remove 'Basic'
+            encoded_credentials = auth_header.split(' ')[-1]  # remove 'Basic'
             decoded_credentials = base64.b64decode(encoded_credentials).decode('utf-8')
             username, password = decoded_credentials.split(':')
 
