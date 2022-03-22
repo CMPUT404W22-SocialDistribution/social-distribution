@@ -78,10 +78,18 @@ aria-controls="collapseExample">
             {% endif %}
         </div>
         <div class="card-footer">
-            <a href="#" class="card-link text-muted" style="text-decoration: none;"><i class="fa-solid fa-thumbs-up"></i> Like</a>
-            
-            <a class="card-link text-muted" style="text-decoration: none;" 
-                data-bs-toggle="collapse" 
+            <a href="#" class="card-link text-muted" style="text-decoration: none;" onclick="postLike('{{ post.id }}')"><i class="fa-solid fa-thumbs-up"></i>
+                {% if numLikes > 1 %}
+                    {{ numLikes }}&nbsp;Likes
+                {% elif numLikes > 0 %}
+                    {{ numLikes }}&nbsp;Like
+                {% else %}
+                    Like
+                {% endif %}
+            </a>
+
+            <a class="card-link text-muted" style="text-decoration: none;"
+                data-bs-toggle="collapse"
                 href="#collapseComments"
                 aria-expanded="false"  >
                 <i class="fa-solid fa-comment-dots"></i> Comment</a>
@@ -97,24 +105,38 @@ aria-controls="collapseExample">
                     </div>
             </div>
             <div class=" card justify-content-center pb-2 comment-wrapper">
-                
+
                 {% for comment in comments %}
                 {%  if  post.visibility  != "friends" %}
                 <div class=" justify-content-center py-2">
                     <div class="pb-2 px-2 mx-2"
-                        style="background-color: #00000008; box-shadow: 5px 5px 2px #cccccc;">  
+                        style="background-color: #00000008; box-shadow: 5px 5px 2px #cccccc;">
                         <p class="card-text"> {{comment.comment}}</p>
                         <div class=" d-flex justify-content-between py-1 pt-2" style="font-size: 13px";>
                             <span ><a href="{% url 'author_manager:profile' comment.author.id %}">
-                                {{comment.author}}</a></span>
+                                {{comment.author.displayName}}</a></span>
                             <span>{{comment.published}} </span>
+                            <div><a href="javascript:void(0)" class="card-link text-muted"
+                                    style="text-decoration: none;"
+                                    onclick="postLike('{{ post.id }}', '{{ comment.id }}')">
+                                 <i class="fa-solid fa-thumbs-up"></i>
+                                 <span>
+                                 {% if comment.num_likes > 1 %}
+                                    {{ comment.num_likes }} Likes
+                                 {% elif comment.num_likes > 0 %}
+                                    {{ comment.num_likes }} Like
+                                 {% else %}
+                                    Like
+                                 {% endif %}
+                                 </span>
+                            </a></div>
                         </div>
                     </div>
                 </div>
                 {% elif post.author.id == request.user.author.id or comment.author.id ==  request.user.author.id or comment.author.id == post.author.id %}
                 <div class=" justify-content-center py-2">
                     <div class="pb-2 px-2 mx-2"
-                        style="background-color: #00000008; box-shadow: 5px 5px 2px #cccccc;">  
+                        style="background-color: #00000008; box-shadow: 5px 5px 2px #cccccc;">
                         <p class="card-text"> {{comment.comment}}</p>
                         <div class=" d-flex justify-content-between py-1 pt-2" style="font-size: 13px";>
                             <span ><a href="{% url 'author_manager:profile' comment.author.id %}">
@@ -123,13 +145,13 @@ aria-controls="collapseExample">
                         </div>
                     </div>
                 </div>
-                   
+
                 {% endif %}
-                {% endfor %}           
-                    
-                
+                {% endfor %}
+
+
             </div>
-                            
+
         </div>
     </div>
     </div>
@@ -138,7 +160,7 @@ aria-controls="collapseExample">
     window.addEventListener('DOMContentLoaded', (event) => {
         // Inject bootstrap class card-img-bottom to constrain inline image size
         let postContentInlineImg = document.querySelector("#post-content img:not(.card-img-bottom)");
-        postContentInlineImg.classList.add('card-img-bottom');
+        postContentInlineImg?.classList.add('card-img-bottom');
     });
 
 
@@ -155,7 +177,7 @@ aria-controls="collapseExample">
             $(".save-comment").off('click').on('click', function(){
                 var _postid=$(this).data('answer')
                 var _comment=$(".comment-text").val();
-                
+
                 // AJX
                 $.ajax({
                     url:"/authors/{{user.author.id}}/posts/postid/comments".replace("postid", _postid),
@@ -166,32 +188,84 @@ aria-controls="collapseExample">
                         csrfmiddlewaretoken:"{{csrf_token}}"
                     },
                     dataType: 'json',
-                    
+
                     success:function(res){
                         if(res.bool==true){
                             $(".comment-text").val('')
 
                             // Added new comment
                             var _url = "{% url 'author_manager:profile' user.author.id%}";
-                            var _html=' <div class=" justify-content-center py-2">\
-                                                <div class="pb-2 px-2 mx-2" \
-                                                style="background-color: #00000008; box-shadow: 5px 5px 2px #cccccc;" \
-                                                >  <span class="card-text"> '+_comment+'</span> \
-                                                    <div class="d-flex justify-content-between py-1 pt-2" style="font-size: 13px";> \
-                                                        <span ><a href='+_url+'> \
-                                                        {{request.user.author}}</a></span> \
-                                                        <span>'+Timestamp(res.published)+'</span> \
-                                                    </div> \
-                                                </div> \
+                            var _html = `<div class=" justify-content-center py-2">
+                                                <div class="pb-2 px-2 mx-2"
+                                                     style="background-color: #00000008; box-shadow: 5px 5px 2px #cccccc;">
+                                                    <span class="card-text">${_comment}</span>
+                                                    <div class="d-flex justify-content-between py-1 pt-2" style="font-size: 13px";>
+                                                        <span ><a href='${_url}'>{{request.user.author}}</a></span>
+                                                        <span>${Timestamp(res.published)}</span>
+                                                        <div>
+                                                            <a href="javascript:void(0)" class="card-link text-muted"
+                                                               style="text-decoration: none;" onclick="postLike('${_postid}', '${res.id}')">
+                                                               <i class="fa-solid fa-thumbs-up"></i>&nbsp;<span>Like</span></a>
+                                                        </div>
+                                                    </div>
+                                                </div>
                                         </div> \
-                                        ';
-                            
+                                        `;
+
                             $(".comment-wrapper").prepend(_html);
                         }
                         $(".save-comment").removeClass('disabled');
                     }
                 })
-            }) 
+            })
         })
+
+    function getNumLikesText(numLikes) {
+        let text = "Like";
+        if (numLikes > 1) {
+            text = `${numLikes} Likes`;
+        } else if (numLikes > 0) {
+            text = `${numLikes} Like`;
+        }
+        return text;
+    }
+
+    async function postLike(postId, commentId) {
+        await fetch('{% url 'author_manager:like_api' user.author.id %}', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRFToken': '{{ csrf_token }}'
+            },
+            body: JSON.stringify({
+                summary: '{{ request.user.author }} Liked your '.concat(commentId ? 'comment' : 'post'),
+                author: '{{ request.user.author.id }}',
+                post: postId,
+                comment: commentId ?? null
+            })
+        })
+            .then(response => {
+                if (response.status === 200) {
+                    return response.json();
+                }
+            })
+            .then(data => {
+                if (!data) {
+                    return;
+                }
+                const numLikesRegex = /\d+/;
+                if (data.comment) {
+                    const commentLikeSpan = document.querySelector(
+                        `a[onclick="postLike('${postId}', '${commentId}')"]>span`);
+                    const numLikes = parseInt(commentLikeSpan.innerText.match(numLikesRegex)) || 0;
+                    commentLikeSpan.innerText = getNumLikesText(numLikes + 1);
+                } else {
+                    const postLikeSpan = document.querySelector(
+                        `a[onclick="postLike('${postId}')"]>span`);
+                    const numLikes = parseInt(postLikeSpan.innerText.match(numLikesRegex)) || 0;
+                    postLikeSpan.innerText = getNumLikesText(numLikes + 1);
+                }
+            });
+    }
 </script>
 {% endblock %}

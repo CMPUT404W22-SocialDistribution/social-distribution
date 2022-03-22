@@ -15,7 +15,7 @@ from rest_framework.pagination import PageNumberPagination
 from rest_framework.parsers import JSONParser
 
 import requests
-import datetime 
+import datetime
 from posts.models import Comment
 
 from rest_framework.response import Response
@@ -217,8 +217,12 @@ def inbox_view(request, id):
     if request.method == "GET":
         # follow request
         inbox = Inbox.objects.get(author=current_author)
-        return render(request, 'inbox/inbox.html', {'follows' : inbox.follows.all(), 'posts': inbox.posts.all(), 'comments': inbox.comments.all()})
-    
+        return render(request, 'inbox/inbox.html', {
+            'follows': inbox.follows.all(),
+            'posts': inbox.posts.all(),
+            'comments': inbox.comments.all(),
+            'likes': inbox.likes.all().order_by('-id')
+        })
 
     if request.method == "POST":
         # Accept follow request -> follow back-> true friends
@@ -502,6 +506,23 @@ class LikeAPI(APIView):
         inbox = get_object_or_404(Inbox, author__exact=author_id)
         serializer = LikeSerializer(data=request.data)
         if serializer.is_valid():
+            post = serializer.validated_data['post']
+
+            if 'comment' in serializer.validated_data and serializer.validated_data['comment'] is not None:
+                comment = serializer.validated_data['comment']
+                like_query_set = Like.objects.filter(author__id__exact=author_id,
+                                                     post__id__exact=post.id,
+                                                     comment__id__exact=comment.id)
+            else:
+                like_query_set = Like.objects.filter(author__id__exact=author_id,
+                                                     post__id__exact=post.id,
+                                                     comment__id__isnull=True)
+
+            # Do not like the same object twice
+            if like_query_set:
+                return Response(LikeSerializer().to_representation(like_query_set[0]),
+                                status=status.HTTP_204_NO_CONTENT)
+
             serializer.save()
             # Send like object to other user's inbox
             inbox.likes.add(serializer.instance.id)

@@ -16,7 +16,7 @@ import requests
 
 from author_manager.models import *
 from posts.forms import PostForm
-from .models import Post, Comment
+from .models import Post, Comment, Like
 from .serializers import PostSerializer, CommentSerializer, LikeSerializer
 from node.models import Node
 from node.authentication import basic_authentication
@@ -77,7 +77,7 @@ def post_create(request, author_id):
                 visible_user = User.objects.get(username=visible_follower)
                 notify_user = Author.objects.get(user=visible_user)
                 notify_user.inbox.posts.add(post)
-                
+
             return redirect('posts:post_detail', author_id, post.id)
         else:
             # if form is invalid, return the same html page
@@ -147,6 +147,8 @@ def post_detail(request, author_id, post_id):
         # current_user = Author.objects.get(user=user)
         author = Author.objects.get(id=author_id)
         post = get_object_or_404(Post, id=post_id)
+        numLikes = Like.objects.filter(post__id__exact=post.id, comment__id__isnull=True).count()
+
         # check if logged in user is author of post
         if request.user.author == author:
             isAuthor = True
@@ -159,7 +161,8 @@ def post_detail(request, author_id, post_id):
                     context = {
                         "comments": comments,
                         "post": post,
-                        "isAuthor": isAuthor
+                        "isAuthor": isAuthor,
+                        "numLikes": numLikes
                     }
                     return render(request, 'posts/post_detail.html', context)
                 else:
@@ -174,12 +177,13 @@ def post_detail(request, author_id, post_id):
                     return render(request, 'posts/post_create.html', {'error': error}, status=404)
         if post.content_type == 'text/markdown':
             post.content = commonmark.commonmark(post.content)
-        comments = post.commentsSrc.all().order_by('-published')
+        comments = CommentSerializer(post.commentsSrc.all().order_by('-published'), many=True).data
 
         context = {
             "comments": comments,
             "post": post,
-            "isAuthor": isAuthor
+            "isAuthor": isAuthor,
+            "numLikes": numLikes
         }
         return render(request, 'posts/post_detail.html', context)
 
@@ -627,15 +631,15 @@ def create_comment(request, author_id, post_id):
         post=Post.objects.get(id=postID) # Obtain the instance
         postAuthor = post.author
         author = Author.objects.get(user=request.user) # Obtain the instance
-        
+
         comment = Comment.objects.create(author=author, post=post, comment=comment)
 
         # Add comment to post author's inbox
         if (author.id != postAuthor.id):
             postAuthor.inbox.comments.add(comment)
         # postAuthor.inbox.comments.remove(comment)
-                
-        return JsonResponse({"bool":True, 'published': comment.published})
+
+        return JsonResponse({"bool":True, 'published': comment.published, 'id': comment.id})
 
 
 class CommentsAPI(APIView):
@@ -715,7 +719,7 @@ class CommentLikesAPI(generics.GenericAPIView):
     serializer_class = LikeSerializer
 
     def get(self, request, author_id, post_id, comment_id):
-        comment = get_object_or_404(Comment, id=comment_id, commentsSrc__exact=post_id, author__exact=author_id)
+        comment = get_object_or_404(Comment, id=comment_id, post__exact=post_id, author__exact=author_id)
         likes = comment.likes.all()
         serializer = self.serializer_class(likes, many=True)
         return Response(

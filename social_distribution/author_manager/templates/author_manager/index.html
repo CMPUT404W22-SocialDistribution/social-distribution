@@ -20,25 +20,26 @@
                 <div class="card shadow-sm">
                     <div class="card-body">
                         <div class="d-flex flex-column align-items-center text-center">
-                            <img class="rounded-circle border border-secondary" width="150" src="{% static 'img/'|add:author.profileImage %}" alt="profile picture">
+                            <img class="rounded-circle border border-secondary" width="150"
+                                 src="{% static 'img/'|add:author.profileImage %}" alt="profile picture">
                             <div class="mt-4">
-                                <div class="h3 m-0">@{{user.username}}</div>
-                                <div class="h5 text-muted">{{author.displayName}}</div>
+                                <div class="h3 m-0">@{{ user.username }}</div>
+                                <div class="h5 text-muted">{{ author.displayName }}</div>
                             </div>
                         </div>
                     </div>
-                    <div class="card-footer" >
+                    <div class="card-footer">
                         <div class="row">
-                            <div class="col border-end"> 
+                            <div class="col border-end">
                                 <p class="text-center h6 mt-2 mb-1">{{ author.followings.all.count }}</p>
                                 <p class="text-center h7">Following</p>
                             </div>
-                            <div class="col border-end"> 
+                            <div class="col border-end">
                                 <p class="text-center h6 mt-2 mb-1">{{ author.followers.all.count }}</p>
                                 <p class="text-center h7">Followers</p>
                             </div>
                             <div class="col">
-                                <p class="text-center h6 mt-2 mb-1">{{ friends_count}}</p>
+                                <p class="text-center h6 mt-2 mb-1">{{ friends_count }}</p>
                                 <p class="text-center h7">Friends</p>
                             </div>
                         </div>
@@ -52,18 +53,18 @@
                         <div class="row">
                             <div class="col-md-1">
                                 <img class="rounded-circle"
-                                    width="50"
-                                    src="{% static 'img/3.svg' %}"
-                                    alt="profile picture">
-                                    <p class="text-end"><i class="fa-solid fa-turn-up fa-rotate-90 text-muted mt-2"></i></p>
-                                    
+                                     width="50"
+                                     src="{% static 'img/3.svg' %}"
+                                     alt="profile picture">
+                                <p class="text-end"><i class="fa-solid fa-turn-up fa-rotate-90 text-muted mt-2"></i></p>
+
                             </div>
                             <div class="col-md-9 mb-3">
                                 <div class="card shadow-sm">
                                     <div class="card-header">
                                         <div class="d-flex justify-content-between align-items-center">
                                             <a href="{% url 'author_manager:profile' user.author.id %}"
-                                                style="color:black;
+                                               style="color:black;
                                                         text-decoration: none;">
                                                 <div class="d-flex justify-content-between align-items-center">
                                                     <div class="h6 m-0 text-muted">@chicken</div>
@@ -93,46 +94,50 @@
                                             <i class="fa-solid fa-calendar-day"> </i><i>&nbsp;&nbsp;Feb 22 2022 10:46 PM</i>
                                         </div>
                                         <p>
-                                            <p class="card-text fs-5 fw-light">
-                                                Hello World! <a class="fs-6 text-muted"
-                        data-bs-toggle="collapse"
-                        href="#collapseExample-abc"
-                        role="button"
-                        aria-expanded="false"
-                        aria-controls="collapseExample-abc">
-                                                <i class="fa-solid fa-angle-down"></i>
-                                            </a>
+                                        <p class="card-text fs-5 fw-light">
+                                            Hello World! <a class="fs-6 text-muted"
+                                                            data-bs-toggle="collapse"
+                                                            href="#collapseExample-abc"
+                                                            role="button"
+                                                            aria-expanded="false"
+                                                            aria-controls="collapseExample-abc">
+                                            <i class="fa-solid fa-angle-down"></i>
+                                        </a>
                                         </p>
-                                    </p>
-                                    <div class="collapse" id="collapseExample-abc">
-                                        <div class="card card-body">
-                                            <p>
-                                                Source: <a href="{{ post.source }}" target="_blank">{{ post.source }}</a>
-                                            </p>
-                                            <p>
-                                                Origin: <a href="{{ post.origin }}" target="_blank">{{ post.origin }}</a>
-                                            </p>
+                                        </p>
+                                        <div class="collapse" id="collapseExample-abc">
+                                            <div class="card card-body">
+                                                <p>
+                                                    Source: <a href="{{ post.source }}"
+                                                               target="_blank">{{ post.source }}</a>
+                                                </p>
+                                                <p>
+                                                    Origin: <a href="{{ post.origin }}"
+                                                               target="_blank">{{ post.origin }}</a>
+                                                </p>
+                                            </div>
                                         </div>
                                     </div>
+                                    <div class="card-footer">
+                                        <a href="#" class="card-link text-muted" style="text-decoration: none;"><i
+                                                class="fa-solid fa-thumbs-up"></i>&nbsp;<span>Like</span></a>
+                                        <a href="#" class="card-link text-muted" style="text-decoration: none;"><i
+                                                class="fa-solid fa-comment-dots"></i> Comment</a>
+                                        <a href="#" class="card-link text-muted" style="text-decoration: none;"><i
+                                                class="fa-solid fa-retweet"></i> Share</a>
+
+                                    </div>
+
                                 </div>
-                                <div class="card-footer">
-                                    <a href="#" class="card-link text-muted" style="text-decoration: none;"><i class="fa-solid fa-thumbs-up"></i> Like</a>
-                                    <a href="#" class="card-link text-muted" style="text-decoration: none;"><i class="fa-solid fa-comment-dots"></i> Comment</a>
-                                    <a href="#" class="card-link text-muted" style="text-decoration: none;"><i class="fa-solid fa-retweet"></i> Share</a>
-                                    
-                                </div>
-                               
-                            </div>
                             </div>
                         </div>
                         <br>
                     </div>
                 </div>
-                
-                
+
 
             </div>
-            
+
         </div>
     </div>
 
@@ -146,7 +151,8 @@
                 minute: 'numeric', // numeric, 2-digit
             });
         }
-        function createPostCard(post){
+
+        function createPostCard(post) {
             var postTimestamp = new Date(post.published).toLocaleString('en-US', {
                 weekday: 'short', // long, short, narrow
                 day: 'numeric', // numeric, 2-digit
@@ -155,7 +161,7 @@
                 hour: 'numeric', // numeric, 2-digit
                 minute: 'numeric', // numeric, 2-digit
             });
-            
+
             var postVisibility = post.visibility;
             var postVisibilityIcon = "";
             switch (postVisibility) {
@@ -169,8 +175,6 @@
                     postVisibilityIcon = `<i class="card-link fa-solid text-primary fa-user-group"></i>`;
                     break;
             }
-            
-
             const postCardsHtmlParts = [`
                 <div class="row" id="${post.id}">
                     <div class="col-md-1 mr-2">
@@ -180,7 +184,7 @@
                             src="/static/img/${post.author_image}"
                             alt="profile picture">
                             <p class="text-end"><i class="fa-solid fa-turn-up fa-rotate-90 text-muted mt-2"></i></p>
-                            
+
                     </div>
                     <div class="col-md-9 mb-3 ml-1">
                         <div class="card shadow-sm">
@@ -228,15 +232,15 @@
                 `
                             </div>
                             <div class="card-footer">
-                                <a href="#" class="card-link text-muted" style="text-decoration: none;"><i class="fa-solid fa-thumbs-up"></i> Like</a>
+                                <a href="javascript:void(0)" class="card-link text-muted" style="text-decoration: none;"
+                                   onclick="postLike('${post.id}')"><i class="fa-solid fa-thumbs-up"></i>
+                                   <span>${getNumLikesText(post.num_likes)}</span></a>
 
-                                <a class="card-link text-muted" style="text-decoration: none;" 
-                                data-bs-toggle="collapse" 
+                                <a class="card-link text-muted" style="text-decoration: none;"
+                                data-bs-toggle="collapse"
                                 href="#collapseComments-${post.id}"
-                                aria-expanded="false"  
-                                >
+                                aria-expanded="false">
                                 <i class="fa-solid fa-comment-dots"></i> comment</a>
-
                                 <a href="#" class="card-link text-muted" style="text-decoration: none;"><i class="fa-solid fa-retweet"></i> Share</a>
                             </div>
                         </div>
@@ -245,28 +249,31 @@
                             <div class="card  " >
                                     <div class= " input-group ">
                                         <textarea  placeholder="Type your comment here" rows="1" class="form-control comment-text-${post.id}" ></textarea>
-            
+
                                         <button type="submit" data-answer="${post.id}" class="btn-floating save-comment"><i class="bi bi-plus"></i> </button>
                                     </div>
                             </div>
                             <div class=" card justify-content-center pb-2 comment-wrapper-${post.id}">
-                                
-                                    
-                                        ${post.commentsSrc.comments.map( comment => {
-                                            if ( post.visibility != "friends" ) {
-                                                return `
-                                                <div class=" justify-content-center py-2">
-                                                    <div class="pb-2 px-2 mx-2"
-                                                    style="background-color: #00000008; box-shadow: 5px 5px 2px #cccccc;"
-                                                    >  <p class="card-text"> ${comment.comment}</p>
-                                                        <div class=" d-flex justify-content-between py-1 pt-2" style="font-size: 13px";>
-                                                            <span ><a href="/authors/${comment.author.id}">
-                                                            ${comment.author_displayName}</a></span>
-                                                            <span>${Timestamp(comment.published)} </span>
-                                                        </div>
-                                                    </div>
-                                                </div>
-                                                `
+                                ${post.commentsSrc.comments.map(comment =>{
+                    if ( post.visibility != "friends" ) {
+                                                return`<div class=" justify-content-center py-2">
+                                        <div class="pb-2 px-2 mx-2" style="background-color: #00000008;
+                                             box-shadow: 5px 5px 2px #cccccc;">
+                                            <p class="card-text"> ${comment.comment}</p>
+                                            <div class=" d-flex justify-content-between py-1 pt-2" style="font-size: 13px";>
+                                                <span><a href="/authors/${comment.author.id}">
+                                                    ${comment.author_displayName}
+                                                </a></span>
+                                                <span>${Timestamp(comment.published)} </span>
+                                                <div><a href="javascript:void(0)" class="card-link text-muted"
+                                                        style="text-decoration: none;"
+                                                        onclick="postLike('${post.id}', '${comment.id}')">
+                                                     <i class="fa-solid fa-thumbs-up"></i>
+                                                     <span> ${getNumLikesText(comment.num_likes)}</span>
+                                                </a></div>
+                                            </div>
+                                        </div>
+                                    </div>`
                                             }
                                             //current user is the author of that post, or current user is comment author or that comment belongs to post author
                                             else if ((post.author == `{{author.id}}`) || (comment.author.id == `{{author.id}}`) || (comment.author.id == post.author)) {
@@ -283,24 +290,20 @@
                                                         </div>
                                                     </div>
                                                     `
-                                                
-    
+
+
                                             }
-                                        }).join('')} 
-                                    
-                                
+                }).join('')}
                             </div>
-                                            
                         </div>
-                        
                     </div>
                 </div>
                 <br>
-                
                 `];
             return postCardsHtmlParts.join('');
         }
-        function fetchPosts(){
+
+        function fetchPosts() {
             $.ajax({
                 type: 'GET',
                 url: "{% url 'posts:all_posts_api' %}",
@@ -316,11 +319,10 @@
                         var postCardsHtml = '';
                         data.map(post => {
                             postCardsHtml += createPostCard(post);
-                            
+
                         });
                         document.getElementById("my_node").innerHTML += postCardsHtml;
-                    }
-                    else if (postLatestElementId != postLatestFromApi.id) {
+                    } else if (postLatestElementId != postLatestFromApi.id) {
                         console.log(postLatestElement)
                         var rootElement = document.getElementById("my_node")
                         rootElement.innerHTML = createPostCard(postLatestFromApi) + rootElement.innerHTML
@@ -328,71 +330,121 @@
 
                     // Inject bootstrap class card-img-bottom to constrain inline image sizes
                     document.querySelectorAll("#post-content img:not(.card-img-bottom)").forEach(postContentInlineImg =>
-                        postContentInlineImg.classList.add('card-img-bottom')
+                        postContentInlineImg?.classList.add('card-img-bottom')
                     );
                 },
                 error: (error) => {
                     console.log(error);
                 }
 
-                
+
             });
-            
 
-            $(document).ready(function ClickOnComment(){
-            $(".save-comment").off('click').on('click', function(){
-                var _postid=$(this).data('answer')
-                var _comment=$(".comment-text-postID".replace("postID", _postid)).val();
-                
-                // AJX
-                $.ajax({
-                    url:"/authors/{{user.author.id}}/posts/postid/comments".replace("postid", _postid),
-                    type: "post",
-                    data:{
-                        comment:_comment,
-                        post:_postid,
-                        csrfmiddlewaretoken:"{{csrf_token}}"
-                    },
-                    dataType: 'json',
-                    
-                    success:function(res){
-                        if(res.bool==true){
-                            $(".comment-text-postID".replace("postID", _postid)).val('')
 
-                            // Added new comment
-                            var _url = "{% url 'author_manager:profile' user.author.id%}";
-                            var _html=' <div class=" justify-content-center py-2">\
-                                                <div class="pb-2 px-2 mx-2" \
-                                                style="background-color: #00000008; box-shadow: 5px 5px 2px #cccccc;" \
-                                                >  <span class="card-text"> '+_comment+'</span> \
-                                                    <div class="d-flex justify-content-between py-1 pt-2" style="font-size: 13px";> \
-                                                        <span ><a href='+_url+'> \
-                                                        {{request.user.author}}</a></span> \
-                                                        <span>'+Timestamp(res.published)+'</span> \
-                                                    </div> \
-                                                </div> \
+            $(document).ready(function ClickOnComment() {
+                $(".save-comment").off('click').on('click', function () {
+                    var _postid = $(this).data('answer')
+                    var _comment = $(".comment-text-postID".replace("postID", _postid)).val();
+
+                    // AJX
+                    $.ajax({
+                        url: "/authors/{{user.author.id}}/posts/postid/comments".replace("postid", _postid),
+                        type: "post",
+                        data: {
+                            comment: _comment,
+                            post: _postid,
+                            csrfmiddlewaretoken: "{{csrf_token}}"
+                        },
+                        dataType: 'json',
+
+                        success: function (res) {
+                            if (res.bool == true) {
+                                $(".comment-text-postID".replace("postID", _postid)).val('')
+
+                                // Added new comment
+                                var _url = "{% url 'author_manager:profile' user.author.id%}";
+                                var _html = `<div class=" justify-content-center py-2">
+                                                <div class="pb-2 px-2 mx-2"
+                                                     style="background-color: #00000008; box-shadow: 5px 5px 2px #cccccc;">
+                                                    <span class="card-text">${_comment}</span>
+                                                    <div class="d-flex justify-content-between py-1 pt-2" style="font-size: 13px";>
+                                                        <span ><a href='${_url}'>{{request.user.author}}</a></span>
+                                                        <span>${Timestamp(res.published)}</span>
+                                                        <div>
+                                                            <a href="javascript:void(0)" class="card-link text-muted"
+                                                               style="text-decoration: none;" onclick="postLike('${_postid}', '${res.id}')">
+                                                               <i class="fa-solid fa-thumbs-up"></i>&nbsp;<span>Like</span></a>
+                                                        </div>
+                                                    </div>
+                                                </div>
                                         </div> \
-                                        ';
-                            
-                            $(".comment-wrapper-postID".replace("postID", _postid)).prepend(_html);
+                                        `;
+
+                                $(".comment-wrapper-postID".replace("postID", _postid)).prepend(_html);
+                            }
+                            $(".save-comment").removeClass('disabled');
                         }
-                        $(".save-comment").removeClass('disabled');
-                    }
+                    })
                 })
-            }) 
-        })
-        
-        setTimeout(fetchPosts, 5000);
-            
+            })
+
+            setTimeout(fetchPosts, 5000);
+
         }
+
         fetchPosts();
 
+        function getNumLikesText(numLikes) {
+            let text = "Like";
+            if (numLikes > 1) {
+                text = `${numLikes} Likes`;
+            } else if (numLikes > 0) {
+                text = `${numLikes} Like`;
+            }
+            return text;
+        }
 
-        
-       
+        async function postLike(postId, commentId) {
+            await fetch('{% url 'author_manager:like_api' user.author.id %}', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRFToken': '{{ csrf_token }}'
+                },
+                body: JSON.stringify({
+                    summary: '{{ request.user.author }} Liked your '.concat(commentId ? 'comment' : 'post'),
+                    author: '{{ request.user.author.id }}',
+                    post: postId,
+                    comment: commentId ?? null
+                })
+            })
+                .then(response => {
+                    if (response.status === 200) {
+                        return response.json();
+                    }
+                })
+                .then(data => {
+                    if (!data) {
+                        return;
+                    }
+                    const numLikesRegex = /\d+/;
+                    if (data.comment) {
+                        const commentLikeSpan = document.querySelector(
+                            `a[onclick="postLike('${postId}', '${commentId}')"]>span`);
+                        const numLikes = parseInt(commentLikeSpan.innerText.match(numLikesRegex)) || 0;
+                        commentLikeSpan.innerText = getNumLikesText(numLikes + 1);
+                    } else {
+                        const postLikeSpan = document.querySelector(
+                            `a[onclick="postLike('${postId}')"]>span`);
+                        const numLikes = parseInt(postLikeSpan.innerText.match(numLikesRegex)) || 0;
+                        postLikeSpan.innerText = getNumLikesText(numLikes + 1);
+                    }
+                });
+        }
+
 
     </script>
-    
 
-                        
+
+
 {% endblock %}
