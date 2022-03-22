@@ -412,6 +412,7 @@
                     'X-CSRFToken': '{{ csrf_token }}'
                 },
                 body: JSON.stringify({
+                    type: 'like',
                     summary: '{{ request.user.author }} Liked your '.concat(commentId ? 'comment' : 'post'),
                     author: '{{ request.user.author.id }}',
                     post: postId,
