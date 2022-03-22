@@ -1,6 +1,3 @@
-from email import header
-from gzip import BadGzipFile
-from urllib import response
 import commonmark
 from django.contrib.auth.decorators import login_required
 from django.db.models import Q
@@ -21,8 +18,8 @@ from .serializers import PostSerializer, CommentSerializer, LikeSerializer
 from node.models import Node
 from node.authentication import basic_authentication
 
-HEADERS = {'Referer': 'https://squawker-cmput404.herokuapp.com/', 'Mode': 'no-cors'}
-URL = 'https://squawker-cmput404.herokuapp.com/'
+HEADERS = {'Referer': 'http://squawker-cmput404.herokuapp.com/', 'Mode': 'no-cors'}
+URL = 'http://squawker-cmput404.herokuapp.com/'
 
 @login_required
 def post_create(request, author_id):
@@ -47,11 +44,11 @@ def post_create(request, author_id):
     elif request.method == "POST":
 
         updated_request = request.POST.copy()  # using deepcopy() to make a mutable copy of the object
-        print(updated_request)
         if 'Origin' in request.headers:
             origin = str(request.headers['Origin'])
         else:
             origin=''
+
         updated_request.update(
             {
                 'author': author,
@@ -77,7 +74,6 @@ def post_create(request, author_id):
                 visible_user = User.objects.get(username=visible_follower)
                 notify_user = Author.objects.get(user=visible_user)
                 notify_user.inbox.posts.add(post)
-
             return redirect('posts:post_detail', author_id, post.id)
         else:
             # if form is invalid, return the same html page
@@ -139,8 +135,6 @@ def post_detail(request, author_id, post_id):
                 - check if user is authorized to see post.
             
     '''
-    # TODO: permission for DM posts (Jun)
-
     if request.method == "GET":
         current_user = request.user
         # Using user name to get author 
@@ -148,9 +142,8 @@ def post_detail(request, author_id, post_id):
         author = Author.objects.get(id=author_id)
         post = get_object_or_404(Post, id=post_id)
         numLikes = Like.objects.filter(post__id__exact=post.id, comment__id__isnull=True).count()
-
         # check if logged in user is author of post
-        if request.user.author == author:
+        if current_user.author == author:
             isAuthor = True
         else:
             # auth user is not user
@@ -308,7 +301,7 @@ def RemotePostsAPI(request):
                                         'id': comment_id
                                     }
                                     comments.append(comment_data)
-                            
+                            comments = sorted(comments, key=lambda k:k['published'], reverse=True)
                             # post with comments
                             post_data = {
                                 'author_username' : post["author"]["displayName"],
@@ -326,7 +319,10 @@ def RemotePostsAPI(request):
                                 'unlisted': post['unlisted'],
                                 'author_image': "profile_picture.png",
                                 'comments': '',
-                                'commentsSrc': comments
+                                'commentsSrc': {
+                                        'size': comments.count,
+                                        'comments': comments
+                                }
                             }
                             remote_posts.append(post_data)
 
@@ -375,14 +371,50 @@ def RemotePostsAPI(request):
                                 'unlisted': post['unlisted'],
                                 'author_image': "profile_picture.png",
                                 'comments': '',
-                                'commentsSrc': comments
+                                'commentsSrc': {
+                                        'size': comments.count,
+                                        'comments': comments
+                                }
                             }
                             remote_posts.append(post_data)
 
+        # Clone
+        elif node.host == 'https://squawker-dev.herokuapp.com/':
+            authors_url = node.host + 'api/authors/'
+            response = requests.get(authors_url, headers=HEADERS, auth=(node.outgoing_username, node.outgoing_password))
+            if response.status_code == 200:
+                remote_authors = []
+                clone_authors = response.json()['items']
+                for author in clone_authors:
+                    remote_authors.append(str(author["id"]))
+            
+            for author_id in remote_authors:
+                # for each author, get all of their posts 
+                posts_url = node.host + 'api/authors' + author_id + '/posts/'
+                response = requests.get(posts_url, headers=HEADERS, auth=(node.outgoing_username, node.outgoing_password))
+                
+                if response.status_code == 200:
+                    clone_posts = response.json()['posts']
+                    for post in clone_posts:
+                        if post['visibility'] == 'PUBLIC':
+                            remote_posts.append(post_data)
+                        elif post['visibility'] == 'FRIENDS' and id in request.user.remote_friends:
+                            # get all friends posts of my remote friend
+
+                            friend_url = node.host + '/authors/' + id +'/'
+                            # for each post, get my comments and the friend's comments only
+                            # comments_url = str(post["comments"]) commented out since T08 hasn't have this field set yet
+                            comments = []
+                            for comment in post["commentsSrc"]["comments"]:
+                                if str(comment["author"]["url"]) == request.user.author.url or str(comment["author"]["url"])== friend_url:                                    
+                                    comments.append(comment)
+                            post["commentsSrc"]["comments"] = comments  # I can only my and friend's comments
+                            remote_posts.append(post_data)
         # Team 3
         elif node.host == 'https://website404.herokuapp.com/':
             pass
-
+        
+        remote_posts = sorted(remote_posts, key=lambda k:k['published'], reverse=True)
     return JsonResponse({"posts": remote_posts}, status=200)
 
 class PostsAPI(APIView):
@@ -466,6 +498,7 @@ class MyPostsAPI(generics.GenericAPIView):
                     post.content = commonmark.commonmark(post.content)
 
             serializer = PostSerializer(posts, many=True)
+            
             content = {
                 'current user': request.user.username,
                 'author': author.displayName,
@@ -474,12 +507,17 @@ class MyPostsAPI(generics.GenericAPIView):
             return Response(content, 200)
         
         if remote:
-            posts = posts.filter(visibility='public', unlisted=False)
+            posts = author.posts.filter().order_by('-published')
             for post in posts:
                 if post.content_type == 'text/markdown':
                     post.content = commonmark.commonmark(post.content)
             serializer = PostSerializer(posts, many=True)
-            return Response({'posts': serializer.data}, 200)
+            post_data = serializer.data
+            for post in post_data:
+                post['id'] = author.url + '/posts/' + post['id']
+                post['author']['id'] = author.url
+
+            return Response({'posts': post_data}, 200)
 
     def post(self, request, author_id):
         author = Author.objects.get(id=author_id)
@@ -530,24 +568,28 @@ class PostDetailAPI(generics.GenericAPIView):
         local, remote = basic_authentication(request)
         if not local and not remote:
             return Response({'detail': 'Access denied'}, 401)
+        author = get_object_or_404(Author, id=author_id)
         
         if local:
             # local user 
             current_user = request.user
             if current_user.author.id == author_id:
-                post = get_object_or_404(Post, id=post_id)
+                post = get_object_or_404(Post, id=post_id, author=author)
             else:
-                post = get_object_or_404(Post, id=post_id, visibility='public')
+                post = get_object_or_404(Post, id=post_id, author=author, visibility='public')
 
             if post:
                 serializer = PostSerializer(post)
                 return Response(serializer.data, 200)
             return Response({'detail': 'Not Found!'}, 404)
         if remote: 
-            post = get_object_or_404(Post, id=post_id, visibility='public')
+            post = get_object_or_404(Post, id=post_id, author=author, visibility='public')
             if post:
                 serializer = PostSerializer(post)
-                return Response(serializer.data, 200)
+                data = serializer.data
+                data['id'] = author.url + '/posts/' + post['id']
+                post['author']['id'] = author.url
+                return Response(data, 200)
             return Response({'detail': 'Not Found!'}, 404)
 
     def post(self, request, author_id, post_id):
@@ -631,16 +673,15 @@ def create_comment(request, author_id, post_id):
         post=Post.objects.get(id=postID) # Obtain the instance
         postAuthor = post.author
         author = Author.objects.get(user=request.user) # Obtain the instance
-
+        
         comment = Comment.objects.create(author=author, post=post, comment=comment)
 
         # Add comment to post author's inbox
         if (author.id != postAuthor.id):
             postAuthor.inbox.comments.add(comment)
         # postAuthor.inbox.comments.remove(comment)
-
-        return JsonResponse({"bool":True, 'published': comment.published, 'id': comment.id, 'author': author.id})
-
+                
+    return JsonResponse({"bool":True, 'published': comment.published, 'id': comment.id, 'author': author.id})
 
 class CommentsAPI(APIView):
     """
@@ -656,15 +697,23 @@ class CommentsAPI(APIView):
         # User see comments from posts they have access to 
         # US: Comments on friend posts are private only to me the original author.
         post_author = get_object_or_404(Author, id=author_id)  # Check if post author exist
-        post = get_object_or_404(Post, id=post_id)  # Check if post exist
+        post = get_object_or_404(Post, id=post_id, author=post_author)  # Check if post exist
         comments = post.commentsSrc.all()  # get all comments from that post_id
         serializer = CommentSerializer(comments, many=True, remove_fields=['author_displayName'])  # many=True
+        
+        data = serializer.data
+
+        # for remote only
+        # for comment in data:
+        #     comment['id'] = post.comments + comment['id']
+        #     comment['author']['id'] = comment['author']['url']
+
         # page,id
         response = {
             'type': "comments",
             'size': len(serializer.data),
             'post': post_id,
-            'comments': serializer.data,
+            'comments': data,
         }
         return Response(response, status=status.HTTP_200_OK)
 
