@@ -9,7 +9,7 @@
         </div>
         <div class="row d-flex justify-content-between">
             <div class="col-md-3">
-                <div class="card friend-requests shadow mb-4" style="margin-left: auto; margin-right: auto; width: 500px;">
+                <div class="card friend-requests shadow mb-4" style="margin-left: auto; margin-right: auto; ">
                     <h3 class="card-header mb-2 bg-secondary text-white">Friend Requests</h3>
                     <div class="card-body">
                         <div class="card-text">
@@ -56,11 +56,11 @@
                 </div>
             </div>
             <div class="col-md-3">
-                <div class="card friend-requests shadow mb-4" style="margin-left: auto; margin-right: auto; width: 500px;">
+                <div class="card comments shadow mb-4" style="margin-left: auto; margin-right: auto; ">
                 <h3 class="card-header mb-2 bg-secondary text-white">Comments</h3>
                 <div class="card-body">
                     <div class="card-text">
-                        {% if comments%}
+                        {% if comments %}
                         <ol class="list-group"></ol>
                             {% for comment in comments %}
                             <div class="card flex-row flex-grow-1 p-2 mx-2 my-2 align-items-center shadow-sm">
@@ -92,13 +92,15 @@
                             </div>
                             {% endfor %}
                         </ol>
+                        {% else %}
+                        <h5 class="form-text" style="font-size: 16px">You have no new comments!</h5>
                         {% endif %}
                     </div>
                 </div>
-            </div>
+                </div>
             </div>
             <div class="col-md-3">
-                <div class="card post-updates shadow mb-4" style="margin-left: auto; margin-right: auto; width: 500px;">
+                <div class="card post-updates shadow mb-4" style="margin-left: auto; margin-right: auto;">
                     <h3 class="card-header mb-2 bg-secondary text-white">Post Updates</h3>
                     <div class="card-body">
                         <div class="card-text">
@@ -141,7 +143,7 @@
                 </div>
             </div>
             <div class="col-md-3">
-                <div class="card likes shadow mb-4" style="margin-right: auto; margin-right: auto; width: 500px;">
+                <div class="card likes shadow mb-4" style="margin-right: auto; margin-right: auto; ">
                     <h3 class="card-header mb-2 bg-secondary text-white">Likes</h3>
                     <div class="card-body">
                         <div class="card-text">
