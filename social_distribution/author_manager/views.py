@@ -10,6 +10,9 @@ from django.shortcuts import redirect, render
 from django.views.generic import ListView
 from rest_framework import authentication, permissions
 from rest_framework import status
+from rest_framework import generics, authentication, permissions
+from rest_framework.pagination import PageNumberPagination
+from rest_framework.parsers import JSONParser
 
 import requests
 import datetime 
@@ -20,6 +23,7 @@ from rest_framework.views import APIView
 
 import posts.serializers
 from posts.models import Post
+from posts.serializers import CommentSerializer, PostSerializer
 from .forms import SignUpForm, EditProfileForm
 from .models import *
 from .serializers import *
@@ -204,8 +208,8 @@ class SearchAuthorView(ListView):
 
 
 @login_required
-def inbox_view(request, author_id):
-    current_author = Author.objects.get(id=author_id)
+def inbox_view(request, id):
+    current_author = Author.objects.get(id=id)
 
     if request.user.author != current_author:
         return redirect('author_manager:login')
@@ -230,7 +234,8 @@ def inbox_view(request, author_id):
             except:
                 pass
             messages.success(request, 'Success to accept friend request.')
-            return redirect('author_manager:inbox', author_id)
+            return redirect('author_manager:inbox', id)
+
         if request.POST['type'] == 'comment':
             comment = request.POST['comment']
             inbox_comment = Comment.objects.get(id=comment)
@@ -526,3 +531,124 @@ class AuthorLikedAPI(APIView):
                 'items': serializer.data
             },
             status=status.HTTP_200_OK)
+
+class CustomPagination(PageNumberPagination):
+    '''
+    Helper Pagination class to paginate Inbox API by the query options: page, size 
+    '''
+    page_size = 1000
+    page_size_query_param = 'size'
+    max_page_size = 1000
+
+    def get_paginated_response(self, data):
+        return Response(
+        {
+            'type': 'inbox',
+            'author': data['url'],
+            'items': data['items']
+        },  
+        status=status.HTTP_200_OK
+        )
+
+class InboxAPI(generics.GenericAPIView):
+    """
+    An API endpoint allows viewing the inbox of the author id, send a post to the inbox and clear the inbox.
+    The post here can be type: post, follow, like, comment
+    Require authorization.
+    ...
+    Methods:
+        GET:
+            Retrieve all the posts that are sent to the author id
+            Support pagination 
+        POST:
+            Send/Add post to the author's inbox according to its type:
+                - type is “post” then add that post to the posts list of the inbox
+                - type is “follow” then add that follow/friend request to the follows list of the inbox: request is waiting for approve
+                - type is “like” then add that like to the likes list of the inbox
+                - type is “comment” then add that comment to the comments list of the inbox
+        DELETE:
+            clear the inbox: there is no posts/items in the inbox
+    """
+
+    authentication_classes = [authentication.BasicAuthentication, authentication.SessionAuthentication]
+    permission_classes = [permissions.IsAuthenticated]
+    pagination_class = CustomPagination
+    serializer_class = InboxSerializer
+    parser_classes = [JSONParser]
+
+    def get(self, request, id):
+        try:
+            author = Author.objects.get(id=id)
+            inbox = Inbox.objects.get(author=author)
+        except:
+            return Response({'detail': 'Not Found!'}, status=status.HTTP_404_NOT_FOUND)
+
+        follow_serializer = FriendRequestSerializer(inbox.follows, many=True)
+        post_serializer = PostSerializer(inbox.posts, many=True)
+        comment_serializer = CommentSerializer(inbox.comments, many=True)
+        like_serializer = LikeSerializer(inbox.likes, many=True)
+
+        items = follow_serializer.data + post_serializer.data + comment_serializer.data + like_serializer.data
+
+        # Pagination:
+        part_items = self.paginator.paginate_queryset(items, request)
+        
+        return self.paginator.get_paginated_response({'items': part_items, 'url': author.url})
+
+    def post(self, request, id):
+        try:
+            author = Author.objects.get(id=id)
+            inbox = Inbox.objects.get(author=author)
+
+            item = request.data['item']
+            item_type = item['type']
+
+            if item_type == 'like':
+                serializer = LikeSerializer(data=item)
+
+                if serializer.is_valid():
+                    serializer.save()
+                    # Send like object to other user's inbox
+                    inbox.likes.add(serializer.instance.id)
+                    return Response({'message': 'Success to send like'}, status=status.HTTP_200_OK)
+
+            item_id = item['id']
+
+            if item_type == 'follow':  
+                follow = FriendRequest.objects.get(id=item_id)
+
+                if author != follow.object or author == follow.actor:
+                    return Response({'detail': 'Fail to send the item!'}, status=status.HTTP_400_BAD_REQUEST)
+
+                inbox.follows.add(follow)
+                return Response({'message': 'Success to send follow/friend request'}, status=status.HTTP_200_OK)
+
+            if item_type == 'post':
+                post = Post.objects.get(id=item_id)
+                inbox.posts.add(post)
+                return Response({'message': 'Success to send post'}, status=status.HTTP_200_OK)
+
+            if item_type == 'comment':
+                comment = Comment.objects.get(id=item_id)
+                inbox.comments.add(comment)
+                return Response({'message': 'Success to send comment'}, status=status.HTTP_200_OK)
+
+            return Response({'detail': 'Fail to send the item!'}, status=status.HTTP_400_BAD_REQUEST)
+
+        except:
+            return Response({'detail': 'Fail to send the item!'}, status=status.HTTP_400_BAD_REQUEST)
+
+    def delete(self, request, id):
+        try:
+            author = Author.objects.get(id=id)
+            inbox = Inbox.objects.get(author=author)
+
+            inbox.follows.set([], clear=True)
+            inbox.posts.set([], clear=True)
+            inbox.comments.set([], clear=True)
+            inbox.likes.set([], clear=True)
+
+            return Response({'message': 'Success to clean inbox'}, status=status.HTTP_200_OK)
+        except:
+            return Response({'detail': 'Fail to clear inbox!'}, status=status.HTTP_400_BAD_REQUEST)
+        

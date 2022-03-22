@@ -1,3 +1,5 @@
+from email.policy import default
+from importlib.resources import contents
 import random
 import uuid
 
@@ -53,4 +55,6 @@ class Inbox(models.Model):
     # Send comment to inbox
     comments = models.ManyToManyField('posts.Comment', blank=True)
     likes = models.ManyToManyField('posts.Like', blank=True)
+
+    item = models.JSONField(default=dict)
 
