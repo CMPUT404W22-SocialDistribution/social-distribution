@@ -47,6 +47,7 @@ def post_create(request, author_id):
         updated_request = request.POST.copy()  # using deepcopy() to make a mutable copy of the object
         if 'Origin' in request.headers:
             origin = str(request.headers['Origin'])
+            origin = origin.replace('https', 'http')
         else:
             origin=''
 
@@ -247,7 +248,7 @@ class SearchView(ListView):
 
 
 @login_required
-@api_view()
+@api_view(['GET'])
 def RemotePostsAPI(request):
     ''' API endpoint that gets all remote public and friend posts'''
     # Team 8 hasn't had private posts yet 
@@ -286,7 +287,7 @@ def RemotePostsAPI(request):
                             if res.status_code == 200:
                                 post_comments =  response.json['items']
                                 for comment in post_comments:
-                                    comment_id = str(comment["id"]).split('/')[-2]
+                                    # comment_id = str(comment["id"]).split('/')[-2]
                                     comment_data = {
                                         'author': {
                                             'id': comment["author"]["id"],
@@ -299,7 +300,7 @@ def RemotePostsAPI(request):
                                         'comment': comment["comment"],
                                         'contentType': comment["contentType"],
                                         'published': comment["published"],
-                                        'id': comment_id
+                                        'id': comment["id"]
                                     }
                                     comments.append(comment_data)
                             comments = sorted(comments, key=lambda k:k['published'], reverse=True)
@@ -321,7 +322,7 @@ def RemotePostsAPI(request):
                                 'author_image': "profile_picture.png",
                                 'comments': '',
                                 'commentsSrc': {
-                                        'size': comments.count,
+                                        'size': len(comments),
                                         'comments': comments
                                 }
                             }
@@ -373,7 +374,7 @@ def RemotePostsAPI(request):
                                 'author_image': "profile_picture.png",
                                 'comments': '',
                                 'commentsSrc': {
-                                        'size': comments.count,
+                                        'size': len(comments),
                                         'comments': comments
                                 }
                             }
@@ -397,9 +398,9 @@ def RemotePostsAPI(request):
                 if response.status_code == 200:
                     clone_posts = response.json()['posts']
                     for post in clone_posts:
-                        if post['visibility'] == 'PUBLIC':
+                        if post['visibility'] == 'public':
                             remote_posts.append(post_data)
-                        elif post['visibility'] == 'FRIENDS' and id in request.user.remote_friends:
+                        elif post['visibility'] == 'friends' and id in request.user.remote_friends:
                             # get all friends posts of my remote friend
 
                             friend_url = node.host + '/authors/' + id +'/'
@@ -411,6 +412,8 @@ def RemotePostsAPI(request):
                                     comments.append(comment)
                             post["commentsSrc"]["comments"] = comments  # I can only my and friend's comments
                             remote_posts.append(post_data)
+                        # elif post['visibility'] == 'private' and post['visibleTo'] == request.user.username:
+
         # Team 3
         elif node.host == 'https://website404.herokuapp.com/':
             pass
@@ -525,8 +528,19 @@ class MyPostsAPI(generics.GenericAPIView):
             post_data = serializer.data
             for post in post_data:
                 post['id'] = author.url + '/posts/' + post['id']
+                # post['author'] = {
+                #                 'type': 'author',
+                #                 'id': author.url,
+                #                 'host': author.host,
+                #                 'displayName': author.displayName,
+                #                 'github': author.github,
+                #                 'profileImage': author.profileImage,
+                #                 'url': author.url
+                # }
                 post['author']['id'] = author.url
-
+                for comment in post['commentsSrc']['comments']:
+                    comment['author']['id'] = comment['author']['url']
+                    comment['id'] = post['comments'] + comment['id']
             return Response({'posts': post_data}, 200)
 
     def post(self, request, author_id):
@@ -597,8 +611,20 @@ class PostDetailAPI(generics.GenericAPIView):
             if post:
                 serializer = PostSerializer(post)
                 data = serializer.data
-                data['id'] = author.url + '/posts/' + post['id']
-                post['author']['id'] = author.url
+                data['id'] = author.url + '/posts/' + data['id']
+                # data['author'] = {
+                #                 'type': 'author',
+                #                 'id': author.url,
+                #                 'host': author.host,
+                #                 'displayName': author.displayName,
+                #                 'github': author.github,
+                #                 'profileImage': author.profileImage,
+                #                 'url': author.url
+                # }
+                data['author']['id'] = author.url
+                for comment in data['commentsSrc']['comments']:
+                    comment['author']['id'] = comment['author']['url']
+                    comment['id'] = data['comments'] + comment['id']
                 return Response(data, 200)
             return Response({'detail': 'Not Found!'}, 404)
 
