@@ -140,7 +140,7 @@ aria-controls="collapseExample">
                         <p class="card-text"> {{comment.comment}}</p>
                         <div class=" d-flex justify-content-between py-1 pt-2" style="font-size: 13px";>
                             <span ><a href="{% url 'author_manager:profile' comment.author.id %}">
-                                {{comment.author}}</a></span>
+                                {{comment.author.displayName}}</a></span>
                             <span>{{comment.published}} </span>
                         </div>
                     </div>
