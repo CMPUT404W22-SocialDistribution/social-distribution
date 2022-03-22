@@ -333,8 +333,8 @@
                         rootElement.innerHTML = createPostCard(postLatestFromApi) + rootElement.innerHTML
                     }
                     var countPosts =  $(".postCard").length;
-                    if (countPosts == 5) {
-                        document.getElementsByClassName("loadmoreBtn").hidden = true;
+                    if (countPosts < 5) {
+                        document.getElementsByClassName("loadmoreBtn")[0].style.visibility = 'hidden';
                     } 
                     // Inject bootstrap class card-img-bottom to constrain inline image sizes
                     document.querySelectorAll("#post-content img:not(.card-img-bottom)").forEach(postContentInlineImg =>
