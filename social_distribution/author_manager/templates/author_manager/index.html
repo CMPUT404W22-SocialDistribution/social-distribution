@@ -233,14 +233,14 @@
                             </div>
                             <div class="card-footer">
                                 <a href="javascript:void(0)" class="card-link text-muted" style="text-decoration: none;"
-                                   onclick="postLike('${post.id}')"><i class="fa-solid fa-thumbs-up"></i>
+                                   onclick="postLike('${post.author}', '${post.id}')"><i class="fa-solid fa-thumbs-up"></i>
                                    <span>${getNumLikesText(post.num_likes)}</span></a>
 
                                 <a class="card-link text-muted" style="text-decoration: none;"
                                 data-bs-toggle="collapse"
                                 href="#collapseComments-${post.id}"
                                 aria-expanded="false">
-                                <i class="fa-solid fa-comment-dots"></i> comment</a>
+                                <i class="fa-solid fa-comment-dots"></i> Comment</a>
                                 <a href="#" class="card-link text-muted" style="text-decoration: none;"><i class="fa-solid fa-retweet"></i> Share</a>
                             </div>
                         </div>
@@ -267,7 +267,7 @@
                                                 <span>${Timestamp(comment.published)} </span>
                                                 <div><a href="javascript:void(0)" class="card-link text-muted"
                                                         style="text-decoration: none;"
-                                                        onclick="postLike('${post.id}', '${comment.id}')">
+                                                        onclick="postLike('${comment.author.id}', '${post.id}', '${comment.id}')">
                                                      <i class="fa-solid fa-thumbs-up"></i>
                                                      <span> ${getNumLikesText(comment.num_likes)}</span>
                                                 </a></div>
@@ -372,7 +372,7 @@
                                                         <span>${Timestamp(res.published)}</span>
                                                         <div>
                                                             <a href="javascript:void(0)" class="card-link text-muted"
-                                                               style="text-decoration: none;" onclick="postLike('${_postid}', '${res.id}')">
+                                                               style="text-decoration: none;" onclick="postLike('${res.author}', '${_postid}', '${res.id}')">
                                                                <i class="fa-solid fa-thumbs-up"></i>&nbsp;<span>Like</span></a>
                                                         </div>
                                                     </div>
@@ -404,19 +404,21 @@
             return text;
         }
 
-        async function postLike(postId, commentId) {
-            await fetch('{% url 'author_manager:like_api' user.author.id %}', {
+        async function postLike(authorId, postId, commentId) {
+            await fetch(`/api/authors/${authorId}/inbox`, {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
                     'X-CSRFToken': '{{ csrf_token }}'
                 },
                 body: JSON.stringify({
-                    type: 'like',
-                    summary: '{{ request.user.author }} Liked your '.concat(commentId ? 'comment' : 'post'),
-                    author: '{{ request.user.author.id }}',
-                    post: postId,
-                    comment: commentId ?? null
+                    item: {
+                        type: 'like',
+                        summary: '{{ request.user.author }} Liked your '.concat(commentId ? 'comment' : 'post'),
+                        author: '{{ request.user.author.id }}',
+                        post: postId,
+                        comment: commentId ?? null
+                    }
                 })
             })
                 .then(response => {
@@ -431,12 +433,12 @@
                     const numLikesRegex = /\d+/;
                     if (data.comment) {
                         const commentLikeSpan = document.querySelector(
-                            `a[onclick="postLike('${postId}', '${commentId}')"]>span`);
+                            `a[onclick="postLike('${authorId}', '${postId}', '${commentId}')"]>span`);
                         const numLikes = parseInt(commentLikeSpan.innerText.match(numLikesRegex)) || 0;
                         commentLikeSpan.innerText = getNumLikesText(numLikes + 1);
                     } else {
                         const postLikeSpan = document.querySelector(
-                            `a[onclick="postLike('${postId}')"]>span`);
+                            `a[onclick="postLike('${authorId}', '${postId}')"]>span`);
                         const numLikes = parseInt(postLikeSpan.innerText.match(numLikesRegex)) || 0;
                         postLikeSpan.innerText = getNumLikesText(numLikes + 1);
                     }
