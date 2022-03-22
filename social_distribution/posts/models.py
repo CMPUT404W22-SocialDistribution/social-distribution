@@ -103,4 +103,4 @@ class Like(models.Model):
     type = models.CharField(max_length=50, default='Like')
     author = models.ForeignKey(Author, on_delete=models.CASCADE)
     post = models.ForeignKey(Post, on_delete=models.CASCADE, related_name="likes")
-    comment = models.ForeignKey(Comment, on_delete=models.CASCADE, related_name="likes", null=True)
+    comment = models.ForeignKey(Comment, on_delete=models.CASCADE, related_name="likes", null=True, blank=True)

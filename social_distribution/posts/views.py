@@ -1,3 +1,6 @@
+from email import header
+from gzip import BadGzipFile
+from urllib import response
 import commonmark
 from django.contrib.auth.decorators import login_required
 from django.db.models import Q
@@ -9,12 +12,18 @@ from rest_framework import status
 from rest_framework.response import Response
 from rest_framework.views import APIView
 from rest_framework.pagination import PageNumberPagination
+from rest_framework.decorators import api_view
+import requests
 
 from author_manager.models import *
 from posts.forms import PostForm
-from .models import Post, Comment
+from .models import Post, Comment, Like
 from .serializers import PostSerializer, CommentSerializer, LikeSerializer
+from node.models import Node
+from node.authentication import basic_authentication
 
+HEADERS = {'Referer': 'https://squawker-cmput404.herokuapp.com/', 'Mode': 'no-cors'}
+URL = 'https://squawker-cmput404.herokuapp.com/'
 
 @login_required
 def post_create(request, author_id):
@@ -69,7 +78,7 @@ def post_create(request, author_id):
                 visible_user = User.objects.get(username=visible_follower)
                 notify_user = Author.objects.get(user=visible_user)
                 notify_user.inbox.posts.add(post)
-                
+
             return redirect('posts:post_detail', author_id, post.id)
         else:
             # if form is invalid, return the same html page
@@ -139,6 +148,8 @@ def post_detail(request, author_id, post_id):
         # current_user = Author.objects.get(user=user)
         author = Author.objects.get(id=author_id)
         post = get_object_or_404(Post, id=post_id)
+        numLikes = Like.objects.filter(post__id__exact=post.id, comment__id__isnull=True).count()
+
         # check if logged in user is author of post
         if request.user.author == author:
             isAuthor = True
@@ -151,7 +162,8 @@ def post_detail(request, author_id, post_id):
                     context = {
                         "comments": comments,
                         "post": post,
-                        "isAuthor": isAuthor
+                        "isAuthor": isAuthor,
+                        "numLikes": numLikes
                     }
                     return render(request, 'posts/post_detail.html', context)
                 else:
@@ -166,12 +178,13 @@ def post_detail(request, author_id, post_id):
                     return render(request, 'posts/post_create.html', {'error': error}, status=404)
         if post.content_type == 'text/markdown':
             post.content = commonmark.commonmark(post.content)
-        comments = post.commentsSrc.all().order_by('-published')
+        comments = CommentSerializer(post.commentsSrc.all().order_by('-published'), many=True).data
 
         context = {
             "comments": comments,
             "post": post,
-            "isAuthor": isAuthor
+            "isAuthor": isAuthor,
+            "numLikes": numLikes
         }
         return render(request, 'posts/post_detail.html', context)
 
@@ -240,8 +253,141 @@ class SearchView(ListView):
         return queryset
 
 
+@login_required
+@api_view()
+def RemotePostsAPI(request):
+    ''' API endpoint that gets all remote public and friend posts'''
+    # Team 8 hasn't had private posts yet 
+    remote_posts = []
+    for node in Node.objects.all():
+        # Team 8
+        if node.host == 'https://project-socialdistribution.herokuapp.com/':
+            # get all authors of the remote node
+            authors_url = node.host + 'api/authors/'
+            response = requests.get(authors_url, headers=HEADERS, auth=(node.outgoing_username, node.outgoing_password))
+            if response.status_code == 200:
+                remote_authors = []
+                team8_authors = response.json()['results']
+                for author in team8_authors:
+                    new_id = str(author["id"])
+                    remote_authors.append(new_id.split('/')[-2])
+            
+            for author_id in remote_authors:
+                # for each author, get all of their posts 
+                posts_url = node.host + 'api/authors' + author_id + '/posts/'
+                response = requests.get(posts_url, headers=HEADERS, auth=(node.outgoing_username, node.outgoing_password))
+                
+                if response.status_code == 200:
+                    team8_posts = response.json()['items']
+                    for post in team8_posts:
+                        if post['visibility'] == 'PUBLIC':
+                            # Need Comment API to create comment objects
+                            # need to convert categories, comments to arr
+                            
+                            # for each post, get all comments
+                            # comments_url = str(post["comments"]) commented out since T08 hasn't have this field set yet
+                            comments = []
+                            post_id = str(post["id"])
+                            comments_url = node.host + 'api/authors' + author_id + '/posts/' + post_id +'/comments/'
+                            res = requests.get(comments_url, header=HEADERS, auth=(node.outgoing_username, node.outgoing_password))
+                            if res.status_code == 200:
+                                post_comments =  response.json['items']
+                                for comment in post_comments:
+                                    comment_id = str(comment["id"]).split('/')[-2]
+                                    comment_data = {
+                                        'author': {
+                                            'id': comment["author"]["id"],
+                                            'host': comment["author"]["host"],
+                                            'displayName': comment["author"]["displayName"],
+                                            'profileImage': 'profile_picture.png',
+                                            'url': comment["author"]["url"]
+                                        },
+                                        'author_displayName' : comment["author"]["displayName"],
+                                        'comment': comment["comment"],
+                                        'contentType': comment["contentType"],
+                                        'published': comment["published"],
+                                        'id': comment_id
+                                    }
+                                    comments.append(comment_data)
+                            
+                            # post with comments
+                            post_data = {
+                                'author_username' : post["author"]["displayName"],
+                                'author_displayName' : post["author"]["displayName"],
+                                'title' : post["title"],
+                                'id' : post["id"],
+                                'source' : post["source"],
+                                'origin' : "https://project-socialdistribution.herokuapp.com/",
+                                'content_type' : post["contentType"],
+                                'content' : post["content"],
+                                'author' : post["author"]["id"],
+                                'categories': post["categories"],
+                                'published': post["published"],
+                                'visibility': 'public',
+                                'unlisted': post['unlisted'],
+                                'author_image': "profile_picture.png",
+                                'comments': '',
+                                'commentsSrc': comments
+                            }
+                            remote_posts.append(post_data)
+
+                        elif post['visibility'] == 'FRIENDS' and id in request.user.remote_friends:
+                            # get all friends posts of my remote friend
+                            friend_url = node.host + '/authors/' + id +'/'
+                            # for each post, get my comments and the friend's comments only
+                            # comments_url = str(post["comments"]) commented out since T08 hasn't have this field set yet
+                            comments = []
+                            post_id = str(post["id"])
+                            comments_url = node.host + 'api/authors' + author_id + '/posts/' + post_id +'/comments/'
+                            res = requests.get(comments_url, header=HEADERS, auth=(node.outgoing_username, node.outgoing_password))
+                            if res.status_code == 200:
+                                post_comments =  response.json['items']
+                                for comment in post_comments:
+                                    comment_id = str(comment["id"]).split('/')[-2]
+                                    if str(comment["author"]["url"]) == request.user.author.url or str(comment["author"]["url"])== friend_url:                                    
+                                        comment_data = {
+                                            'author': {
+                                                'id': comment["author"]["id"],
+                                                'host': comment["author"]["host"],
+                                                'displayName': comment["author"]["displayName"],
+                                                'profileImage': 'profile_picture.png',
+                                                'url': comment["author"]["url"]
+                                            },
+                                            'author_displayName' : comment["author"]["displayName"],
+                                            'comment': comment["comment"],
+                                            'contentType': comment["contentType"],
+                                            'published': comment["published"],
+                                            'id': comment_id
+                                    }
+                                    comments.append(comment_data)
+                            post_data = {
+                                'author_username' : post["author"]["displayName"],
+                                'author_displayName' : post["author"]["displayName"],
+                                'title' : post["title"],
+                                'id' : post["id"],
+                                'source' : post["source"],
+                                'origin' : "https://project-socialdistribution.herokuapp.com/",
+                                'content_type' : post["contentType"],
+                                'content' : post["content"],
+                                'author' : post["author"]["id"],
+                                'categories': post["categories"],
+                                'published': post["published"],
+                                'visibility': 'friends',
+                                'unlisted': post['unlisted'],
+                                'author_image': "profile_picture.png",
+                                'comments': '',
+                                'commentsSrc': comments
+                            }
+                            remote_posts.append(post_data)
+
+        # Team 3
+        elif node.host == 'https://website404.herokuapp.com/':
+            pass
+
+    return JsonResponse({"posts": remote_posts}, status=200)
 
 class PostsAPI(APIView):
+    # local use
     '''
     API endpoint that gathers all public posts, friends posts, my posts to display in stream.
     
@@ -273,17 +419,18 @@ class PostsAPI(APIView):
         private_posts = Post.objects.filter(visibility="private", visibleTo=author.user, unlisted=False).order_by(
             '-published')
         my_posts = Post.objects.filter(author=author, unlisted=False).order_by('-published')
-        posts = public_posts | my_posts | friend_posts | private_posts
-        for post in posts:
+        local_posts = public_posts | my_posts | friend_posts | private_posts
+        
+        for post in local_posts:
             if post.content_type == 'text/markdown':
                 post.content = commonmark.commonmark(post.content)  # parse and render content of type markdown
         
         
         paginator = PageNumberPagination()
-        result_page = paginator.paginate_queryset(posts,request)
+        result_page = paginator.paginate_queryset(local_posts,request)
         serializer = PostSerializer(result_page, many=True)
         response = {
-            'count': len(posts),
+            'count': len(local_posts),
             'posts': serializer.data
         }
         return Response(response, 200)
@@ -309,31 +456,45 @@ class MyPostsAPI(generics.GenericAPIView):
     permission_classes = [permissions.IsAuthenticated]
     serializer_class = PostSerializer
 
+    # local & remote
     def get(self, request, author_id):
+        local, remote = basic_authentication(request)
+        if not local and not remote:
+            return Response({'detail': 'Access denied'}, 401)
 
         author = Author.objects.get(id=author_id)
 
         posts = author.posts.filter().order_by('-published')
-        current_user = Author.objects.get(user=request.user)
-        if current_user.id != author.id:
-            # local 
+        if local: 
+            current_user = Author.objects.get(user=request.user)
+            if current_user.id != author.id:
+                # local 
+                posts = posts.filter(visibility='public', unlisted=False)
+
+            for post in posts:
+                if post.content_type == 'text/markdown':
+                    post.content = commonmark.commonmark(post.content)
+
+            serializer = PostSerializer(posts, many=True)
+            content = {
+                'current user': request.user.username,
+                'author': author.displayName,
+                'posts': serializer.data
+            }
+            return Response(content, 200)
+        
+        if remote:
             posts = posts.filter(visibility='public', unlisted=False)
-
-        for post in posts:
-            if post.content_type == 'text/markdown':
-                post.content = commonmark.commonmark(post.content)
-
-        serializer = PostSerializer(posts, many=True)
-        content = {
-            'current user': request.user.username,
-            'author': author.displayName,
-            'posts': serializer.data
-        }
-        return Response(content, 200)
+            for post in posts:
+                if post.content_type == 'text/markdown':
+                    post.content = commonmark.commonmark(post.content)
+            serializer = PostSerializer(posts, many=True)
+            return Response({'posts': serializer.data}, 200)
 
     def post(self, request, author_id):
         author = Author.objects.get(id=author_id)
-        if request.user.author != author:
+        local, remote = basic_authentication(request)
+        if not local or request.user.author != author:
             return Response({'detail': 'Access denied'}, 401)
 
         post = Post.objects.create(author=author)
@@ -376,20 +537,35 @@ class PostDetailAPI(generics.GenericAPIView):
     serializer_class = PostSerializer
 
     def get(self, request, author_id, post_id):
-        # TODO: remote
-        current_user = request.user
-        if current_user.author.id == author_id:
-            post = get_object_or_404(Post, id=post_id)
-        else:
-            post = get_object_or_404(Post, id=post_id, visibility='public')
+        local, remote = basic_authentication(request)
+        if not local and not remote:
+            return Response({'detail': 'Access denied'}, 401)
+        
+        if local:
+            # local user 
+            current_user = request.user
+            if current_user.author.id == author_id:
+                post = get_object_or_404(Post, id=post_id)
+            else:
+                post = get_object_or_404(Post, id=post_id, visibility='public')
 
-        if post:
-            serializer = PostSerializer(post)
-            return Response(serializer.data, 200)
-        return Response({'detail': 'Not Found!'}, 404)
+            if post:
+                serializer = PostSerializer(post)
+                return Response(serializer.data, 200)
+            return Response({'detail': 'Not Found!'}, 404)
+        if remote: 
+            post = get_object_or_404(Post, id=post_id, visibility='public')
+            if post:
+                serializer = PostSerializer(post)
+                return Response(serializer.data, 200)
+            return Response({'detail': 'Not Found!'}, 404)
 
     def post(self, request, author_id, post_id):
         # update post
+        local, remote = basic_authentication(request)
+        if not local:
+            return Response({'detail': 'Access denied'}, 401)
+
         try:
             post = get_object_or_404(Post, id=post_id)
         except Post.DoesNotExist:
@@ -413,6 +589,10 @@ class PostDetailAPI(generics.GenericAPIView):
                 return Response(serializer.errors, 400)
 
     def delete(self, request, author_id, post_id):
+        local, remote = basic_authentication(request)
+        if not local:
+            return Response({'detail': 'Access denied'}, 401)
+
         try:
             post = get_object_or_404(Post, id=post_id)
         except Post.DoesNotExist:
@@ -430,6 +610,10 @@ class PostDetailAPI(generics.GenericAPIView):
             return Response({'detail': 'Current user is not authorized to do this operation'}, 401)
 
     def put(self, request, author_id, post_id):
+        local, remote = basic_authentication(request)
+        if not local:
+            return Response({'detail': 'Access denied'}, 401)
+
         current_user = request.user
         if not current_user.author.id == author_id:
             return Response({'detail': 'Current user is not authorized to do this operation'}, 401)
@@ -457,15 +641,15 @@ def create_comment(request, author_id, post_id):
         post=Post.objects.get(id=postID) # Obtain the instance
         postAuthor = post.author
         author = Author.objects.get(user=request.user) # Obtain the instance
-        
+
         comment = Comment.objects.create(author=author, post=post, comment=comment)
 
         # Add comment to post author's inbox
         if (author.id != postAuthor.id):
             postAuthor.inbox.comments.add(comment)
         # postAuthor.inbox.comments.remove(comment)
-                
-        return JsonResponse({"bool":True, 'published': comment.published})
+
+        return JsonResponse({"bool":True, 'published': comment.published, 'id': comment.id})
 
 
 class CommentsAPI(APIView):
@@ -545,7 +729,7 @@ class CommentLikesAPI(generics.GenericAPIView):
     serializer_class = LikeSerializer
 
     def get(self, request, author_id, post_id, comment_id):
-        comment = get_object_or_404(Comment, id=comment_id, commentsSrc__exact=post_id, author__exact=author_id)
+        comment = get_object_or_404(Comment, id=comment_id, post__exact=post_id, author__exact=author_id)
         likes = comment.likes.all()
         serializer = self.serializer_class(likes, many=True)
         return Response(

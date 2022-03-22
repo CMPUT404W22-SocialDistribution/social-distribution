@@ -25,6 +25,7 @@ SECRET_KEY = 'django-insecure-)al3(3it)mn!7xvspyyt$o=kij2fq%tq%2ylxu%u+9i_%c9+$q
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
+CORS_ALLOW_ALL_ORIGINS = True
 ALLOWED_HOSTS = []
 
 # Application definition
@@ -39,6 +40,7 @@ INSTALLED_APPS = [
     'rest_framework',
     'author_manager',
     'posts',
+    'node',
     'nested_admin',
     'crispy_forms',
     'django_cleanup.apps.CleanupConfig'

@@ -12,9 +12,10 @@ from rest_framework import authentication, permissions
 from rest_framework import status
 from rest_framework import generics, authentication, permissions
 from rest_framework.pagination import PageNumberPagination
+from rest_framework.parsers import JSONParser
 
 import requests
-import datetime 
+import datetime
 from posts.models import Comment
 
 from rest_framework.response import Response
@@ -22,6 +23,7 @@ from rest_framework.views import APIView
 
 import posts.serializers
 from posts.models import Post
+from posts.serializers import CommentSerializer, PostSerializer
 from .forms import SignUpForm, EditProfileForm
 from .models import *
 from .serializers import *
@@ -215,8 +217,12 @@ def inbox_view(request, id):
     if request.method == "GET":
         # follow request
         inbox = Inbox.objects.get(author=current_author)
-        return render(request, 'inbox/inbox.html', {'follows' : inbox.follows.all(), 'posts': inbox.posts.all(), 'comments': inbox.comments.all()})
-    
+        return render(request, 'inbox/inbox.html', {
+            'follows': inbox.follows.all(),
+            'posts': inbox.posts.all(),
+            'comments': inbox.comments.all(),
+            'likes': inbox.likes.all().order_by('-id')
+        })
 
     if request.method == "POST":
         # Accept follow request -> follow back-> true friends
@@ -492,21 +498,38 @@ class FriendRequestsAPI(APIView):
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
 
-# class LikeAPI(APIView):
-#     authentication_classes = [authentication.BasicAuthentication, authentication.SessionAuthentication]
-#     permission_classes = [permissions.IsAuthenticated]
+class LikeAPI(APIView):
+    authentication_classes = [authentication.BasicAuthentication, authentication.SessionAuthentication]
+    permission_classes = [permissions.IsAuthenticated]
 
-#     def post(self, request, author_id):
-#         inbox = get_object_or_404(Inbox, author__exact=author_id)
-#         serializer = LikeSerializer(data=request.data)
-#         if serializer.is_valid():
-#             serializer.save()
-#             # Send like object to other user's inbox
-#             inbox.likes.add(serializer.instance.id)
+    def post(self, request, author_id):
+        inbox = get_object_or_404(Inbox, author__exact=author_id)
+        serializer = LikeSerializer(data=request.data)
+        if serializer.is_valid():
+            post = serializer.validated_data['post']
 
-#             return Response(posts.serializers.LikeSerializer().to_representation(serializer.instance),
-#                             status=status.HTTP_200_OK)
-#         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+            if 'comment' in serializer.validated_data and serializer.validated_data['comment'] is not None:
+                comment = serializer.validated_data['comment']
+                like_query_set = Like.objects.filter(author__id__exact=author_id,
+                                                     post__id__exact=post.id,
+                                                     comment__id__exact=comment.id)
+            else:
+                like_query_set = Like.objects.filter(author__id__exact=author_id,
+                                                     post__id__exact=post.id,
+                                                     comment__id__isnull=True)
+
+            # Do not like the same object twice
+            if like_query_set:
+                return Response(LikeSerializer().to_representation(like_query_set[0]),
+                                status=status.HTTP_204_NO_CONTENT)
+
+            serializer.save()
+            # Send like object to other user's inbox
+            inbox.likes.add(serializer.instance.id)
+
+            return Response(posts.serializers.LikeSerializer().to_representation(serializer.instance),
+                            status=status.HTTP_200_OK)
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
 
 class AuthorLikedAPI(APIView):
@@ -572,6 +595,7 @@ class InboxAPI(generics.GenericAPIView):
     permission_classes = [permissions.IsAuthenticated]
     pagination_class = CustomPagination
     serializer_class = InboxSerializer
+    parser_classes = [JSONParser]
 
     def get(self, request, id):
         try:
@@ -581,9 +605,9 @@ class InboxAPI(generics.GenericAPIView):
             return Response({'detail': 'Not Found!'}, status=status.HTTP_404_NOT_FOUND)
 
         follow_serializer = FriendRequestSerializer(inbox.follows, many=True)
-        post_serializer = FriendRequestSerializer(inbox.posts, many=True)
-        comment_serializer = FriendRequestSerializer(inbox.comments, many=True)
-        like_serializer = FriendRequestSerializer(inbox.likes, many=True)
+        post_serializer = PostSerializer(inbox.posts, many=True)
+        comment_serializer = CommentSerializer(inbox.comments, many=True)
+        like_serializer = LikeSerializer(inbox.likes, many=True)
 
         items = follow_serializer.data + post_serializer.data + comment_serializer.data + like_serializer.data
 
@@ -596,31 +620,39 @@ class InboxAPI(generics.GenericAPIView):
         try:
             author = Author.objects.get(id=id)
             inbox = Inbox.objects.get(author=author)
-            print(request)
 
-            if 'follows' in request.data:  
-                follow = FriendRequest.objects.get(id=request.data['follows'])
+            item = request.data['item']
+            item_type = item['type']
+
+            if item_type == 'like':
+                serializer = LikeSerializer(data=item)
+
+                if serializer.is_valid():
+                    serializer.save()
+                    # Send like object to other user's inbox
+                    inbox.likes.add(serializer.instance.id)
+                    return Response({'message': 'Success to send like'}, status=status.HTTP_200_OK)
+
+            item_id = item['id']
+
+            if item_type == 'follow':  
+                follow = FriendRequest.objects.get(id=item_id)
 
                 if author != follow.object or author == follow.actor:
                     return Response({'detail': 'Fail to send the item!'}, status=status.HTTP_400_BAD_REQUEST)
 
                 inbox.follows.add(follow)
-                return Response({'message': 'Success to send item'}, status=status.HTTP_200_OK)
+                return Response({'message': 'Success to send follow/friend request'}, status=status.HTTP_200_OK)
 
-            if 'posts' in request.data:
-                post = Post.objects.get(id=request.data['posts'])
+            if item_type == 'post':
+                post = Post.objects.get(id=item_id)
                 inbox.posts.add(post)
-                return Response({'message': 'Success to send item'}, status=status.HTTP_200_OK)
+                return Response({'message': 'Success to send post'}, status=status.HTTP_200_OK)
 
-            if 'comments' in request.data:
-                comment = Comment.objects.get(id=request.data['comments'])
+            if item_type == 'comment':
+                comment = Comment.objects.get(id=item_id)
                 inbox.comments.add(comment)
-                return Response({'message': 'Success to send item'}, status=status.HTTP_200_OK)
-
-            if 'likes' in request.data:
-                like = Like.objects.get(id=request.data['likes'])
-                inbox.likes.add(like)
-                return Response({'message': 'Success to send item'}, status=status.HTTP_200_OK)
+                return Response({'message': 'Success to send comment'}, status=status.HTTP_200_OK)
 
             return Response({'detail': 'Fail to send the item!'}, status=status.HTTP_400_BAD_REQUEST)
 
