@@ -498,40 +498,6 @@ class FriendRequestsAPI(APIView):
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
 
-class LikeAPI(APIView):
-    authentication_classes = [authentication.BasicAuthentication, authentication.SessionAuthentication]
-    permission_classes = [permissions.IsAuthenticated]
-
-    def post(self, request, author_id):
-        inbox = get_object_or_404(Inbox, author__exact=author_id)
-        serializer = LikeSerializer(data=request.data)
-        if serializer.is_valid():
-            post = serializer.validated_data['post']
-
-            if 'comment' in serializer.validated_data and serializer.validated_data['comment'] is not None:
-                comment = serializer.validated_data['comment']
-                like_query_set = Like.objects.filter(author__id__exact=author_id,
-                                                     post__id__exact=post.id,
-                                                     comment__id__exact=comment.id)
-            else:
-                like_query_set = Like.objects.filter(author__id__exact=author_id,
-                                                     post__id__exact=post.id,
-                                                     comment__id__isnull=True)
-
-            # Do not like the same object twice
-            if like_query_set:
-                return Response(LikeSerializer().to_representation(like_query_set[0]),
-                                status=status.HTTP_204_NO_CONTENT)
-
-            serializer.save()
-            # Send like object to other user's inbox
-            inbox.likes.add(serializer.instance.id)
-
-            return Response(posts.serializers.LikeSerializer().to_representation(serializer.instance),
-                            status=status.HTTP_200_OK)
-        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
-
-
 class AuthorLikedAPI(APIView):
     authentication_classes = [authentication.BasicAuthentication, authentication.SessionAuthentication]
     permission_classes = [permissions.IsAuthenticated]
@@ -616,6 +582,22 @@ class InboxAPI(generics.GenericAPIView):
         
         return self.paginator.get_paginated_response({'items': part_items, 'url': author.url})
 
+    @staticmethod
+    def _get_already_liked(author_id, post_id, comment_id):
+        print(f"{author_id=}, {post_id=}, {comment_id=}")
+        if comment_id:
+            like_query_set = Like.objects.filter(author__id__exact=author_id,
+                                                 post__id__exact=post_id,
+                                                 comment__id__exact=comment_id)
+        else:
+            like_query_set = Like.objects.filter(author__id__exact=author_id,
+                                                 post__id__exact=post_id,
+                                                 comment__id__isnull=True)
+
+        if like_query_set:
+            return like_query_set[0]
+        return None
+
     def post(self, request, id):
         try:
             author = Author.objects.get(id=id)
@@ -625,13 +607,30 @@ class InboxAPI(generics.GenericAPIView):
             item_type = item['type']
 
             if item_type == 'like':
-                serializer = LikeSerializer(data=item)
+                like_serializer = LikeSerializer(data=item)
+                if like_serializer.is_valid():
+                    post = like_serializer.validated_data['post']
 
-                if serializer.is_valid():
-                    serializer.save()
+                    # Do not like the same object twice
+                    comment = like_serializer.validated_data.get('comment', None)
+                    like_author = like_serializer.validated_data['author']
+                    if comment:
+                        previous_like = self._get_already_liked(like_author.id, post.id, comment.id)
+                    else:
+                        previous_like = self._get_already_liked(like_author.id, post.id, None)
+                    print(f"{previous_like=}")
+                    if previous_like:
+                        return Response(LikeSerializer().to_representation(previous_like),
+                                        status=status.HTTP_204_NO_CONTENT)
+
+                    like_serializer.save()
+
                     # Send like object to other user's inbox
-                    inbox.likes.add(serializer.instance.id)
-                    return Response({'message': 'Success to send like'}, status=status.HTTP_200_OK)
+                    inbox.likes.add(like_serializer.instance.id)
+
+                    return Response(posts.serializers.LikeSerializer().to_representation(like_serializer.instance),
+                                    status=status.HTTP_200_OK)
+                return Response(like_serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
             item_id = item['id']
 

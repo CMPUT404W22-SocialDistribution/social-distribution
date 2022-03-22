@@ -639,7 +639,7 @@ def create_comment(request, author_id, post_id):
             postAuthor.inbox.comments.add(comment)
         # postAuthor.inbox.comments.remove(comment)
 
-        return JsonResponse({"bool":True, 'published': comment.published, 'id': comment.id})
+        return JsonResponse({"bool":True, 'published': comment.published, 'id': comment.id, 'author': author.id})
 
 
 class CommentsAPI(APIView):
