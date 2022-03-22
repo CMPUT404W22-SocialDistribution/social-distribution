@@ -498,15 +498,11 @@ class MyPostsAPI(generics.GenericAPIView):
                     post.content = commonmark.commonmark(post.content)
 
             serializer = PostSerializer(posts, many=True)
-            post_data = serializer.data
-            for post in post_data:
-                post['id'] = author.url + '/posts/' + post['id']
-                post['author']['id'] = author.url
             
             content = {
                 'current user': request.user.username,
                 'author': author.displayName,
-                'posts': post_data
+                'posts': serializer.data
             }
             return Response(content, 200)
         
@@ -516,6 +512,11 @@ class MyPostsAPI(generics.GenericAPIView):
                 if post.content_type == 'text/markdown':
                     post.content = commonmark.commonmark(post.content)
             serializer = PostSerializer(posts, many=True)
+            post_data = serializer.data
+            for post in post_data:
+                post['id'] = author.url + '/posts/' + post['id']
+                post['author']['id'] = author.url
+                
             return Response({'posts': serializer.data}, 200)
 
     def post(self, request, author_id):
@@ -701,7 +702,7 @@ class CommentsAPI(APIView):
         serializer = CommentSerializer(comments, many=True, remove_fields=['author_displayName'])  # many=True
         
         data = serializer.data
-        
+
         # for remote only
         # for comment in data:
         #     comment['id'] = post.comments + comment['id']
