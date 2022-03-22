@@ -49,7 +49,7 @@
             <div class="col-md-10 mt-3">
                 <div class="row">
                     <div class="col-md-5 ml-5 border-right border-2" id="my_node"></div>
-                    <div class="col-md-5 ml-5">
+                    <div class="col-md-5 ml-5" id="remote_node">
                         <div class="row">
                             <div class="col-md-1">
                                 <img class="rounded-circle"
@@ -190,7 +190,7 @@
                         <div class="card shadow-sm">
                             <div class="card-header" style="background-color: #A7C7E7">
                                 <div class="d-flex justify-content-between align-items-center">
-                                    <a href="authors/${post.author}"
+                                    <a href="authors/${post.author.id}"
                                         style="color:black;
                                                 text-decoration: none;">
                                         <div class="d-flex justify-content-between align-items-center">
@@ -201,7 +201,7 @@
                                 </div>
                             </div>
                             <div class="card-body">
-                                <h3 class="card-title"><a href="authors/${post.author}/posts/${post.id}" style="text-decoration: none;color: black">${post.title}</a></h3>
+                                <h3 class="card-title"><a href="authors/${post.author.id}/posts/${post.id}" style="text-decoration: none;color: black">${post.title}</a></h3>
                                 <div class="card-text fs-6 text-muted">
                                     <i class="fa-solid fa-calendar-day"> </i><i>&nbsp;&nbsp;${postTimestamp}</i>
                                 </div>
@@ -233,7 +233,7 @@
                             </div>
                             <div class="card-footer">
                                 <a href="javascript:void(0)" class="card-link text-muted" style="text-decoration: none;"
-                                   onclick="postLike('${post.author}', '${post.id}')"><i class="fa-solid fa-thumbs-up"></i>
+                                   onclick="postLike('${post.author.id}', '${post.id}')"><i class="fa-solid fa-thumbs-up"></i>
                                    <span>${getNumLikesText(post.num_likes)}</span></a>
 
                                 <a class="card-link text-muted" style="text-decoration: none;"
@@ -276,7 +276,7 @@
                                     </div>`
                                             }
                                             //current user is the author of that post, or current user is comment author or that comment belongs to post author
-                                            else if ((post.author == `{{author.id}}`) || (comment.author.id == `{{author.id}}`) || (comment.author.id == post.author)) {
+                                            else if ((post.author.id == `{{author.id}}`) || (comment.author.id == `{{author.id}}`) || (comment.author.id == post.author.id)) {
                                                 return `
                                                     <div class=" justify-content-center py-2">
                                                         <div class="pb-2 px-2 mx-2"

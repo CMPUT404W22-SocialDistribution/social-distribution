@@ -36,7 +36,7 @@ class PostSerializer(serializers.ModelSerializer):
     class Meta:
         model = Post
         fields = ['type', 'author_username', 'author_displayName', 'title', 'id', 'source', 'origin', 'description',
-                  'content_type',
+                  'content_type', 'visibleTo',
                   'content', 'author', 'categories', 'published', 'visibility', 'unlisted', 'author_image', 'image',
                   'comments', 'commentsSrc', 'num_likes']
 
@@ -46,6 +46,12 @@ class PostSerializer(serializers.ModelSerializer):
     #     return data
     def to_representation(self, instance):
         response = super().to_representation(instance)
+        if "author" in response:
+            post_author = response["author"]
+            author = Author.objects.get(id=post_author)
+
+        response["author"] = AuthorSerializer(author).data
+
         if "commentsSrc" in response:
             comments = response["commentsSrc"]
             for i in range(len(comments)):
