@@ -1,3 +1,4 @@
+from enum import Flag
 import requests
 from django.contrib import messages
 from django.contrib.auth import authenticate, login, logout
@@ -454,6 +455,8 @@ class FriendsAPI(APIView):
         GET:
             Retrieve a list of followers and a list of followings of an author
     """
+    authentication_classes = [authentication.BasicAuthentication, authentication.SessionAuthentication]
+    permission_classes = [permissions.IsAuthenticated]
 
     def get(self, request, id):
         try:
@@ -462,13 +465,51 @@ class FriendsAPI(APIView):
             return Response({'detail': 'Not Found!'}, status=status.HTTP_404_NOT_FOUND)
 
         followers = author.followers.all()
-        followings = author.followings.all()
+        # followings = author.followings.all()
         followers_serializer = ProfileSerializer(followers, remove_fields=['user'], many=True)
-        followings_serializer = ProfileSerializer(followings, remove_fields=['user'], many=True)
+        # followings_serializer = ProfileSerializer(followings, remove_fields=['user'], many=True)
         return Response(
-            {'type': 'friends', 'followers': followers_serializer.data, 'followings': followings_serializer.data},
+            {'type': 'followers', 'items': followers_serializer.data},
             status=status.HTTP_200_OK)
 
+
+class FriendDetailAPI(APIView):
+    """
+        To do: remote and put
+    """
+    authentication_classes = [authentication.BasicAuthentication, authentication.SessionAuthentication]
+    permission_classes = [permissions.IsAuthenticated]
+    serializer_class = ProfileSerializer
+
+    def get(self, request, author_id, follower_id):
+        try:
+            author = Author.objects.get(id=author_id)
+            follower = Author.objects.get(id=follower_id)
+            
+            if follower in author.followers.all():
+                followers_serializer = ProfileSerializer(follower, remove_fields=['user'], many=False)
+                return Response(followers_serializer.data, status=status.HTTP_200_OK)
+
+            return Response({'detail': 'Not Found!'}, status=status.HTTP_404_NOT_FOUND)
+
+        except:
+            return Response({'detail': 'Not Found!'}, status=status.HTTP_404_NOT_FOUND)
+
+    def delete(self, request, author_id, follower_id):
+        try:
+            author = Author.objects.get(id=author_id)
+            follower = Author.objects.get(id=follower_id)
+            
+            if follower in author.followers.all():
+                author.followers.remove(follower)
+                return Response({'message': 'Success to unfriend/unfollow'}, status=status.HTTP_200_OK)
+
+            return Response({'detail': 'Not Found!'}, status=status.HTTP_404_NOT_FOUND)
+
+        except:
+            return Response({'detail': 'Not Found!'}, status=status.HTTP_404_NOT_FOUND)
+
+        
 
 class FriendRequestsAPI(APIView):
     """

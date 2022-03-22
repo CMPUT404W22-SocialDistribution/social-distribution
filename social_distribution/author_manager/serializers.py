@@ -5,6 +5,11 @@ from .models import Author, FriendRequest, Inbox
 
 
 class ProfileSerializer(serializers.ModelSerializer):
+    id = serializers.SerializerMethodField('get_author_id')
+
+    def get_author_id(self, obj):
+        return obj.url
+
     class Meta:
         model = Author
         fields = ['user', 'type', 'id', 'host', 'displayName', 'url',
