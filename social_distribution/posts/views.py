@@ -8,6 +8,7 @@ from rest_framework import generics, authentication, permissions
 from rest_framework import status
 from rest_framework.response import Response
 from rest_framework.views import APIView
+from rest_framework.pagination import PageNumberPagination
 from rest_framework.decorators import api_view
 import requests
 
@@ -431,6 +432,7 @@ class PostsAPI(APIView):
     authentication_classes = [authentication.BasicAuthentication, authentication.SessionAuthentication]
     permission_classes = [permissions.IsAuthenticated]
     serializer_class = PostSerializer
+   
 
     def get(self, request):
         user = request.user
@@ -454,8 +456,16 @@ class PostsAPI(APIView):
         for post in local_posts:
             if post.content_type == 'text/markdown':
                 post.content = commonmark.commonmark(post.content)  # parse and render content of type markdown
-        serializer = PostSerializer(local_posts, many=True)
-        return Response(serializer.data, 200)
+        
+        
+        paginator = PageNumberPagination()
+        result_page = paginator.paginate_queryset(local_posts,request)
+        serializer = PostSerializer(result_page, many=True)
+        response = {
+            'count': len(local_posts),
+            'posts': serializer.data
+        }
+        return Response(response, 200)
 
 
 class MyPostsAPI(generics.GenericAPIView):
