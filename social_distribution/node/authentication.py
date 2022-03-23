@@ -3,7 +3,7 @@ from author_manager.models import Author
 from .models import Node
 import base64
 
-INCOMING_USERNAME = 'cmput404'
+INCOMING_USERNAME = 'squawker'
 INCOMING_PASSWORD = 'cmput404'
 
 def basic_authentication(request):
