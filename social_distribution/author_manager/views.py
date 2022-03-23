@@ -38,7 +38,7 @@ HEADERS = {'Referer': 'http://squawker-cmput404.herokuapp.com/', 'Mode': 'no-cor
 # URL = 'http://squawker-cmput404.herokuapp.com/'
 T08_USERNAME = 'squawker'
 T08_PASS = 'sQu@k3r'
-CLONE_USERNAME = 'cmput404'
+CLONE_USERNAME = 'squawker-dev'
 CLONE_PASS = 'cmput404'
 
 def sign_up(request):
