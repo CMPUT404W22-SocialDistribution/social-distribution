@@ -9,7 +9,6 @@ INCOMING_PASSWORD = 'cmput404'
 def basic_authentication(request):
     # local authentication
     local, remote = False, False
-    print(request.headers)
     try:
         # local authentication
         if not request.user.is_anonymous and Author.objects.filter(user=request.user).exists():

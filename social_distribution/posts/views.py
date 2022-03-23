@@ -385,18 +385,19 @@ def RemotePostsAPI(request):
         elif node.url == 'http://squawker-cmput404.herokuapp.com/':
             authors_url = node.url + 'api/authors/'
             response = requests.get(authors_url, headers=HEADERS, auth=(node.outgoing_username, node.outgoing_password))
-            
+        
             if response.status_code == 200:
                 remote_authors = []
                 clone_authors = response.json()['items']
                 for author in clone_authors:
                     remote_authors.append(str(author["id"]))
-            
+                print(remote_authors)
+
                 for author_id in remote_authors:
                     # for each author, get all of their posts 
-                    posts_url = node.url + 'api/authors' + author_id + '/posts/'
+                    posts_url = node.url + 'api/authors/' + author_id + '/posts/'
                     response = requests.get(posts_url, headers=HEADERS, auth=(node.outgoing_username, node.outgoing_password))
-                
+
                     if response.status_code == 200:
                         clone_posts = response.json()['posts']
                         for post in clone_posts:
