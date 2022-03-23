@@ -143,7 +143,7 @@ aria-controls="collapseExample">
                         <div class=" d-flex justify-content-between py-1 pt-2" style="font-size: 13px";>
                             <span ><a href="{% url 'author_manager:profile' comment.author.id %}">
                                 {{comment.author.displayName}}</a></span>
-                            <span>{{comment.published}} </span>
+                            <span id="datePublished" data-answer="{{comment.published}}">{{comment.published}} </span>
                             <div><a href="javascript:void(0)" class="card-link text-muted"
                                 style="text-decoration: none;"
                                 onclick="postLike('{{comment.author.id}}', '{{post.id}}', '{{comment.id}}')">
@@ -165,6 +165,7 @@ aria-controls="collapseExample">
     </div>
 </div>
 <script>
+
     window.addEventListener('DOMContentLoaded', (event) => {
         // Inject bootstrap class card-img-bottom to constrain inline image size
         let postContentInlineImg = document.querySelector("#post-content img:not(.card-img-bottom)");
@@ -181,6 +182,12 @@ aria-controls="collapseExample">
                 minute: 'numeric', // numeric, 2-digit
             });
     }
+
+    // var datePublished = $("#datePublished").data('answer');
+    // var content = document.getElementById("datePublished");
+    // console.log(Timestamp(datePublished));
+    // content.innerHTML = Timestamp(datePublished).toString();
+
     $(document).ready(function ClickOnComment(){
             $(".save-comment").off('click').on('click', function(){
                 var _postid=$(this).data('answer')
