@@ -487,8 +487,8 @@ class FriendsAPI(APIView):
         GET:
             Retrieve a list of followers and a list of followings of an author
     """
-    authentication_classes = [authentication.BasicAuthentication, authentication.SessionAuthentication]
-    permission_classes = [permissions.IsAuthenticated]
+    authentication_classes = [authentication.SessionAuthentication]
+    permission_classes = []
 
     def get(self, request, id):
         local, remote = basic_authentication(request)
@@ -516,8 +516,8 @@ class FriendDetailAPI(APIView):
     """
         To do: remote and put
     """
-    authentication_classes = [authentication.BasicAuthentication, authentication.SessionAuthentication]
-    permission_classes = [permissions.IsAuthenticated]
+    authentication_classes = [authentication.SessionAuthentication]
+    permission_classes = []
     serializer_class = ProfileSerializer
 
     def get(self, request, author_id, follower_id):
