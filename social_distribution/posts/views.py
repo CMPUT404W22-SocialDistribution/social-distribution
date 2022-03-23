@@ -253,10 +253,9 @@ def RemotePostsAPI(request):
     ''' API endpoint that gets all remote public and friend posts'''
     # Team 8 hasn't had private posts yet 
     remote_posts = []
-    for node in []:
-        print(node)
+    for node in Node.objects.all():
         # Team 8
-        if node.url == 'https://project-socialdistribution.herokuapp.com/':
+        if node.url == 'http://project-socialdistribution.herokuapp.com/':
             # get all authors of the remote node
             authors_url = node.url + 'api/authors/'
             response = requests.get(authors_url, headers=HEADERS, auth=(node.outgoing_username, node.outgoing_password))
@@ -382,7 +381,7 @@ def RemotePostsAPI(request):
                                 remote_posts.append(post_data)
 
         # Clone
-        elif node.url == 'http://squawker-cmput404.herokuapp.com/':
+        elif node.url == 'https://squawker-dev.herokuapp.com/':
             authors_url = node.url + 'api/authors/'
             response = requests.get(authors_url, headers=HEADERS, auth=(node.outgoing_username, node.outgoing_password))
         
@@ -391,7 +390,6 @@ def RemotePostsAPI(request):
                 clone_authors = response.json()['items']
                 for author in clone_authors:
                     remote_authors.append(str(author["id"]))
-                print(remote_authors)
 
                 for author_id in remote_authors:
                     # for each author, get all of their posts 
@@ -423,7 +421,6 @@ def RemotePostsAPI(request):
             pass
         
         remote_posts = sorted(remote_posts, key=lambda k:k['published'], reverse=True)
-        print(remote_posts)
     return JsonResponse({"posts": remote_posts}, status=200)
 
 class PostsAPI(APIView):
