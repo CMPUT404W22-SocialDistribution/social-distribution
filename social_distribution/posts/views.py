@@ -261,7 +261,7 @@ def RemotePostsAPI(request):
         # Clone
         if node.url == 'https://squawker-dev.herokuapp.com/':
             posts_url = node.url + 'api/posts/'
-            response = requests.get(authors_url, headers=HEADERS, auth=(node.outgoing_username, node.outgoing_password))
+            response = requests.get(posts_url, headers=HEADERS, auth=(node.outgoing_username, node.outgoing_password))
         
             if response.status_code == 200:
                 clone_posts = response.json()['items']
@@ -458,7 +458,8 @@ class PostsAPI(APIView):
             }
             return Response(response, 200)
         else: 
-            public_posts = Post.objects.filter(visibility='public', unlisted=False).order_by('-published')
+            visibilities = ['public', 'friends']
+            public_posts = Post.objects.filter(visibility__in=visibilities, unlisted=False).order_by('-published')
             serializer = PostSerializer(public_posts, many=True)
             post_data = serializer.data
             for post in post_data:
