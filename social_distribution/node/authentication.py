@@ -21,13 +21,13 @@ def basic_authentication(request):
             decoded_credentials = base64.b64decode(encoded_credentials).decode('utf-8')
             username, password = decoded_credentials.split(':')
             
-            for node in Node.objects.all():
+            # for node in Node.objects.all():
                 # if username == node.incoming_username and password == node.incoming_password:
-                if username == INCOMING_USERNAME and password == INCOMING_PASSWORD:
-                    remote = True
-                    return local, remote
-
+        if username == INCOMING_USERNAME and password == INCOMING_PASSWORD:
+            remote = True
             return local, remote
+
+            # return local, remote
     except Exception as e:
         return local, remote
     
