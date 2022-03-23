@@ -264,7 +264,7 @@ def RemotePostsAPI(request):
             response = requests.get(posts_url, headers=HEADERS, auth=(node.outgoing_username, node.outgoing_password))
         
             if response.status_code == 200:
-                clone_posts = response.json()['items']
+                clone_posts = response.json()['posts']
                 for post in clone_posts:
                     remote_posts.append(post)
             
