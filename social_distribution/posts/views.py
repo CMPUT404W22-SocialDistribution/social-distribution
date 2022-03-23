@@ -264,12 +264,12 @@ def RemotePostsAPI(request):
                 team8_authors = response.json()['items']
                 for author in team8_authors:
                     new_id = str(author["id"])
-                    remote_authors.append(new_id.split('/')[-1])
+                    remote_authors.append(new_id.split('/')[-2])
             
                 for author_id in remote_authors:
                     # for each author, get all of their posts 
                     posts_url = node.url + 'api/authors/' + author_id + '/posts/'
-                    response = requests.get(posts_url, headers=HEADERS, auth=(node.outgoing_username, node.outgoing_password))
+                    response = requests.get(posts_url, auth=(node.outgoing_username, node.outgoing_password))
                     
                     if response.status_code == 200:
                         team8_posts = response.json()['items']
@@ -283,7 +283,7 @@ def RemotePostsAPI(request):
                                 comments = []
                                 post_id = str(post["id"])
                                 comments_url = node.url + 'api/authors/' + author_id + '/posts/' + post_id +'/comments/'
-                                res = requests.get(comments_url, header=HEADERS, auth=(node.outgoing_username, node.outgoing_password))
+                                res = requests.get(comments_url, auth=(node.outgoing_username, node.outgoing_password))
                                 if res.status_code == 200:
                                     post_comments =  response.json['items']
                                     for comment in post_comments:
@@ -305,6 +305,8 @@ def RemotePostsAPI(request):
                                         comments.append(comment_data)
                                 comments = sorted(comments, key=lambda k:k['published'], reverse=True)
                                 # post with comments
+                                if post["contentType"] == 'text/markdown':
+                                    post["content"] = commonmark.commonmark(str(post["content"]))
                                 post_data = {
                                     'author_username' : post["author"]["displayName"],
                                     'author_displayName' : post["author"]["displayName"],
@@ -328,15 +330,15 @@ def RemotePostsAPI(request):
                                 }
                                 remote_posts.append(post_data)
 
-                            elif post['visibility'] == 'FRIENDS' and id in request.user.remote_friends:
+                            elif post['visibility'] == 'FRIENDS':
                                 # get all friends posts of my remote friend
-                                friend_url = node.url + '/authors/' + id +'/'
+                                friend_url = node.url + '/authors/' + author_id +'/'
                                 # for each post, get my comments and the friend's comments only
                                 # comments_url = str(post["comments"]) commented out since T08 hasn't have this field set yet
                                 comments = []
                                 post_id = str(post["id"])
                                 comments_url = node.url + 'api/authors/' + author_id + '/posts/' + post_id +'/comments/'
-                                res = requests.get(comments_url, header=HEADERS, auth=(node.outgoing_username, node.outgoing_password))
+                                res = requests.get(comments_url, auth=(node.outgoing_username, node.outgoing_password))
                                 if res.status_code == 200:
                                     post_comments =  response.json['items']
                                     for comment in post_comments:
@@ -357,6 +359,8 @@ def RemotePostsAPI(request):
                                                 'id': comment_id
                                         }
                                         comments.append(comment_data)
+                                if post["contentType"] == 'text/markdown':
+                                    post["content"] = commonmark.commonmark(str(post["content"]))
                                 post_data = {
                                     'author_username' : post["author"]["displayName"],
                                     'author_displayName' : post["author"]["displayName"],
