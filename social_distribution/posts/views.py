@@ -250,9 +250,6 @@ class SearchView(ListView):
 @api_view(['GET'])
 def RemotePostsAPI(request):
     ''' API endpoint that gets all remote public and friend posts'''
-    local, remote = basic_authentication(request)
-    print(local)
-    print(remote)
     # Team 8 hasn't had private posts yet 
     remote_posts = []
     for node in Node.objects.all():
@@ -490,9 +487,7 @@ class MyPostsAPI(generics.GenericAPIView):
 
     # local & remote
     def get(self, request, author_id):
-        print(request.user)
         local, remote = basic_authentication(request)
-        print(local)
         if not local and not remote:
             return Response({'detail': 'Access denied'}, 401)
 
@@ -763,6 +758,9 @@ class PostImageAPI(generics.GenericAPIView):
     permission_classes = []
 
     def get(self, request, author_id, post_id):
+        local, remote = basic_authentication(request)
+        if not local and not remote:
+            return Response({'detail': 'Access denied'}, 401)
         post = get_object_or_404(Post, id=post_id, author_id=author_id)
         if post.image:
             return redirect(post.image.url)
