@@ -264,7 +264,7 @@ def RemotePostsAPI(request):
             response = requests.get(posts_url, headers=HEADERS, auth=(node.outgoing_username, node.outgoing_password))
         
             if response.status_code == 200:
-                clone_posts = response.json()['items']
+                clone_posts = response.json()['posts']
                 for post in clone_posts:
                     post['post_id'] =  str(post["id"]).split('/')[-1]
                     remote_posts.append(post)
@@ -281,13 +281,18 @@ def RemotePostsAPI(request):
                 for author in team8_authors:
                     new_id = str(author["id"])
                     remote_authors.append(new_id.split('/')[-2])
+
+                print(remote_authors)
             
                 for author_id in remote_authors:
                     # for each author, get all of their posts 
+                  
                     posts_url = node.url + 'api/authors/' + author_id + '/posts/'
                     response = requests.get(posts_url, auth=(node.outgoing_username, node.outgoing_password))
                     
+
                     if response.status_code == 200:
+                        print("get post")
                         team8_posts = response.json()['items']
                         for post in team8_posts:
                             if post['visibility'] == 'PUBLIC':
@@ -460,7 +465,8 @@ class PostsAPI(APIView):
             }
             return Response(response, 200)
         else: 
-            public_posts = Post.objects.filter(visibility='public', unlisted=False).order_by('-published')
+            visibilities = ['public', 'friends']
+            public_posts = Post.objects.filter(visibility__in=visibilities, unlisted=False).order_by('-published')
             serializer = PostSerializer(public_posts, many=True)
             post_data = serializer.data
             for post in post_data:
