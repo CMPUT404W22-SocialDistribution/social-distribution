@@ -261,7 +261,7 @@ def RemotePostsAPI(request):
         # Clone
         if node.url == 'https://squawker-dev.herokuapp.com/':
             posts_url = node.url + 'api/posts/'
-            response = requests.get(authors_url, headers=HEADERS, auth=(node.outgoing_username, node.outgoing_password))
+            response = requests.get(posts_url, headers=HEADERS, auth=(node.outgoing_username, node.outgoing_password))
         
             if response.status_code == 200:
                 clone_posts = response.json()['items']
