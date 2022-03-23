@@ -49,7 +49,7 @@
             <div class="col-md-10 mt-3">
                 <div class="row " id="post-stream">
                     <div class="col-md-5 ml-5 border-right border-2" id="my_node"></div>
-                    <div class="col-md-5 ml-5" id="remote_node"></div>
+                    <div class="col-md-5 ml-5" id="remote_node"><div id="remote_fetching"><i>Fetching...</i></div></div>
                         <br>
 
                     </div>
@@ -409,6 +409,7 @@
                 dataType: 'json',
                 success: (data, status) => {
                     // Get the latest post from the API
+                    // document.getElementById("remote_fetching").remove();
                     var postLatestFromApi = data.posts[0];
                     // Get the latest post from the DOM
                     var rootFirstChild = document.getElementById("remote_node").firstChild;
@@ -485,7 +486,6 @@
                         dataType: 'json',
                         success:function(res){
                             if(res.bool==true){
-                                console.log("Hello {{user.author.id}}")
                                 $(".comment-text-postID".replace("postID", _postid)).val('')
 
                                 // Added new comment
