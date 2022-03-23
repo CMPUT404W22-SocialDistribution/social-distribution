@@ -11,12 +11,11 @@ def basic_authentication(request):
     local, remote = False, False
     try:
         # local authentication
-        if Author.objects.filter(user=request.user).exists():
+        if not request.user.is_anonymous and Author.objects.filter(user=request.user).exists():
             local = True
             return local, remote
         else:
-            auth_header = request.META['HTTP_AUTHORIZATION']
-
+            auth_header = request.headers['Authorization']
             encoded_credentials = auth_header.split(' ')[-1]  # remove 'Basic'
             decoded_credentials = base64.b64decode(encoded_credentials).decode('utf-8')
             username, password = decoded_credentials.split(':')
@@ -26,6 +25,6 @@ def basic_authentication(request):
                 return local, remote
             else:
                 return local, remote
-    except:
+    except Exception as e:
         return local, remote
     
