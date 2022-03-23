@@ -339,6 +339,7 @@ class ImagePostTest(APITestCase):
         self.url = reverse('posts:post_image', args=[self.author1.id, self.post_with_image.id])
 
         response = self.client.get(self.url)
+        print(response.content)
         self.assertEqual(response.status_code, 401)
 
     def test_get_post_image_success_redirects_to_image_url(self):

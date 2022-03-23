@@ -15,7 +15,7 @@ from rest_framework import status
 from rest_framework import generics, authentication, permissions
 from rest_framework.pagination import PageNumberPagination
 from rest_framework.parsers import JSONParser
-
+from node.authentication import basic_authentication
 import requests
 import datetime
 from posts.models import Comment
@@ -346,6 +346,8 @@ class GetAllAuthors(APIView):
         GET:
             Retrieve all author's profiles
     """
+    authentication_classes = [authentication.SessionAuthentication]
+    permission_classes = []
 
     def get(self, request):
         """
@@ -357,6 +359,7 @@ class GetAllAuthors(APIView):
         local, remote = basic_authentication(request)
         if not local and not remote:
             return Response({'detail': 'Access denied'}, status=status.HTTP_401_UNAUTHORIZED)
+
 
         authors = Author.objects.all()
         if local:
