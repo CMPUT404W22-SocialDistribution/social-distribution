@@ -47,13 +47,18 @@
                 </div>
             </div>
             <div class="col-md-10 mt-3">
-                <div class="row">
+                <div class="row " id="post-stream">
                     <div class="col-md-5 ml-5 border-right border-2" id="my_node"></div>
                     <div class="col-md-5 ml-5" id="remote_node"></div>
                         <br>
+
+                    </div>
+                    <div class="col-md-5 ml-4 text-center" >
+                        <button class="bi bi-three-dots loadmoreBtn" ></button>
+                    </div>    
+
                 </div>
             </div>
-
 
         </div>
 
@@ -94,7 +99,7 @@
                     break;
             }
             const postCardsHtmlParts = [`
-                <div class="row" id="${post.id}">
+                <div class="row postCard" id="${post.id}">
                     <div class="col-md-1 mr-2">
                         <img class="rounded-circle border border-2 shadow-sm"
                             style="border-color: gray"
@@ -368,31 +373,38 @@
         }
         
 
-        function fetchPosts() {
+  
+        var pageNumb = 1;
+       
+        function fetchPosts(){
+
             $.ajax({
                 type: 'GET',
                 url: "{% url 'posts:all_posts_api' %}",
                 dataType: 'json',
-                success: (data, status) => {
+                success: (data, status) => {                   
                     // Get the latest post from the API
-                    var postLatestFromApi = data[0];
+                    var postLatestFromApi = data.posts[0];
                     // Get the latest post from the DOM
                     var rootFirstChild = document.getElementById("my_node").firstChild;
                     var postLatestElement = rootFirstChild ? rootFirstChild.nextElementSibling : null;
                     var postLatestElementId = postLatestElement ? postLatestElement.id : "empty";
                     if (postLatestElementId == "empty") {
                         var postCardsHtml = '';
-                        data.map(post => {
+                        data.posts.map(post => {
                             postCardsHtml += createPostCard(post);
 
                         });
                         document.getElementById("my_node").innerHTML += postCardsHtml;
-                    } else if (postLatestElementId != postLatestFromApi.id) {
-                        console.log(postLatestElement)
+                    }
+                    else if (postLatestElementId != postLatestFromApi.id) {                        
                         var rootElement = document.getElementById("my_node")
                         rootElement.innerHTML = createPostCard(postLatestFromApi) + rootElement.innerHTML
                     }
-
+                    var countPosts =  $(".postCard").length;
+                    if (countPosts < 5) {
+                        document.getElementsByClassName("loadmoreBtn")[0].style.visibility = 'hidden';
+                    } 
                     // Inject bootstrap class card-img-bottom to constrain inline image sizes
                     document.querySelectorAll("#post-content img:not(.card-img-bottom)").forEach(postContentInlineImg =>
                         postContentInlineImg?.classList.add('card-img-bottom')
@@ -437,45 +449,73 @@
                     console.log(error);
                 }
             });
+          
+            
+           
+            $(document).ready(function OnClickLoadMore(){
+                $(".loadmoreBtn").off('click').on('click', function(){
+                   
+                    pageNumb++;
+                   
 
-
-            $(document).ready(function ClickOnComment() {
-                $(".save-comment").off('click').on('click', function () {
-                    console.log('hi')
-                    var _postid = $(this).data('answer')
-                    var _comment = $(".comment-text-postID".replace("postID", _postid)).val();
-
-                    // AJX
                     $.ajax({
-                        url: "/authors/{{user.author.id}}/posts/postid/comments".replace("postid", _postid),
-                        type: "post",
+                        type: 'GET',
+                        url: "{% url 'posts:all_posts_api' %}",
                         data: {
-                            comment: _comment,
-                            post: _postid,
-                            csrfmiddlewaretoken: "{{csrf_token}}"
+                            page: pageNumb,
                         },
                         dataType: 'json',
+                        success: (data, status) => {                   
+                            
+                            var postCardsHtml = '';
+                            data.posts.map(post => {
+                                postCardsHtml += createPostCard(post);
+                            });
+                            document.getElementById("my_node").innerHTML += postCardsHtml;
+                            var countPosts =  $(".postCard").length;
+                            if (countPosts == data.count) {
+                                $(".loadmoreBtn").remove();
+                                
+                            }
+                        },
+                        error: (error) => {
+                            console.log(error);
+                            $(".loadmoreBtn").remove();
+                        }
+                    });
+                })
+            });
+            $(document).ready(function ClickOnComment(){
+            $(".save-comment").off('click').on('click', function(){
+                var _postid=$(this).data('answer')
+                var _comment=$(".comment-text-postID".replace("postID", _postid)).val();
+                
+                // AJX
+                $.ajax({
+                    url:"/authors/{{user.author.id}}/posts/postid/comments".replace("postid", _postid),
+                    type: "post",
+                    data:{
+                        comment:_comment,
+                        post:_postid,
+                        csrfmiddlewaretoken:"{{csrf_token}}"
+                    },
+                    dataType: 'json',
+                    success:function(res){
+                        if(res.bool==true){
+                            $(".comment-text-postID".replace("postID", _postid)).val('')
 
-                        success: function (res) {
-                            if (res.bool == true) {
-                                $(".comment-text-postID".replace("postID", _postid)).val('')
-
-                                // Added new comment
-                                var _url = "{% url 'author_manager:profile' user.author.id%}";
-                                var _html = `<div class=" justify-content-center py-2">
-                                                <div class="pb-2 px-2 mx-2"
-                                                     style="background-color: #00000008; box-shadow: 5px 5px 2px #cccccc;">
-                                                    <span class="card-text">${_comment}</span>
-                                                    <div class="d-flex justify-content-between py-1 pt-2" style="font-size: 13px";>
-                                                        <span ><a href='${_url}'>{{request.user.author}}</a></span>
-                                                        <span>${Timestamp(res.published)}</span>
-                                                        <div>
-                                                            <a href="javascript:void(0)" class="card-link text-muted"
-                                                               style="text-decoration: none;" onclick="postLike('${res.author}', '${_postid}', '${res.id}')">
-                                                               <i class="fa-solid fa-thumbs-up"></i>&nbsp;<span>Like</span></a>
-                                                        </div>
-                                                    </div>
-                                                </div>
+                            // Added new comment
+                            var _url = "{% url 'author_manager:profile' user.author.id%}";
+                            var _html=` <div class=" justify-content-center py-2">\
+                                                <div class="pb-2 px-2 mx-2" \
+                                                style="background-color: #00000008; box-shadow: 5px 5px 2px #cccccc;" \
+                                                >  <span class="card-text"> '+_comment+'</span> \
+                                                    <div class="d-flex justify-content-between py-1 pt-2" style="font-size: 13px";> \
+                                                        <span ><a href='+_url+'> \
+                                                        {{request.user.author}}</a></span> \
+                                                        <span>'+Timestamp(res.published)+'</span> \
+                                                    </div> \
+                                                </div> \
                                         </div> \
                                         `;
 
@@ -491,6 +531,7 @@
 
         }
 
+        
         fetchPosts();
 
         function getNumLikesText(numLikes) {
