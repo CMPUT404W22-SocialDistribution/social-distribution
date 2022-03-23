@@ -261,14 +261,14 @@ def RemotePostsAPI(request):
             response = requests.get(authors_url, headers=HEADERS, auth=(node.outgoing_username, node.outgoing_password))
             if response.status_code == 200:
                 remote_authors = []
-                team8_authors = response.json()['results']
+                team8_authors = response.json()['items']
                 for author in team8_authors:
                     new_id = str(author["id"])
-                    remote_authors.append(new_id.split('/')[-2])
+                    remote_authors.append(new_id.split('/')[-1])
             
                 for author_id in remote_authors:
                     # for each author, get all of their posts 
-                    posts_url = node.url + 'api/authors' + author_id + '/posts/'
+                    posts_url = node.url + 'api/authors/' + author_id + '/posts/'
                     response = requests.get(posts_url, headers=HEADERS, auth=(node.outgoing_username, node.outgoing_password))
                     
                     if response.status_code == 200:
@@ -282,7 +282,7 @@ def RemotePostsAPI(request):
                                 # comments_url = str(post["comments"]) commented out since T08 hasn't have this field set yet
                                 comments = []
                                 post_id = str(post["id"])
-                                comments_url = node.url + 'api/authors' + author_id + '/posts/' + post_id +'/comments/'
+                                comments_url = node.url + 'api/authors/' + author_id + '/posts/' + post_id +'/comments/'
                                 res = requests.get(comments_url, header=HEADERS, auth=(node.outgoing_username, node.outgoing_password))
                                 if res.status_code == 200:
                                     post_comments =  response.json['items']
@@ -335,7 +335,7 @@ def RemotePostsAPI(request):
                                 # comments_url = str(post["comments"]) commented out since T08 hasn't have this field set yet
                                 comments = []
                                 post_id = str(post["id"])
-                                comments_url = node.url + 'api/authors' + author_id + '/posts/' + post_id +'/comments/'
+                                comments_url = node.url + 'api/authors/' + author_id + '/posts/' + post_id +'/comments/'
                                 res = requests.get(comments_url, header=HEADERS, auth=(node.outgoing_username, node.outgoing_password))
                                 if res.status_code == 200:
                                     post_comments =  response.json['items']
