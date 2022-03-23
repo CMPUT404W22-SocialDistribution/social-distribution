@@ -291,6 +291,8 @@ class ProfileAPI(APIView):
         POST:
             update an author's profile.
     """
+    authentication_classes = [authentication.SessionAuthentication]
+    permission_classes = []
 
     def get(self, request, id):
         """
@@ -301,7 +303,9 @@ class ProfileAPI(APIView):
         """
         local, remote = basic_authentication(request)
         if not local and not remote:
+
             return Response({'detail': 'Access denied'}, status=status.HTTP_401_UNAUTHORIZED)
+
 
         profile = get_object_or_404(Author, id=id)
         if local:
