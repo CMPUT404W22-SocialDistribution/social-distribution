@@ -253,7 +253,7 @@ def RemotePostsAPI(request):
     ''' API endpoint that gets all remote public and friend posts'''
     # Team 8 hasn't had private posts yet 
     remote_posts = []
-    for node in Node.objects.all():
+    for node in []:
         print(node)
         # Team 8
         if node.url == 'https://project-socialdistribution.herokuapp.com/':
