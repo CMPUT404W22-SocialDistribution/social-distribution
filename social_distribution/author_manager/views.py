@@ -18,6 +18,7 @@ from rest_framework.parsers import JSONParser
 from node.authentication import basic_authentication
 import requests
 import datetime
+from node.models import Node
 from posts.models import Comment
 
 from rest_framework.response import Response
@@ -31,6 +32,9 @@ from .models import *
 from .serializers import *
 
 from node.authentication import basic_authentication
+
+HEADERS = {'Referer': 'http://squawker-cmput404.herokuapp.com/', 'Mode': 'no-cors'}
+URL = 'http://squawker-cmput404.herokuapp.com/'
 
 def sign_up(request):
     '''
@@ -172,10 +176,30 @@ class SearchAuthorView(ListView):
         if query == '':
             queryset = []
         else:
-            queryset = Author.objects.filter(
-                Q(user__username__icontains=query) |
-                Q(displayName__icontains=query),
-            )
+            queryset = []
+            query_local_authors = Author.objects.filter( 
+                                    Q(user__username__icontains=query)|Q(displayName__icontains=query))
+
+            for author in query_local_authors:
+                queryset.append({'id': author.id, 'username': author.user.username, 
+                                 'profileImage': author.profileImage, 'displayName': author.displayName, 'url': author.url})
+            
+            for node in Node.objects.all():
+                # # Team 8
+                # if node.url == 'http://project-socialdistribution.herokuapp.com/' :
+                #     authors_url = node.url + 'api/authors/'
+                # # Clone
+                # elif  node.url == 'https://squawker-dev.herokuapp.com/':
+                #     authors_url = node.url + 'api/authors/'
+                authors_url = node.url + 'api/authors/'
+                response = requests.get(authors_url, headers=HEADERS, auth=(node.outgoing_username, node.outgoing_password))
+                if response.status_code == 200:
+                    authors = response.json()['items']
+                    for author in authors:
+                        if query in author["displayName"]:
+                            queryset.append(
+                                {'id': author['id'], 'username': 'remote_author', 
+                                    'profileImage': 'profile_picture.png', 'displayName': author['displayName'], 'url': author['url']})
 
         return queryset
 
