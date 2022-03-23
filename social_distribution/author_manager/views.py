@@ -1,3 +1,5 @@
+from enum import Flag
+from os import stat
 import requests
 from django.contrib import messages
 from django.contrib.auth import authenticate, login, logout
@@ -27,6 +29,8 @@ from posts.serializers import CommentSerializer, PostSerializer
 from .forms import SignUpForm, EditProfileForm
 from .models import *
 from .serializers import *
+
+from node.authentication import basic_authentication
 
 def sign_up(request):
     '''
@@ -299,19 +303,31 @@ class ProfileAPI(APIView):
         """
         local, remote = basic_authentication(request)
         if not local and not remote:
-            return Response({'detail': 'Access denied'}, 401)
+
+            return Response({'detail': 'Access denied'}, status=status.HTTP_401_UNAUTHORIZED)
+
 
         profile = get_object_or_404(Author, id=id)
-        serializer = ProfileSerializer(profile, remove_fields=['user'])
+        if local:
+            serializer = ProfileSerializer(profile, remove_fields=['user'])
+        else:
+            serializer = RemoteProfileSerializer(profile)
         return Response(serializer.data, status=status.HTTP_200_OK)
 
     def post(self, request, id):
+        local, remote = basic_authentication(request)
+        if not local and not remote:
+            return Response({'detail': 'Access denied'}, status=status.HTTP_401_UNAUTHORIZED)
+
         # Get object we want to update
         update_user = get_object_or_404(Author, id=id)  # make sure author in url exists
         current_user = Author.objects.get(user=request.user)
 
         if (current_user.id == id):  # current user and user needs to be updated matched
-            serializer = ProfileSerializer(update_user, data=request.data, partial=True, remove_fields=['user'])
+            if local:
+                serializer = ProfileSerializer(update_user, data=request.data, partial=True, remove_fields=['user'])
+            else:
+                serializer = RemoteProfileSerializer(update_user, data=request.data, partial=True)
 
             if serializer.is_valid():
                 serializer.save()
@@ -346,10 +362,15 @@ class GetAllAuthors(APIView):
         """
         local, remote = basic_authentication(request)
         if not local and not remote:
-            return Response({'detail': 'Access denied'}, 401)
+            return Response({'detail': 'Access denied'}, status=status.HTTP_401_UNAUTHORIZED)
+
 
         authors = Author.objects.all()
-        serializer = ProfileSerializer(authors, many=True, remove_fields=['user'])
+        if local:
+            serializer = ProfileSerializer(authors, many=True, remove_fields=['user'])
+        else:
+            serializer = RemoteProfileSerializer(authors, many=True)
+
         response = {
             'type': "authors",
             'items': serializer.data
@@ -466,21 +487,76 @@ class FriendsAPI(APIView):
         GET:
             Retrieve a list of followers and a list of followings of an author
     """
+    authentication_classes = [authentication.SessionAuthentication]
+    permission_classes = []
 
     def get(self, request, id):
+        local, remote = basic_authentication(request)
+        if not local and not remote:
+            return Response({'detail': 'Access denied'}, status=status.HTTP_401_UNAUTHORIZED)
+
         try:
             author = Author.objects.get(id=id)
         except:
             return Response({'detail': 'Not Found!'}, status=status.HTTP_404_NOT_FOUND)
-
+        
         followers = author.followers.all()
-        followings = author.followings.all()
-        followers_serializer = ProfileSerializer(followers, remove_fields=['user'], many=True)
-        followings_serializer = ProfileSerializer(followings, remove_fields=['user'], many=True)
+        if local:
+            followers_serializer = ProfileSerializer(followers, remove_fields=['user'], many=True)
+        else: #remote
+            followers_serializer = RemoteProfileSerializer(followers, many=True)
+
+        # followings_serializer = ProfileSerializer(followings, remove_fields=['user'], many=True)
         return Response(
-            {'type': 'friends', 'followers': followers_serializer.data, 'followings': followings_serializer.data},
+            {'type': 'followers', 'items': followers_serializer.data},
             status=status.HTTP_200_OK)
 
+
+class FriendDetailAPI(APIView):
+    """
+        To do: remote and put
+    """
+    authentication_classes = [authentication.SessionAuthentication]
+    permission_classes = []
+    serializer_class = ProfileSerializer
+
+    def get(self, request, author_id, follower_id):
+        local, remote = basic_authentication(request)
+        if not local and not remote:
+            return Response({'detail': 'Access denied'}, status=status.HTTP_401_UNAUTHORIZED)
+
+        try:
+            author = Author.objects.get(id=author_id)
+            follower = Author.objects.get(id=follower_id)
+            
+            if follower in author.followers.all():
+                if local:
+                    followers_serializer = ProfileSerializer(follower, remove_fields=['user'], many=False)
+                else:
+                    followers_serializer = RemoteProfileSerializer(follower, many=False)
+
+                return Response(followers_serializer.data, status=status.HTTP_200_OK)
+
+            return Response({'detail': 'Not Found!'}, status=status.HTTP_404_NOT_FOUND)
+
+        except:
+            return Response({'detail': 'Not Found!'}, status=status.HTTP_404_NOT_FOUND)
+
+    def delete(self, request, author_id, follower_id):
+        try:
+            author = Author.objects.get(id=author_id)
+            follower = Author.objects.get(id=follower_id)
+            
+            if follower in author.followers.all():
+                author.followers.remove(follower)
+                return Response({'message': 'Success to unfriend/unfollow'}, status=status.HTTP_200_OK)
+
+            return Response({'detail': 'Not Found!'}, status=status.HTTP_404_NOT_FOUND)
+
+        except:
+            return Response({'detail': 'Not Found!'}, status=status.HTTP_404_NOT_FOUND)
+
+        
 
 class FriendRequestsAPI(APIView):
     """

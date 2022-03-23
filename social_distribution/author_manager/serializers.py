@@ -18,6 +18,17 @@ class ProfileSerializer(serializers.ModelSerializer):
             for field in remove_fields:
                 self.fields.pop(field)
 
+class RemoteProfileSerializer(serializers.ModelSerializer):
+    id = serializers.SerializerMethodField('get_author_id')
+
+    def get_author_id(self, obj):
+        return obj.url
+
+    class Meta:
+        model = Author
+        fields = ['type', 'id', 'host', 'displayName', 'url',
+                  'github', 'profileImage', 'birthday', 'email', 'about']
+
 
 class FriendRequestSerializer(serializers.ModelSerializer):
     class Meta:

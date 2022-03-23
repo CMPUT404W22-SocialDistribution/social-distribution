@@ -696,13 +696,13 @@ def create_comment(request, author_id, post_id):
         author = Author.objects.get(user=request.user) # Obtain the instance
         
         comment = Comment.objects.create(author=author, post=post, comment=comment)
-
+        num_likes = Like.objects.filter(comment__id__exact=comment.id).count()
         # Add comment to post author's inbox
         if (author.id != postAuthor.id):
             postAuthor.inbox.comments.add(comment)
         # postAuthor.inbox.comments.remove(comment)
                 
-    return JsonResponse({"bool":True, 'published': comment.published, 'id': comment.id, 'author': author.id})
+    return JsonResponse({"bool":True, 'published': comment.published, 'id': comment.id, 'author': author.id, 'num_likes': num_likes})
 
 class CommentsAPI(APIView):
     """
