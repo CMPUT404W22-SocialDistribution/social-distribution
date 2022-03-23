@@ -334,7 +334,8 @@ def RemotePostsAPI(request):
                                 # for each post, get my comments and the friend's comments only
                                 # comments_url = str(post["comments"]) commented out since T08 hasn't have this field set yet
                                 comments = []
-                                post_id = str(post["id"])
+                                post_id = str(post["id"]).split('/')[-2]
+                               
                                 comments_url = node.url + 'api/authors' + author_id + '/posts/' + post_id +'/comments/'
                                 res = requests.get(comments_url, header=HEADERS, auth=(node.outgoing_username, node.outgoing_password))
                                 if res.status_code == 200:
@@ -384,14 +385,14 @@ def RemotePostsAPI(request):
         elif node.url == 'https://squawker-dev.herokuapp.com/':
             authors_url = node.url + 'api/authors/'
             response = requests.get(authors_url, headers=HEADERS, auth=(node.outgoing_username, node.outgoing_password))
-        
+            print(authors_url) 
             if response.status_code == 200:
                 remote_authors = []
                 clone_authors = response.json()['items']
                 for author in clone_authors:
                     new_id = str(author["id"])
                     remote_authors.append(new_id.split('/')[-1])
-    
+                 
                 for author_id in remote_authors:
                     # for each author, get all of their posts
                     posts_url = node.url + 'api/authors/' + author_id + '/posts/'
@@ -399,6 +400,7 @@ def RemotePostsAPI(request):
                     if response.status_code == 200:
                         clone_posts = response.json()['posts']
                         for post in clone_posts:
+                            post['post_id'] =  str(post["id"]).split('/')[-1]
                             if post['visibility'] == 'public':
                                 remote_posts.append(post)
                             elif post['visibility'] == 'friends' and id in request.user.remote_friends:
@@ -421,6 +423,7 @@ def RemotePostsAPI(request):
             pass
         
         remote_posts = sorted(remote_posts, key=lambda k:k['published'], reverse=True)
+   
     return JsonResponse({"posts": remote_posts}, status=200)
 
 class PostsAPI(APIView):
@@ -686,8 +689,10 @@ class PostDetailAPI(generics.GenericAPIView):
                     return Response(serializer.errors, 400)
 
 
+
+
 @login_required
-def create_comment(request, author_id, post_id):
+def create_comment(request):
     if request.method == "POST":
         comment=request.POST['comment']
         postID=request.POST['post']
