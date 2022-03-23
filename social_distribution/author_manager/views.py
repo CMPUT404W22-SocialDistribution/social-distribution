@@ -584,7 +584,6 @@ class InboxAPI(generics.GenericAPIView):
 
     @staticmethod
     def _get_already_liked(author_id, post_id, comment_id):
-        print(f"{author_id=}, {post_id=}, {comment_id=}")
         if comment_id:
             like_query_set = Like.objects.filter(author__id__exact=author_id,
                                                  post__id__exact=post_id,
@@ -618,15 +617,15 @@ class InboxAPI(generics.GenericAPIView):
                         previous_like = self._get_already_liked(like_author.id, post.id, comment.id)
                     else:
                         previous_like = self._get_already_liked(like_author.id, post.id, None)
-                    print(f"{previous_like=}")
                     if previous_like:
                         return Response(LikeSerializer().to_representation(previous_like),
                                         status=status.HTTP_204_NO_CONTENT)
 
                     like_serializer.save()
 
-                    # Send like object to other user's inbox
-                    inbox.likes.add(like_serializer.instance.id)
+                    # Except for self-likes, send like object to recipient's inbox
+                    if id != like_author.id:
+                        inbox.likes.add(like_serializer.instance.id)
 
                     return Response(posts.serializers.LikeSerializer().to_representation(like_serializer.instance),
                                     status=status.HTTP_200_OK)
