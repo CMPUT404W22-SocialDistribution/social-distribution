@@ -16,6 +16,8 @@ class Migration(migrations.Migration):
             fields=[
                 ('url', models.URLField(primary_key=True, serialize=False)),
                 ('name', models.CharField(max_length=50)),
+                ('incoming_username', models.CharField(max_length=20, null=True)),
+                ('incoming_password', models.CharField(max_length=20, null=True)),
                 ('outgoing_username', models.CharField(max_length=50)),
                 ('outgoing_password', models.CharField(max_length=100)),
             ],
