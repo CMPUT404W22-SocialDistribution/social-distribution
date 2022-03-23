@@ -287,6 +287,8 @@ class ProfileAPI(APIView):
         POST:
             update an author's profile.
     """
+    authentication_classes = [authentication.SessionAuthentication]
+    permission_classes = []
 
     def get(self, request, id):
         """
@@ -295,6 +297,10 @@ class ProfileAPI(APIView):
             - If successful:
                 Status 200 and the author's basic information.
         """
+        local, remote = basic_authentication(request)
+        if not local and not remote:
+            return Response({'detail': 'Access denied'}, 401)
+
         profile = get_object_or_404(Author, id=id)
         serializer = ProfileSerializer(profile, remove_fields=['user'])
         return Response(serializer.data, status=status.HTTP_200_OK)

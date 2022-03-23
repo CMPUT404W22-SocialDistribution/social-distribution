@@ -736,7 +736,7 @@ class CommentsAPI(APIView):
         if remote: 
         # for remote only
             for comment in data:
-                comment['id'] = post.comments + comment['id']
+                comment['id'] = post_author.url + '/posts/' + post.id + '/comments/' + comment['id']
                 comment['author']['id'] = comment['author']['url']
 
         # page,id
