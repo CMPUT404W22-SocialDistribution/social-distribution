@@ -19,6 +19,8 @@ from .serializers import PostSerializer, CommentSerializer, LikeSerializer
 from node.models import Node
 from node.authentication import basic_authentication
 
+from django.views.decorators.cache import cache_page
+
 HEADERS = {'Referer': 'http://squawker-cmput404.herokuapp.com/', 'Mode': 'no-cors'}
 URL = 'http://squawker-cmput404.herokuapp.com/'
 
@@ -244,18 +246,56 @@ class SearchView(ListView):
             Q(author__displayName__icontains=query),
             visibility="public",
         )
+        # search remote
         return queryset
 
 
 @login_required
 @api_view(['GET'])
+@cache_page(60 * 5)
 def RemotePostsAPI(request):
     ''' API endpoint that gets all remote public and friend posts'''
     # Team 8 hasn't had private posts yet 
     remote_posts = []
     for node in Node.objects.all():
+        # Clone
+        if node.url == 'https://squawker-dev.herokuapp.com/':
+            authors_url = node.url + 'api/authors/'
+            response = requests.get(authors_url, headers=HEADERS, auth=(node.outgoing_username, node.outgoing_password))
+        
+            if response.status_code == 200:
+                remote_authors = []
+                clone_authors = response.json()['items']
+                for author in clone_authors:
+                    new_id = str(author["id"])
+                    remote_authors.append(new_id.split('/')[-1])
+    
+                for author_id in remote_authors:
+                    # for each author, get all of their posts
+                    posts_url = node.url + 'api/authors/' + author_id + '/posts/'
+                    response = requests.get(posts_url, headers=HEADERS, auth=(node.outgoing_username, node.outgoing_password))
+                    if response.status_code == 200:
+                        clone_posts = response.json()['posts']
+                        for post in clone_posts:
+                            if post['visibility'] == 'public':
+                                remote_posts.append(post)
+                            elif post['visibility'] == 'friends' and id in request.user.remote_friends:
+                                # get all friends posts of my remote friend
+
+                                friend_url = node.url + '/authors/' + id +'/'
+                                # for each post, get my comments and the friend's comments only
+                                # comments_url = str(post["comments"]) commented out since T08 hasn't have this field set yet
+                                comments = []
+                                for comment in post["commentsSrc"]["comments"]:
+                                    if str(comment["author"]["url"]) == request.user.author.url or str(comment["author"]["url"])== friend_url:                                    
+                                        comments.append(comment)
+                                post["commentsSrc"]["comments"] = comments  # I can only my and friend's comments
+                                remote_posts.append(post)
+                            elif post['visibility'] == 'private' and post['visibleTo'] == request.user.username:
+                                remote_posts.append(post)
+
         # Team 8
-        if node.url == 'http://project-socialdistribution.herokuapp.com/':
+        elif node.url == 'http://project-socialdistribution.herokuapp.com/':
             # get all authors of the remote node
             authors_url = node.url + 'api/authors/'
             response = requests.get(authors_url, headers=HEADERS, auth=(node.outgoing_username, node.outgoing_password))
@@ -383,42 +423,6 @@ def RemotePostsAPI(request):
                                     }
                                 }
                                 remote_posts.append(post_data)
-
-        # Clone
-        elif node.url == 'https://squawker-dev.herokuapp.com/':
-            authors_url = node.url + 'api/authors/'
-            response = requests.get(authors_url, headers=HEADERS, auth=(node.outgoing_username, node.outgoing_password))
-        
-            if response.status_code == 200:
-                remote_authors = []
-                clone_authors = response.json()['items']
-                for author in clone_authors:
-                    new_id = str(author["id"])
-                    remote_authors.append(new_id.split('/')[-1])
-    
-                for author_id in remote_authors:
-                    # for each author, get all of their posts
-                    posts_url = node.url + 'api/authors/' + author_id + '/posts/'
-                    response = requests.get(posts_url, headers=HEADERS, auth=(node.outgoing_username, node.outgoing_password))
-                    if response.status_code == 200:
-                        clone_posts = response.json()['posts']
-                        for post in clone_posts:
-                            if post['visibility'] == 'public':
-                                remote_posts.append(post)
-                            elif post['visibility'] == 'friends' and id in request.user.remote_friends:
-                                # get all friends posts of my remote friend
-
-                                friend_url = node.url + '/authors/' + id +'/'
-                                # for each post, get my comments and the friend's comments only
-                                # comments_url = str(post["comments"]) commented out since T08 hasn't have this field set yet
-                                comments = []
-                                for comment in post["commentsSrc"]["comments"]:
-                                    if str(comment["author"]["url"]) == request.user.author.url or str(comment["author"]["url"])== friend_url:                                    
-                                        comments.append(comment)
-                                post["commentsSrc"]["comments"] = comments  # I can only my and friend's comments
-                                remote_posts.append(post)
-                            elif post['visibility'] == 'private' and post['visibleTo'] == request.user.username:
-                                remote_posts.append(post)
 
         # Team 3
         elif node.url == 'https://website404.herokuapp.com/':
