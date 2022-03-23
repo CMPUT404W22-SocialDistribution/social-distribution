@@ -23,11 +23,11 @@ def basic_authentication(request):
             
             # for node in Node.objects.all():
                 # if username == node.incoming_username and password == node.incoming_password:
-        if username == INCOMING_USERNAME and password == INCOMING_PASSWORD:
-            remote = True
-            return local, remote
-
-            # return local, remote
+            if username == INCOMING_USERNAME and password == INCOMING_PASSWORD:
+                remote = True
+                return local, remote
+            else: 
+                return local, remote
     except Exception as e:
         return local, remote
     
