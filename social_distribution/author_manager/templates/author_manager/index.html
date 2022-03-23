@@ -54,7 +54,7 @@
 
                     </div>
                     <div class="col-md-5 ml-4 text-center" >
-                        <button class="bi bi-three-dots loadmoreBtn" ></button>
+                        <button class="bi bi-three-dots loadmoreBtn" style="visibility: hidden" ></button>
                     </div>    
 
                 </div>
@@ -389,8 +389,8 @@
                         rootElement.innerHTML = createPostCard(postLatestFromApi) + rootElement.innerHTML
                     }
                     var countPosts =  $(".postCard").length;
-                    if (countPosts < 5) {
-                        document.getElementsByClassName("loadmoreBtn")[0].style.visibility = 'hidden';
+                    if (countPosts == 5) {
+                        document.getElementsByClassName("loadmoreBtn")[0].style.visibility = 'visible';
                     } 
                     // Inject bootstrap class card-img-bottom to constrain inline image sizes
                     document.querySelectorAll("#post-content img:not(.card-img-bottom)").forEach(postContentInlineImg =>
