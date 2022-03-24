@@ -55,7 +55,7 @@
                     </div>
                     <div class="col-md-5 ml-4 text-center" >
                         <button class="bi bi-three-dots loadmoreBtn" style="visibility: hidden" ></button>
-                    </div>    
+                    </div>
 
                 </div>
             </div>
@@ -294,8 +294,8 @@
                             </div>
                             <div class="card-footer">
                                 <a href="javascript:void(0)" class="card-link text-muted" style="text-decoration: none;"
-                                   onclick="remotePostLike('${post.author.id}', '${post.id}')"><i class="fa-solid fa-thumbs-up"></i>
-                                   
+                                   onclick="remotePostLike('${post.id}')"><i class="fa-solid fa-thumbs-up"></i>
+                                   <span>${remoteGetNumLikesText(post.id)}</span></a>
 
                                 <a class="card-link text-muted" style="text-decoration: none;"
                                 data-bs-toggle="collapse"
@@ -356,20 +356,20 @@
                 <br>
                 `];
             return remoteCardsHtmlParts.join('');
-        
-        }
-        
 
-  
+        }
+
+
+
         var pageNumb = 1;
-       
+
         function fetchPosts(){
 
             $.ajax({
                 type: 'GET',
                 url: "{% url 'posts:all_posts_api' %}",
                 dataType: 'json',
-                success: (data, status) => {                   
+                success: (data, status) => {
                     // Get the latest post from the API
                     var postLatestFromApi = data.posts[0];
                     // Get the latest post from the DOM
@@ -384,14 +384,14 @@
                         });
                         document.getElementById("my_node").innerHTML += postCardsHtml;
                     }
-                    else if (postLatestElementId != postLatestFromApi.id) {                        
+                    else if (postLatestElementId != postLatestFromApi.id) {
                         var rootElement = document.getElementById("my_node")
                         rootElement.innerHTML = createPostCard(postLatestFromApi) + rootElement.innerHTML
                     }
                     var countPosts =  $(".postCard").length;
                     if (countPosts == 5) {
                         document.getElementsByClassName("loadmoreBtn")[0].style.visibility = 'visible';
-                    } 
+                    }
                     // Inject bootstrap class card-img-bottom to constrain inline image sizes
                     document.querySelectorAll("#post-content img:not(.card-img-bottom)").forEach(postContentInlineImg =>
                         postContentInlineImg?.classList.add('card-img-bottom')
@@ -436,9 +436,9 @@
                     console.log(error);
                 }
             });
-          
-            
-           
+
+
+
             $(document).ready(function OnClickLoadMore(){
                 $(".loadmoreBtn").off('click').on('click', function(){
                     pageNumb++;
@@ -449,8 +449,8 @@
                             page: pageNumb,
                         },
                         dataType: 'json',
-                        success: (data, status) => {                   
-                            
+                        success: (data, status) => {
+
                             var postCardsHtml = '';
                             data.posts.map(post => {
                                 postCardsHtml += createPostCard(post);
@@ -459,7 +459,7 @@
                             var countPosts =  $(".postCard").length;
                             if (countPosts == data.count) {
                                 $(".loadmoreBtn").remove();
-                                
+
                             }
                         },
                         error: (error) => {
@@ -473,7 +473,7 @@
             $(".save-comment").off('click').on('click', function(){
                 var _postid=$(this).data('answer')
                 var _comment=$(".comment-text-postID".replace("postID", _postid)).val();
-                
+
                 // AJX
                 $.ajax({
                     url:"/authors/{{user.author.id}}/posts/postid/comments".replace("postid", _postid),
@@ -520,7 +520,7 @@
 
         }
 
-        
+
         fetchPosts();
 
         function getNumLikesText(numLikes) {
@@ -574,6 +574,51 @@
                 });
         }
 
+        async function remotePostLike(likedObject) {
+            console.log(likedObject);
+            const objectUrl = new URL(likedObject);
+            const objectUrlPath = objectUrl.pathname.split('/');
+            const authorId = objectUrlPath[2];
+            const postId = objectUrlPath[4];
+            const likedObjectType = objectUrlPath[6] ? 'Post' : 'Comment';
+
+            console.log(objectUrl.hostname);
+            await fetch(`/api/node/authors/${authorId}/inbox`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRFToken': '{{ csrf_token }}',
+                    'node': objectUrl.origin + '/'
+                },
+                body: JSON.stringify({
+                    item: {
+                        type: 'like',
+                        summary: `'{{ request.user.author }} Liked your ${likedObjectType}`,
+                        author: {
+                            type: 'author',
+                            id: '{{ request.user.author.id }}',
+                            host: 'https://squawker-cmput404.herokuapp.com/',
+                            displayName: '{{ request.user.author.displayName }}',
+                            url: 'https://squawker-cmput404.herokuapp.com/authors/{{ request.user.author.id }}/',
+                            github: 'http://github.com/{{ request.user.author.github }}/',
+                            profileImage: 'https://squawker-cmput404.herokuapp.com/static/img/{{ request.user.author.profileImage }}/'
+                        },
+                        object: postId,
+                    }
+                })
+            })
+                .then(() => {
+                    const numLikesRegex = /\d+/;
+                    const commentLikeSpan = document.querySelector(`a[onclick="remotePostLike('${likedObject}')"]>span`);
+                    const numLikes = parseInt(commentLikeSpan.innerText.match(numLikesRegex)) || 0;
+                    commentLikeSpan.innerText = getNumLikesText(numLikes + 1);
+                    })
+                .catch(reason => console.log(reason));
+        }
+
+        function remoteGetNumLikesText(postUrl) {
+            return "TODO";
+        }
 
     </script>
 

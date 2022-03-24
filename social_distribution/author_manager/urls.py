@@ -19,6 +19,7 @@ urlpatterns = [
     path('api/authors/<str:author_id>/followers/<str:follower_id>', FriendDetailAPI.as_view(), name="friend_detail_api"),
     path('authors/<str:id>/inbox', inbox_view, name="inbox"),
     path('api/authors/<str:id>/inbox', InboxAPI.as_view(), name='inbox_api'),
+    path('api/node/authors/<str:author_id>/inbox', RemoteInboxAPI.as_view(), name='remote_inbox_api'),
     path('api/authors/<str:id>/followers', FriendsAPI.as_view(), name='friends_api'),
     path('api/friendrequests', FriendRequestsAPI.as_view(), name='friendrequests_api'),
     path('api/authors/<str:author_id>/liked', AuthorLikedAPI.as_view(), name='author_liked_api')
