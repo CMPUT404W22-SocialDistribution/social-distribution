@@ -21,7 +21,7 @@ from node.authentication import basic_authentication
 
 from django.views.decorators.cache import cache_page
 
-HEADERS = {'Referer': 'http://squawker-cmput404.herokuapp.com/', 'Mode': 'no-cors'}
+HEADERS = {'Referer': 'http://squawker-cmput404.herokuapp.com/', 'Mode': 'no-cors', 'Access-Control-Allow-Origin': '*'}
 URL = 'http://squawker-cmput404.herokuapp.com/'
 
 @login_required
