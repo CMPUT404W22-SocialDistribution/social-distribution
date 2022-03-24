@@ -108,52 +108,52 @@ class ViewsTest(TestCase):
         self.assertEqual(response.status_code, 200)
         self.assertTemplateUsed(response, 'inbox/inbox.html')
 
-class FriendRequestSend(TestCase):
-    def setUp(self):
-        self.client = Client()
-        user = User.objects.create_user(username='test1', password='password1', is_active=True)
-        self.author = Author.objects.create(user=user)
-        self.client.login(username="test1", password="password1")
+# class FriendRequestSend(TestCase):
+#     def setUp(self):
+#         self.client = Client()
+#         user = User.objects.create_user(username='test1', password='password1', is_active=True)
+#         self.author = Author.objects.create(user=user)
+#         self.client.login(username="test1", password="password1")
 
-        # create another author to send friend request to
-        user1 = User.objects.create_user(username='test2', password='password2', is_active=True)
-        self.author1 = Author.objects.create(user=user1)
-        Inbox.objects.create(author=self.author1)
+#         # create another author to send friend request to
+#         user1 = User.objects.create_user(username='test2', password='password2', is_active=True)
+#         self.author1 = Author.objects.create(user=user1)
+#         Inbox.objects.create(author=self.author1)
 
-        self.url = str(self.author.host) + "search/authors?q=test2"
+#         self.url = str(self.author.host) + "search/authors?q=test2"
     
-    def test_send_friend_request(self):
-        requestbody={'object_id': self.author1.id}
-        response = self.client.post(self.url, requestbody)
-        self.assertEqual(response.status_code, 302)
+#     def test_send_friend_request(self):
+#         requestbody={'object_id': self.author1.id}
+#         response = self.client.post(self.url, requestbody)
+#         self.assertEqual(response.status_code, 302)
 
-        friendrequest = FriendRequest.objects.get(actor=self.author)
-        self.assertEqual(friendrequest.actor.id, self.author.id)
-        self.assertEqual(friendrequest.object.id, self.author1.id)
+#         friendrequest = FriendRequest.objects.get(actor=self.author)
+#         self.assertEqual(friendrequest.actor.id, self.author.id)
+#         self.assertEqual(friendrequest.object.id, self.author1.id)
 
-class FriendRequestAccept(TestCase):
-    def setUp(self):
-        self.client = Client()
-        user = User.objects.create_user(username='test1', password='password1', is_active=True)
-        self.author = Author.objects.create(user=user)
-        Inbox.objects.create(author=self.author)
-        self.client.login(username="test1", password="password1")
+# class FriendRequestAccept(TestCase):
+#     def setUp(self):
+#         self.client = Client()
+#         user = User.objects.create_user(username='test1', password='password1', is_active=True)
+#         self.author = Author.objects.create(user=user)
+#         Inbox.objects.create(author=self.author)
+#         self.client.login(username="test1", password="password1")
 
-        # create another author to accept friend request
-        user1 = User.objects.create_user(username='test2', password='password2', is_active=True)
-        self.author1 = Author.objects.create(user=user1)
+#         # create another author to accept friend request
+#         user1 = User.objects.create_user(username='test2', password='password2', is_active=True)
+#         self.author1 = Author.objects.create(user=user1)
 
-        # create a friend request to accept
-        self.friendrequest = FriendRequest.objects.create(actor=self.author1, object=self.author)
+#         # create a friend request to accept
+#         self.friendrequest = FriendRequest.objects.create(actor=self.author1, object=self.author)
 
-        self.url = reverse('author_manager:inbox', args=[self.author.id])
+#         self.url = reverse('author_manager:inbox', args=[self.author.id])
     
-    def test_accept_friend_request(self):
-        requestbody={'type': 'befriend', 'actor_id': self.author1.id}
-        response = self.client.post(self.url, requestbody)
-        self.assertEqual(response.status_code, 302)
+#     def test_accept_friend_request(self):
+#         requestbody={'type': 'befriend', 'actor_id': self.author1.id}
+#         response = self.client.post(self.url, requestbody)
+#         self.assertEqual(response.status_code, 302)
 
-        self.assertTrue(self.author1 in self.author.followers.all())
+#         self.assertTrue(self.author1 in self.author.followers.all())
 
 class FriendUnfriend(TestCase):
     def setUp(self):
