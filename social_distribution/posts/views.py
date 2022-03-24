@@ -52,23 +52,26 @@ def post_create(request, author_id):
     elif request.method == "POST":
 
         updated_request = request.POST.copy()  # using deepcopy() to make a mutable copy of the object
-        if 'Origin' in request.headers:
-            origin = str(request.headers['Origin'])
-            origin = origin.replace('https', 'http')
-        else:
-            origin=''
+        # if 'Origin' in request.headers:
+        #     origin = str(request.headers['Origin'])
+        #     origin = origin.replace('https', 'http')
+        # else:
+        #     origin=''
 
         updated_request.update(
             {
                 'author': author,
                 'type': 'post',
-                'origin': origin
+                # 'origin': origin
             }
         )
         form = PostForm(updated_request, request.FILES)
 
         if form.is_valid():
             post = form.save(commit=False)
+            origin = request.build_absolute_uri()
+            origin = origin.replace("create", post.id)
+            post.origin = origin
             post.save()
             if post.visibility == "public":
                 # send public posts to follower. Since friends are also followers so friends also receive then in their inboxes
