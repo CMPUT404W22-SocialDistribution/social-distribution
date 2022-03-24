@@ -827,8 +827,6 @@ class InboxAPI(generics.GenericAPIView):
                                     status=status.HTTP_200_OK)
                 return Response(like_serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
-            item_id = item['id']
-
             if item_type == 'follow':
                 if author.url != item['object']['id'] or author.url == item['actor']['id']:
                     return Response({'detail': 'Fail to send the item!'}, status=status.HTTP_400_BAD_REQUEST)
@@ -839,6 +837,8 @@ class InboxAPI(generics.GenericAPIView):
                 inbox.follows.append(item)
                 inbox.save()
                 return Response({'message': 'Success to send follow/friend request'}, status=status.HTTP_200_OK)
+            
+            item_id = item['id']
 
             if item_type == 'post':
                 post = Post.objects.get(id=item_id)
