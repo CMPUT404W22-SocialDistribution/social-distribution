@@ -766,6 +766,7 @@ class InboxAPI(generics.GenericAPIView):
     parser_classes = [JSONParser]
 
     def get(self, request, id):
+        basic_authentication(request)
         try:
             author = Author.objects.get(id=id)
             inbox = Inbox.objects.get(author=author)
@@ -799,6 +800,7 @@ class InboxAPI(generics.GenericAPIView):
         return None
 
     def post(self, request, id):
+        basic_authentication(request)
         try:
             author = Author.objects.get(id=id)
             inbox = Inbox.objects.get(author=author)
@@ -860,6 +862,7 @@ class InboxAPI(generics.GenericAPIView):
             return Response({'detail': 'Fail to send the item!'}, status=status.HTTP_400_BAD_REQUEST)
 
     def delete(self, request, id):
+        basic_authentication(request)
         try:
             author = Author.objects.get(id=id)
             inbox = Inbox.objects.get(author=author)
