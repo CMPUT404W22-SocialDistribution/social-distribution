@@ -5,9 +5,14 @@ from .models import Author, FriendRequest, Inbox
 
 
 class ProfileSerializer(serializers.ModelSerializer):
+    username = serializers.SerializerMethodField('get_author_username')
+    
+    def get_author_username(self, obj):
+        return obj.user.username
+
     class Meta:
         model = Author
-        fields = ['user', 'type', 'id', 'host', 'displayName', 'url',
+        fields = ['user', 'type', 'id', 'host', 'username', 'displayName', 'url',
                   'github', 'profileImage', 'birthday', 'email', 'about']
 
     def __init__(self, *args, **kwargs):
