@@ -433,6 +433,8 @@
                 url: "{% url 'posts:remote_posts_api' %}",
                 dataType: 'json',
                 success: (data, status) => {
+                    // Remove the Fetching placeholder
+                    document.getElementById("remote_fetching").remove();
                     // Get the latest post from the API
                     var postLatestFromApi = data.posts[0];
                     // Get the latest post from the DOM
