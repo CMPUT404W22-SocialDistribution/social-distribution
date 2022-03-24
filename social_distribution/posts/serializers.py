@@ -111,7 +111,7 @@ class LikeSerializer(serializers.ModelSerializer):
 
     @staticmethod
     def get_object(obj):
-        return obj.author.host + '/'.join(['api', 'authors', obj.author.id, 'posts', obj.post.id])
+        return obj.author.host + '/'.join(['api', 'authors', str(obj.author.id), 'posts', str(obj.post.id)])
 
     def to_representation(self, instance):
         response = super().to_representation(instance)

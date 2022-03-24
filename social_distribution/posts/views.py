@@ -310,22 +310,22 @@ def RemotePostsAPI(request):
                                 # for each post, get all comments
                                 # comments_url = str(post["comments"]) commented out since T08 hasn't have this field set yet
                                 comments = []
-                                post_id = str(post["id"])
+                                post_id = str(post["id"]).split('/')[-2]
                                 comments_url = node.url + 'api/authors/' + author_id + '/posts/' + post_id +'/comments/'
                                 res = requests.get(comments_url, auth=(node.outgoing_username, node.outgoing_password))
                                 if res.status_code == 200:
-                                    post_comments =  response.json['items']
+                                    post_comments =  res.json()['items']
                                     for comment in post_comments:
-                                     
+                                        comment_id = str(comment["id"]).split('/')[-2]
                                         comment_data = {
-                                            'author': {
-                                                'id': comment["author"]["id"],
-                                                'host': comment["author"]["host"],
-                                                'displayName': comment["author"]["displayName"],
-                                                'profileImage': 'profile_picture.png',
-                                                'url': comment["author"]["url"]
-                                            },
-                                            'author_displayName' : comment["author"]["displayName"],
+                                            # 'author': {
+                                            #     'id': comment["author"]["id"],
+                                            #     'host': comment["author"]["host"],
+                                            #     'displayName': comment["author"]["displayName"],
+                                            #     'profileImage': 'profile_picture.png',
+                                            #     'url': comment["author"]["url"]
+                                            # },
+                                            # 'author_displayName' : comment["author"]["displayName"],
                                             'comment': comment["comment"],
                                             'contentType': comment["contentType"],
                                             'published': comment["published"],
@@ -340,7 +340,7 @@ def RemotePostsAPI(request):
                                     'author_username' : post["author"]["displayName"],
                                     'author_displayName' : post["author"]["displayName"],
                                     'title' : post["title"],
-                                    'id' : post["id"],
+                                    'id' : post_id,
                                     'source' : post["source"],
                                     'origin' : "https://project-socialdistribution.herokuapp.com/",
                                     'content_type' : post["contentType"],
@@ -367,23 +367,23 @@ def RemotePostsAPI(request):
                                 # for each post, get my comments and the friend's comments only
                                 # comments_url = str(post["comments"]) commented out since T08 hasn't have this field set yet
                                 comments = []
-                                post_id = str(post["id"])
+                                post_id = str(post["id"]).split('/')[-2]
                                 comments_url = node.url + 'api/authors/' + author_id + '/posts/' + post_id +'/comments/'
                                 res = requests.get(comments_url, auth=(node.outgoing_username, node.outgoing_password))
                                 if res.status_code == 200:
-                                    post_comments =  response.json['items']
+                                    post_comments =  res.json()['items']
                                     for comment in post_comments:
                                         comment_id = str(comment["id"]).split('/')[-2]
                                         if str(comment["author"]["url"]) == request.user.author.url or str(comment["author"]["url"])== friend_url:                                    
                                             comment_data = {
-                                                'author': {
-                                                    'id': comment["author"]["id"],
-                                                    'host': comment["author"]["host"],
-                                                    'displayName': comment["author"]["displayName"],
-                                                    'profileImage': 'profile_picture.png',
-                                                    'url': comment["author"]["url"]
-                                                },
-                                                'author_displayName' : comment["author"]["displayName"],
+                                                # 'author': {
+                                                #     'id': comment["author"]["id"],
+                                                #     'host': comment["author"]["host"],
+                                                #     'displayName': comment["author"]["displayName"],
+                                                #     'profileImage': 'profile_picture.png',
+                                                #     'url': comment["author"]["url"]
+                                                # },
+                                                # 'author_displayName' : comment["author"]["displayName"],
                                                 'comment': comment["comment"],
                                                 'contentType': comment["contentType"],
                                                 'published': comment["published"],
@@ -396,7 +396,7 @@ def RemotePostsAPI(request):
                                     'author_username' : post["author"]["displayName"],
                                     'author_displayName' : post["author"]["displayName"],
                                     'title' : post["title"],
-                                    'id' : post["id"],
+                                    'id' : post_id,
                                     'source' : post["source"],
                                     'origin' : "https://project-socialdistribution.herokuapp.com/",
                                     'content_type' : post["contentType"],
@@ -430,7 +430,7 @@ def RemotePostsAPI(request):
         # Team 3
         elif node.url == 'https://website404.herokuapp.com/':
             pass
-        remote_posts = sorted(remote_posts, key=lambda k:k['published'], reverse=True)
+    remote_posts = sorted(remote_posts, key=lambda k:k['published'], reverse=True)
 
     print("--- %s seconds ---" % (time.time() - start_time))
 
