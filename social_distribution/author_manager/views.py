@@ -31,6 +31,8 @@ from posts.serializers import CommentSerializer, PostSerializer
 from .forms import SignUpForm, EditProfileForm
 from .models import *
 from .serializers import *
+import json
+
 
 from node.authentication import basic_authentication
 
@@ -270,7 +272,7 @@ class SearchAuthorView(ListView):
                     if service == "clone":
                         friend_request = {"item" : friend_request}
 
-                    response =  requests.post(inbox_url, data=friend_request, headers=HEADERS, auth=(outgoing_username, outgoing_password))
+                    response =  requests.post(inbox_url, data=json.dumps(friend_request), headers=HEADERS, auth=(outgoing_username, outgoing_password))
                     print(response.json())
                     print(response.status_code)
 
@@ -750,7 +752,7 @@ class InboxAPI(generics.GenericAPIView):
     permission_classes = []
     pagination_class = CustomPagination
     serializer_class = InboxSerializer
-    parser_classes = [JSONParser]
+    # parser_classes = [JSONParser]
 
     def get(self, request, id):
         local, remote = basic_authentication(request)
@@ -828,8 +830,8 @@ class InboxAPI(generics.GenericAPIView):
                 return Response(like_serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
             if item_type == 'follow':
-                if author.url != item['object']['id'] or author.url == item['actor']['id']:
-                    return Response({'detail': 'Fail to send the item!'}, status=status.HTTP_400_BAD_REQUEST)
+                # if author.url != item['object']['id'] or author.url == item['actor']['id']:
+                #     return Response({'detail': 'Fail to send the item!'}, status=status.HTTP_400_BAD_REQUEST)
 
                 if item in inbox.follows:
                     return Response({'message': 'Already sent follow/friend request'}, status=status.HTTP_204_NO_CONTENT)
@@ -864,10 +866,11 @@ class InboxAPI(generics.GenericAPIView):
             author = Author.objects.get(id=id)
             inbox = Inbox.objects.get(author=author)
 
-            inbox.follows.set([], clear=True)
+            inbox.follows = []
             inbox.posts.set([], clear=True)
             inbox.comments.set([], clear=True)
             inbox.likes.set([], clear=True)
+            inbox.save()
 
             return Response({'message': 'Success to clean inbox'}, status=status.HTTP_200_OK)
         except:
