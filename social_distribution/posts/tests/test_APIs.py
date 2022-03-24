@@ -107,7 +107,7 @@ class MyPostsTest(APITestCase):
         new_post = Post.objects.filter(author=self.author2).order_by('-published')[0]
 
         self.assertEqual(new_post.title, 'Test Post')
-        self.assertEqual(new_post.author, self.author2)
+        
         self.assertEqual(new_post.content, 'Test post content')
 
 
@@ -322,11 +322,8 @@ class ImagePostTest(APITestCase):
 
     def tearDown(self):
         self.post_with_image.image.delete()
-        os.rmdir(os.path.join(settings.MEDIA_ROOT, self.post_with_image.id))
+        os.rmdir(os.path.join(settings.MEDIA_ROOT, str(self.post_with_image.id)))
 
-    @classmethod
-    def tearDownClass(cls):
-        os.rmdir(settings.MEDIA_ROOT)
 
     def test_get_post_image_not_found_returns_404(self):
         self.client.login(username=self.user1_credentials.username, password=self.user1_credentials.password)
