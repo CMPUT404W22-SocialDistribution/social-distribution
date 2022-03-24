@@ -265,39 +265,15 @@ def RemotePostsAPI(request):
     for node in Node.objects.all():
         # Clone
         if node.url == 'https://squawker-dev.herokuapp.com/':
-            authors_url = node.url + 'api/authors/'
-            response = requests.get(authors_url, headers=HEADERS, auth=(node.outgoing_username, node.outgoing_password))
+            posts_url = node.url + 'api/posts/'
+            response = requests.get(posts_url, headers=HEADERS, auth=(node.outgoing_username, node.outgoing_password))
         
             if response.status_code == 200:
-                remote_authors = []
-                clone_authors = response.json()['items']
-                for author in clone_authors:
-                    new_id = str(author["id"])
-                    remote_authors.append(new_id.split('/')[-1])
-    
-                for author_id in remote_authors:
-                    # for each author, get all of their posts
-                    posts_url = node.url + 'api/authors/' + author_id + '/posts/'
-                    response = requests.get(posts_url, headers=HEADERS, auth=(node.outgoing_username, node.outgoing_password))
-                    if response.status_code == 200:
-                        clone_posts = response.json()['posts']
-                        for post in clone_posts:
-                            if post['visibility'] == 'public':
-                                remote_posts.append(post)
-                            elif post['visibility'] == 'friends' and id in request.user.remote_friends:
-                                # get all friends posts of my remote friend
-
-                                friend_url = node.url + '/authors/' + id +'/'
-                                # for each post, get my comments and the friend's comments only
-                                # comments_url = str(post["comments"]) commented out since T08 hasn't have this field set yet
-                                comments = []
-                                for comment in post["commentsSrc"]["comments"]:
-                                    if str(comment["author"]["url"]) == request.user.author.url or str(comment["author"]["url"])== friend_url:                                    
-                                        comments.append(comment)
-                                post["commentsSrc"]["comments"] = comments  # I can only my and friend's comments
-                                remote_posts.append(post)
-                            elif post['visibility'] == 'private' and post['visibleTo'] == request.user.username:
-                                remote_posts.append(post)
+                clone_posts = response.json()['posts']
+                for post in clone_posts:
+                    post['post_id'] =  str(post["id"]).split('/')[-1]
+                    remote_posts.append(post)
+            
 
         # Team 8
         elif node.url == 'http://project-socialdistribution.herokuapp.com/':
@@ -444,6 +420,7 @@ def RemotePostsAPI(request):
         elif node.url == 'https://website404.herokuapp.com/':
             pass
         remote_posts = sorted(remote_posts, key=lambda k:k['published'], reverse=True)
+
         print("--- %s seconds ---" % (time.time() - start_time))
 
     return JsonResponse({"posts": remote_posts}, status=200)
@@ -459,45 +436,61 @@ class PostsAPI(APIView):
                 - respond to requests with information and status code.
     '''
     # basic auth for remote nodes, session auth for local node
-    authentication_classes = [authentication.BasicAuthentication, authentication.SessionAuthentication]
-    permission_classes = [permissions.IsAuthenticated]
+    authentication_classes = [authentication.SessionAuthentication]
+    permission_classes = []
     serializer_class = PostSerializer
    
 
     def get(self, request):
-        user = request.user
-        author = Author.objects.get(user=request.user)
-        # get public posts
-        public_posts = Post.objects.filter(visibility='public', unlisted=False).order_by('-published')
-        # get friends of current user
-        followers = author.followers.all()
-        followings = author.followings.all()
-        friends = followings & followers
-        # get friends' posts that have visibility= friends
-        friend_posts = Post.objects.filter(author__in=friends, visibility="friends", unlisted=False).order_by(
-            '-published')
-        # private post only visible to certain people that author shared to
-        # eg. visibleTo is eqaul to certain author.
-        private_posts = Post.objects.filter(visibility="private", visibleTo=author.user, unlisted=False).order_by(
-            '-published')
-        my_posts = Post.objects.filter(author=author, unlisted=False).order_by('-published')
-        local_posts = public_posts | my_posts | friend_posts | private_posts
-        
-        for post in local_posts:
-            if post.content_type == 'text/markdown':
-                post.content = commonmark.commonmark(post.content)  # parse and render content of type markdown
-        
-        
-        paginator = PageNumberPagination()
-        result_page = paginator.paginate_queryset(local_posts,request)
-        serializer = PostSerializer(result_page, many=True)
-        response = {
-            'count': len(local_posts),
-            'posts': serializer.data
-        }
-        return Response(response, 200)
-
-
+        local, remote = basic_authentication(request)
+        if not local and not remote:
+            return Response({'detail': 'Access denied'}, 401)
+        if local: 
+            author = Author.objects.get(user=request.user)
+            # get public posts
+            public_posts = Post.objects.filter(visibility='public', unlisted=False).order_by('-published')
+            # get friends of current user
+            followers = author.followers.all()
+            followings = author.followings.all()
+            friends = followings & followers
+            # get friends' posts that have visibility= friends
+            friend_posts = Post.objects.filter(author__in=friends, visibility="friends", unlisted=False).order_by(
+                '-published')
+            # private post only visible to certain people that author shared to
+            # eg. visibleTo is eqaul to certain author.
+            private_posts = Post.objects.filter(visibility="private", visibleTo=author.user, unlisted=False).order_by(
+                '-published')
+            my_posts = Post.objects.filter(author=author, unlisted=False).order_by('-published')
+            local_posts = public_posts | my_posts | friend_posts | private_posts
+            
+            for post in local_posts:
+                if post.content_type == 'text/markdown':
+                    post.content = commonmark.commonmark(post.content)  # parse and render content of type markdown
+            
+            
+            paginator = PageNumberPagination()
+            result_page = paginator.paginate_queryset(local_posts,request)
+            serializer = PostSerializer(result_page, many=True)
+            response = {
+                'count': len(local_posts),
+                'posts': serializer.data
+            }
+            return Response(response, 200)
+        else: 
+            visibilities = ['public', 'friends']
+            public_posts = Post.objects.filter(visibility__in=visibilities, unlisted=False).order_by('-published')
+            serializer = PostSerializer(public_posts, many=True)
+            post_data = serializer.data
+            for post in post_data:
+                post['id'] = post["author"]["url"] + '/posts/' + post['id']
+                post['author']['id'] = post["author"]["url"]
+                for comment in post['commentsSrc']['comments']:
+                    comment['author']['id'] = comment['author']['url']
+                    comment['id'] = post['comments'] + comment['id']
+            response = {
+                'posts': post_data
+            }
+            return Response(response, 200)
 class MyPostsAPI(generics.GenericAPIView):
     '''
     The class defines and API endpoint that allows user to get all posts of author of given author_id,
@@ -709,6 +702,8 @@ class PostDetailAPI(generics.GenericAPIView):
                     return Response(serializer.data, 200)
                 else:
                     return Response(serializer.errors, 400)
+
+
 
 
 @login_required
