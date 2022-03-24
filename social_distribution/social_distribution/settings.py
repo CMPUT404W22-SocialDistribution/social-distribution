@@ -26,6 +26,7 @@ SECRET_KEY = 'django-insecure-)al3(3it)mn!7xvspyyt$o=kij2fq%tq%2ylxu%u+9i_%c9+$q
 DEBUG = True
 
 CORS_ALLOW_ALL_ORIGINS = True
+CSRF_TRUSTED_ORIGINS = ['http://127.0.0.1:8000/']
 ALLOWED_HOSTS = []
 
 # Application definition
@@ -43,12 +44,14 @@ INSTALLED_APPS = [
     'node',
     'nested_admin',
     'crispy_forms',
+    'corsheaders',
     'django_cleanup.apps.CleanupConfig'
 ]
 
 CRISPY_TEMPLATE_PACK = 'bootstrap4'
 
 MIDDLEWARE = [
+    'corsheaders.middleware.CorsMiddleware',
     'django.middleware.security.SecurityMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
     'django.middleware.common.CommonMiddleware',
@@ -154,6 +157,8 @@ DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
 MEDIA_ROOT = os.path.join(BASE_DIR, 'media')
 MEDIA_URL = '/media/'
+
+
 
 
 django_on_heroku.settings(locals(), test_runner=False)
