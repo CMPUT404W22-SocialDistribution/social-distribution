@@ -303,22 +303,23 @@ def RemotePostsAPI(request):
                             # for each post, get all comments
                             # comments_url = str(post["comments"]) commented out since T08 hasn't have this field set yet
                             comments = []
-                            post_id = str(post["id"])
+                            post_id = str(post["id"]).split('/')[-2]
                             comments_url = node.url + 'api/authors/' + author_id + '/posts/' + post_id +'/comments/'
+                            print(comments_url)
                             res = requests.get(comments_url, auth=(node.outgoing_username, node.outgoing_password))
                             if res.status_code == 200:
-                                post_comments =  response.json['items']
+                                post_comments =  res.json()['items']
                                 for comment in post_comments:
-                                    # comment_id = str(comment["id"]).split('/')[-2]
+                                    comment_id = str(comment["id"]).split('/')[-2]
                                     comment_data = {
-                                        'author': {
-                                            'id': comment["author"]["id"],
-                                            'host': comment["author"]["host"],
-                                            'displayName': comment["author"]["displayName"],
-                                            'profileImage': 'profile_picture.png',
-                                            'url': comment["author"]["url"]
-                                        },
-                                        'author_displayName' : comment["author"]["displayName"],
+                                        # 'author': {
+                                        #     'id': comment["author"]["id"],
+                                        #     'host': comment["author"]["host"],
+                                        #     'displayName': comment["author"]["displayName"],
+                                        #     'profileImage': 'profile_picture.png',
+                                        #     'url': comment["author"]["url"]
+                                        # },
+                                        # 'author_displayName' : comment["author"]["displayName"],
                                         'comment': comment["comment"],
                                         'contentType': comment["contentType"],
                                         'published': comment["published"],
