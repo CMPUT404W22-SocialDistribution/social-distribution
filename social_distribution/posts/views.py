@@ -25,10 +25,13 @@ import asyncio
 import aiohttp
 
 
+
 HEADERS = {'Referer': 'http://squawker-cmput404.herokuapp.com/', 'Mode': 'no-cors', 'Access-Control-Allow-Origin': '*'}
+
 
 URL = 'http://squawker-cmput404.herokuapp.com/'
 
+  
 @login_required
 def post_create(request, author_id):
     '''
@@ -273,13 +276,13 @@ def RemotePostsAPI(request):
             if response.status_code == 200:
                 clone_posts = response.json()['posts']
                 for post in clone_posts:
+
                     if not post['unlisted']:
                         post['id'] =  str(post["id"]).split('/')[-1]
                         if post["content_type"].lower() in ["image/png;base64", "image/jpeg;base64"]:
                             post["image"] = post["origin"] + post["image"]
                         remote_posts.append(post)
-            print(remote_posts)
-
+           
         # Team 8
         elif node.url == 'http://project-socialdistribution.herokuapp.com/':
             # get all authors of the remote node
@@ -298,6 +301,7 @@ def RemotePostsAPI(request):
                     data = await r.json()
                     team8_posts = data["items"]
                     for post in team8_posts:
+
                         if not post['unlisted']:
                             if post['visibility'] == 'PUBLIC':
                                 # Need Comment API to create comment objects
@@ -312,7 +316,7 @@ def RemotePostsAPI(request):
                                 if res.status_code == 200:
                                     post_comments =  response.json['items']
                                     for comment in post_comments:
-                                        # comment_id = str(comment["id"]).split('/')[-2]
+                                     
                                         comment_data = {
                                             'author': {
                                                 'id': comment["author"]["id"],
@@ -352,6 +356,8 @@ def RemotePostsAPI(request):
                                             'size': len(comments),
                                             'comments': comments
                                     }
+
+                                    
                                 }
                                 remote_posts.append(post_data)
 
@@ -709,11 +715,15 @@ class PostDetailAPI(generics.GenericAPIView):
                 else:
                     return Response(serializer.errors, 400)
 
-
-
+@login_required
+@api_view(['POST'])
+def create_remote_comment(request, url, author_id, post_id):
+    print(request.path)
+    print(request.url)
 
 @login_required
 def create_comment(request, author_id, post_id):
+   
     if request.method == "POST":
         comment=request.POST['comment']
         postID=request.POST['post']
@@ -775,6 +785,8 @@ class CommentsAPI(APIView):
     def post(self, request, author_id, post_id):
         # For now, User can add comments for posts they have access to 
         # OR public posts can have comments from friends ??
+        print(author_id)
+        print(post_id)
         post_author = get_object_or_404(Author, id=author_id)  # check on post author id given in url
         post = get_object_or_404(Post, id=post_id)
         current_author = Author.objects.get(user=request.user)
