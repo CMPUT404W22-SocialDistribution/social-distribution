@@ -266,6 +266,7 @@ def RemotePostsAPI(request):
             if response.status_code == 200:
                 clone_posts = response.json()['posts']
                 for post in clone_posts:
+                    post['post_id'] =  str(post["id"]).split('/')[-1]
                     remote_posts.append(post)
             
 
@@ -409,6 +410,7 @@ def RemotePostsAPI(request):
             pass
         
         remote_posts = sorted(remote_posts, key=lambda k:k['published'], reverse=True)
+   
     return JsonResponse({"posts": remote_posts}, status=200)
 
 class PostsAPI(APIView):
@@ -688,6 +690,8 @@ class PostDetailAPI(generics.GenericAPIView):
                     return Response(serializer.data, 200)
                 else:
                     return Response(serializer.errors, 400)
+
+
 
 
 @login_required

@@ -43,12 +43,14 @@ INSTALLED_APPS = [
     'node',
     'nested_admin',
     'crispy_forms',
+    'corsheaders',
     'django_cleanup.apps.CleanupConfig'
 ]
 
 CRISPY_TEMPLATE_PACK = 'bootstrap4'
 
 MIDDLEWARE = [
+    'corsheaders.middleware.CorsMiddleware',
     'django.middleware.security.SecurityMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
     'django.middleware.common.CommonMiddleware',
