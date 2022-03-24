@@ -820,7 +820,6 @@ class InboxAPI(generics.GenericAPIView):
                     # Except for self-likes, send like object to recipient's inbox
                     if id != like_author.id:
                         inbox.likes.add(like_serializer.instance.id)
-
                     return Response(posts.serializers.LikeSerializer().to_representation(like_serializer.instance),
                                     status=status.HTTP_200_OK)
                 return Response(like_serializer.errors, status=status.HTTP_400_BAD_REQUEST)
@@ -849,7 +848,8 @@ class InboxAPI(generics.GenericAPIView):
 
             return Response({'detail': 'Fail to send the item!'}, status=status.HTTP_400_BAD_REQUEST)
 
-        except:
+        except Exception as e:
+            print(e)
             return Response({'detail': 'Fail to send the item!'}, status=status.HTTP_400_BAD_REQUEST)
 
     def delete(self, request, id):
