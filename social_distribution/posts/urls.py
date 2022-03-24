@@ -1,7 +1,7 @@
 from django.urls import path
 
 from .views import MyPostsAPI, PostsAPI, PostImageAPI, SearchView, PostDetailAPI, my_posts, post_create, post_edit, \
-    post_detail, post_delete, CommentsAPI, create_comment, PostLikesAPI, CommentLikesAPI, RemotePostsAPI
+    post_detail, post_delete, CommentsAPI, create_comment, create_remote_comment, PostLikesAPI, CommentLikesAPI, RemotePostsAPI
 
 app_name = 'posts'
 urlpatterns = [
@@ -20,5 +20,6 @@ urlpatterns = [
     path('api/authors/<str:author_id>/posts/<str:post_id>/likes', PostLikesAPI.as_view(), name="post_likes_api"),
     path('api/authors/<str:author_id>/posts/<str:post_id>/comments/<str:comment_id>/likes', CommentLikesAPI.as_view(),
          name="comment_likes_api"),
-    path('api/posts/remote', RemotePostsAPI, name='remote_posts_api')
+    path('api/posts/remote', RemotePostsAPI, name='remote_posts_api'),
+    path('<str:url>/authors/<str:author_id>/posts/<str:post_id>/comments', create_remote_comment, name='create_remote_comment')
 ]
