@@ -27,6 +27,12 @@ from posts.serializers import CommentSerializer, PostSerializer
 from .forms import SignUpForm, EditProfileForm
 from .serializers import *
 
+HEADERS = {'Referer': 'http://squawker-cmput404.herokuapp.com/', 'Mode': 'no-cors'}
+# URL = 'http://squawker-cmput404.herokuapp.com/'
+T08_USERNAME = 'squawker'
+T08_PASS = 'sQu@k3r'
+CLONE_USERNAME = 'squawker-dev'
+CLONE_PASS = 'cmput404'
 
 def sign_up(request):
     '''
@@ -168,10 +174,30 @@ class SearchAuthorView(ListView):
         if query == '':
             queryset = []
         else:
-            queryset = Author.objects.filter(
-                Q(user__username__icontains=query) |
-                Q(displayName__icontains=query),
-            )
+            queryset = []
+            query_local_authors = Author.objects.filter(
+                                    Q(user__username__icontains=query)|Q(displayName__icontains=query))
+
+            for author in query_local_authors:
+                queryset.append({'id': author.id, 'username': author.user.username,
+                                 'profileImage': author.profileImage, 'displayName': author.displayName, 'url': author.url})
+
+            for node in Node.objects.all():
+                # # Team 8
+                # if node.url == 'http://project-socialdistribution.herokuapp.com/' :
+                #     authors_url = node.url + 'api/authors/'
+                # # Clone
+                # elif  node.url == 'https://squawker-dev.herokuapp.com/':
+                #     authors_url = node.url + 'api/authors/'
+                authors_url = node.url + 'api/authors/'
+                response = requests.get(authors_url, headers=HEADERS, auth=(node.outgoing_username, node.outgoing_password))
+                if response.status_code == 200:
+                    authors = response.json()['items']
+                    for author in authors:
+                        if query in author["displayName"]:
+                            queryset.append(
+                                {'id': author['id'], 'username': 'remote author',
+                                    'profileImage': 'profile_picture.png', 'displayName': author['displayName'], 'url': author['url']})
 
         return queryset
 
@@ -184,23 +210,83 @@ class SearchAuthorView(ListView):
             messages.warning(request, 'You cannot be friend with yourself')
             return redirect('author_manager:friends', author_id)
         try:
-            requested_author = get_object_or_404(Author, id=requested_id)
+            if 'http' in requested_id:
+                #T08
+                if 'project-socialdistribution' in requested_id:
+                    service = 't08'
+                    requested_id = requested_id.split('/')[-2]
+                    author_url = 'http://project-socialdistribution.herokuapp.com/api/authors/' + requested_id + "/"
+                    follow_url = author_url + 'followers/' + author_id + '/'
+                    inbox_url = author_url +'inbox/'
+                    outgoing_username = T08_USERNAME
+                    outgoing_password = T08_PASS
+                #Clone
+                else:
+                    service = 'clone'
+                    requested_id = requested_id.split('/')[-1]
+                    author_url = 'https://squawker-dev.herokuapp.com/api/authors/' + requested_id
+                    follow_url = author_url + '/followers/' + author_id
+                    inbox_url = author_url + '/inbox'
+                    outgoing_username = CLONE_USERNAME
+                    outgoing_password = CLONE_PASS
 
-            if requested_author in current_author.followings.all():
+                response = requests.get(author_url, headers=HEADERS, auth=(outgoing_username, outgoing_password))
+
+                if response.status_code == 200:
+                    object = response.json()
+                else: # cannot found the remote author
+                    messages.warning(request, 'Sorry, we could not find this author.')
+                    return redirect('author_manager:friends', author_id)
+
+                # check if already follow
+                response = requests.get(follow_url, headers=HEADERS, auth=(outgoing_username, outgoing_password))
+                #print(response.json())
+                # if not follow yet
+                if response.status_code == 404 or response.json()["ok"] == []:
+                    actor = {
+                        "type": "author",
+                        "id": current_author.url,
+                        "url": current_author.url,
+                        "host": current_author.host,
+                        "displayName": current_author.displayName,
+                        "github": current_author.github,
+                        "profileImage": current_author.profileImage
+                    }
+
+                    friend_request = {
+                        "type": "follow",
+                        "summary": "follow request",
+                        "actor": actor,
+                        "object": object
+                    }
+
+                    if service == "clone":
+                        friend_request = {"item" : friend_request}
+
+                    response = requests.post(inbox_url, data=friend_request, headers=HEADERS, auth=(outgoing_username, outgoing_password))
+                    return redirect('author_manager:friends', author_id)
+
                 messages.warning(request, 'You already followed this author.')
                 return redirect('author_manager:friends', author_id)
 
-            friend_request, created = FriendRequest.objects.get_or_create(actor=current_author, object=requested_author)
-
-            if created:
-                inbox = Inbox.objects.get(author=requested_author)
-                inbox.follows.add(friend_request)
-                messages.success(request, 'Your friend request has been sent.')
-                return redirect('author_manager:friends', author_id)
-
             else:
-                messages.warning(request, 'You already sent a friend request to this author.')
-                return redirect('author_manager:friends', author_id)
+                requested_author = get_object_or_404(Author, id=requested_id)
+
+                if requested_author in current_author.followings.all():
+                    messages.warning(request, 'You already followed this author.')
+                    return redirect('author_manager:friends', author_id)
+
+                friend_request, created = FriendRequest.objects.get_or_create(actor=current_author, object=requested_author)
+
+                if created:
+                    inbox = Inbox.objects.get(author=requested_author)
+                    inbox.follows.add(friend_request)
+                    messages.success(request, 'Your friend request has been sent.')
+                    return redirect('author_manager:friends', author_id)
+
+                else:
+                    messages.warning(request, 'You already sent a friend request to this author.')
+                    return redirect('author_manager:friends', author_id)
 
         except Author.DoesNotExist:
             messages.warning(request, 'Sorry, we could not find this author.')
