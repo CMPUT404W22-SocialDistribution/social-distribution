@@ -272,15 +272,11 @@ class SearchAuthorView(ListView):
                     if service == "clone":
                         friend_request = {"item" : friend_request}
 
-<<<<<<< HEAD
                     headers = HEADERS + {"Content-Type": "application/json"}
                     response =  requests.post(inbox_url, json=json.dumps(friend_request), headers=headers, auth=(outgoing_username, outgoing_password))
                     print(headers)
                     print(response.json())
                     print(response.status_code)
-=======
-                    response =  requests.post(inbox_url, data=json.dumps(friend_request), headers=HEADERS, auth=(outgoing_username, outgoing_password))
->>>>>>> 388f4ec1159d05c470741010fdf597fba341c1c0
 
                     if response.status_code == 200:
                         messages.success(request, 'Your friend request has been sent.')
@@ -858,14 +854,9 @@ class InboxAPI(generics.GenericAPIView):
 
             return Response({'detail': 'Fail to send the item!'}, status=status.HTTP_400_BAD_REQUEST)
 
-<<<<<<< HEAD
-        except:
-            return Response({'detail': 'Fail to send the item!'}, status=status.HTTP_200_OK)
-=======
         except Exception as e:
             print(e)
             return Response({'detail': 'Fail to send the item!'}, status=status.HTTP_400_BAD_REQUEST)
->>>>>>> 388f4ec1159d05c470741010fdf597fba341c1c0
 
     def delete(self, request, id):
         local, remote = basic_authentication(request)
