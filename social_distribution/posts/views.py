@@ -277,7 +277,6 @@ def RemotePostsAPI(request):
                         post["image"] = post["origin"] + post["image"]
                     remote_posts.append(post)
                    
-
         # Team 8
         elif node.url == 'http://project-socialdistribution.herokuapp.com/':
             # get all authors of the remote node
@@ -307,7 +306,7 @@ def RemotePostsAPI(request):
                             comments = []
                             post_id = str(post["id"]).split('/')[-2]
                             comments_url = node.url + 'api/authors/' + author_id + '/posts/' + post_id +'/comments/'
-                            print(comments_url)
+                            
                             res = requests.get(comments_url, auth=(node.outgoing_username, node.outgoing_password))
                             if res.status_code == 200:
                                 post_comments =  res.json()['items']
