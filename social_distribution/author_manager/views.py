@@ -489,6 +489,7 @@ class GetAllAuthors(APIView):
             'type': "authors",
             'items': serializer.data
         }
+       
         return Response(response, status=status.HTTP_200_OK)
 
 

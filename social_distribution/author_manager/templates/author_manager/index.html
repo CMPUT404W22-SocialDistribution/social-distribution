@@ -538,13 +538,15 @@
                     console.log(_posturl)
                     console.log(_comment)     
                     $.ajax({
+                        
                         url:_posturl+"/comments",
                         type: "post",
-                        // contentType: 'application/json',
-                        username: "squawker-dev", 
-                        password: "cmput404",
+                        // username: "squawker-dev", 
+                        // password: "cmput404",
                         data:
-                            {comment: _comment},
+                            {comment: _comment,
+                            csrfmiddlewaretoken:"{{csrf_token}}"
+                            },
                         
                         dataType: 'json',
                         success:function(data, status){
