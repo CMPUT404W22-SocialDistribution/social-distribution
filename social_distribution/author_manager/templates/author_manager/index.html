@@ -199,7 +199,7 @@
                                         <textarea placeholder="Comment on this post's detail page" rows="1" class="form-control comment-text-${post.id}"></textarea>
                                     </a>
                             </div>
-                            <div class=" card justify-content-center pb-2 comment-wrapper-${post.id}">
+                            ${post.commentsSrc.size ? `<div class=" card justify-content-center pb-2 comment-wrapper-${post.id}">
                                 ${post.commentsSrc.comments.map(comment =>{
                                         var comment_html = `<div class=" justify-content-center py-2">
                                                     <div class="pb-2 px-2 mx-2" style="background-color: #00000008;
@@ -226,8 +226,8 @@
                                         else if ((post.author.id == `{{author.id}}`) || (comment.author.id == `{{author.id}}`) || (comment.author.id == post.author.id)) {
                                             return comment_html
                                         }
-                }).join('')}
-                            </div>
+                                }).join('')}
+                            </div>` : ''}
                         </div>
                     </div>
                 </div>
@@ -337,7 +337,7 @@
                                         <button type="submit" data-answer="${post.id}" class="btn-floating save-comment-remote"><i class="bi bi-plus"></i> </button>
                                     </div>
                             </div>
-                            <div class=" card justify-content-center pb-2 comment-wrapper-${post.id}">
+                            ${post.commentsSrc.size ? `<div class=" card justify-content-center pb-2 comment-wrapper-${post.id}">
                                 ${post.commentsSrc.comments.map(comment =>{
                                     if ( post.visibility != "friends" ) {
                                                 return`<div class=" justify-content-center py-2">
@@ -355,7 +355,7 @@
                                             }
                                             
                 }).join('')}
-                            </div>
+                            </div>` : ''}
                         </div>
                     </div>
                 </div>
