@@ -1,6 +1,5 @@
 from enum import Flag
 from os import stat
-from traceback import print_tb
 import requests
 from django.contrib import messages
 from django.contrib.auth import authenticate, login, logout
@@ -273,8 +272,6 @@ class SearchAuthorView(ListView):
                         friend_request = {"item" : friend_request}
 
                     response =  requests.post(inbox_url, data=json.dumps(friend_request), headers=HEADERS, auth=(outgoing_username, outgoing_password))
-                    print(response.json())
-                    print(response.status_code)
 
                     if response.status_code == 200:
                         messages.success(request, 'Your friend request has been sent.')
@@ -323,7 +320,6 @@ def inbox_view(request, id):
     if request.method == "GET":
         # follow request
         inbox = Inbox.objects.get(author=current_author)
-        print(inbox.follows)
         return render(request, 'inbox/inbox.html', {
             'follows': inbox.follows,
             'posts': inbox.posts.all(),
@@ -374,7 +370,6 @@ def profile_edit(request, id):
             post.save()
             return redirect('author_manager:profile', id)
         else:
-            print(form.errors)
             return redirect('author_manager:editProfile', id)
 
 
@@ -803,8 +798,6 @@ class InboxAPI(generics.GenericAPIView):
 
             item = request.data['item']
             item_type = item['type']
-            print(item)
-            print(item_type)
 
             if item_type == 'like':
                 like_serializer = LikeSerializer(data=item)
@@ -833,7 +826,6 @@ class InboxAPI(generics.GenericAPIView):
                 return Response(like_serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
             if item_type == 'follow':
-                print("follow")
                 # if author.url != item['object']['id'] or author.url == item['actor']['id']:
                 #     return Response({'detail': 'Fail to send the item!'}, status=status.HTTP_400_BAD_REQUEST)
                 if item in inbox.follows:

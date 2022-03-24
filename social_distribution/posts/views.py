@@ -785,8 +785,6 @@ class CommentsAPI(APIView):
     def post(self, request, author_id, post_id):
         # For now, User can add comments for posts they have access to 
         # OR public posts can have comments from friends ??
-        print(author_id)
-        print(post_id)
         post_author = get_object_or_404(Author, id=author_id)  # check on post author id given in url
         post = get_object_or_404(Post, id=post_id)
         current_author = Author.objects.get(user=request.user)
