@@ -274,10 +274,7 @@ class SearchAuthorView(ListView):
 
                     headers = HEADERS
                     headers["Content-Type"] = "application/json"
-                    response =  requests.post(inbox_url, json=json.dumps(friend_request), headers=headers, auth=(outgoing_username, outgoing_password))
-                    print(headers)
-                    print(response.json())
-                    print(response.status_code)
+                    response =  requests.post(inbox_url, data=json.dumps(friend_request), headers=headers, auth=(outgoing_username, outgoing_password))
 
                     if response.status_code == 200:
                         messages.success(request, 'Your friend request has been sent.')
@@ -799,10 +796,8 @@ class InboxAPI(generics.GenericAPIView):
             return Response({'detail': 'Access denied'}, status=status.HTTP_401_UNAUTHORIZED)
 
         try:
-            # print(request.body)
             author = Author.objects.get(id=id)
             inbox = Inbox.objects.get(author=author)
-            print(request.data)
             item = request.data['item']
             item_type = item['type']
 
@@ -832,13 +827,13 @@ class InboxAPI(generics.GenericAPIView):
                 return Response(like_serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
             if item_type == 'follow':
-                # if author.url != item['object']['id'] or author.url == item['actor']['id']:
-                #     return Response({'detail': 'Fail to send the item!'}, status=status.HTTP_400_BAD_REQUEST)
-                # print(type(item['type']))
+                if author.url != item['object']['id'] or author.url == item['actor']['id']:
+                    return Response({'detail': 'Fail to send the item!'}, status=status.HTTP_400_BAD_REQUEST)
+        
                 if item in inbox.follows:
                     return Response({'message': 'Already sent follow/friend request'}, status=status.HTTP_204_NO_CONTENT)
-                # print(type(item))
-                inbox.follows.append(json.dumps(item))
+
+                inbox.follows.append(item)
                 inbox.save()
                 return Response({'message': 'Success to send follow/friend request'}, status=status.HTTP_200_OK)
             
