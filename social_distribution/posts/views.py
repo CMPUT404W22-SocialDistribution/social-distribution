@@ -272,6 +272,8 @@ def RemotePostsAPI(request):
                 clone_posts = response.json()['posts']
                 for post in clone_posts:
                     post['post_id'] =  str(post["id"]).split('/')[-1]
+                    if post["content_type"].lower() in ["image/png;base64", "image/jpeg;base64"]:
+                        post["image"] = post["origin"] + post["image"]
                     remote_posts.append(post)
             
 
@@ -421,7 +423,7 @@ def RemotePostsAPI(request):
             pass
         remote_posts = sorted(remote_posts, key=lambda k:k['published'], reverse=True)
 
-        print("--- %s seconds ---" % (time.time() - start_time))
+    print("--- %s seconds ---" % (time.time() - start_time))
 
     return JsonResponse({"posts": remote_posts}, status=200)
 
