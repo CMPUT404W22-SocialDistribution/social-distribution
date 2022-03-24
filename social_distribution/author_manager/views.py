@@ -225,7 +225,7 @@ class SearchAuthorView(ListView):
                     service = 't08' 
                     requested_id = requested_id.split('/')[-2]
                     author_url = 'http://project-socialdistribution.herokuapp.com/api/authors/' + requested_id + "/"
-                    follow_url = author_url + 'followers/' + author_id + '/'
+                    follow_url = author_url + 'followers/' + str(author_id) + '/'
                     inbox_url = author_url +'inbox/'
                     outgoing_username = T08_USERNAME
                     outgoing_password = T08_PASS
@@ -234,7 +234,7 @@ class SearchAuthorView(ListView):
                     service = 'clone'
                     requested_id = requested_id.split('/')[-1]
                     author_url = 'https://squawker-dev.herokuapp.com/api/authors/' + requested_id
-                    follow_url = author_url + '/followers/' + author_id
+                    follow_url = author_url + '/followers/' + str(author_id)
                     inbox_url = author_url + '/inbox'
                     outgoing_username = CLONE_USERNAME
                     outgoing_password = CLONE_PASS
@@ -272,7 +272,8 @@ class SearchAuthorView(ListView):
                     if service == "clone":
                         friend_request = {"item" : friend_request}
 
-                    headers = HEADERS + {"Content-Type": "application/json"}
+                    headers = HEADERS
+                    headers["Content-Type"] = "application/json"
                     response =  requests.post(inbox_url, json=json.dumps(friend_request), headers=headers, auth=(outgoing_username, outgoing_password))
                     print(headers)
                     print(response.json())
@@ -753,7 +754,7 @@ class InboxAPI(generics.GenericAPIView):
     permission_classes = []
     pagination_class = CustomPagination
     serializer_class = InboxSerializer
-    # parser_classes = [JSONParser]
+    parser_classes = [JSONParser]
 
     def get(self, request, id):
         local, remote = basic_authentication(request)
@@ -798,7 +799,7 @@ class InboxAPI(generics.GenericAPIView):
             return Response({'detail': 'Access denied'}, status=status.HTTP_401_UNAUTHORIZED)
 
         try:
-            print(request.body)
+            # print(request.body)
             author = Author.objects.get(id=id)
             inbox = Inbox.objects.get(author=author)
             print(request.data)
@@ -833,10 +834,11 @@ class InboxAPI(generics.GenericAPIView):
             if item_type == 'follow':
                 # if author.url != item['object']['id'] or author.url == item['actor']['id']:
                 #     return Response({'detail': 'Fail to send the item!'}, status=status.HTTP_400_BAD_REQUEST)
+                # print(type(item['type']))
                 if item in inbox.follows:
                     return Response({'message': 'Already sent follow/friend request'}, status=status.HTTP_204_NO_CONTENT)
-
-                inbox.follows.append(item)
+                # print(type(item))
+                inbox.follows.append(json.dumps(item))
                 inbox.save()
                 return Response({'message': 'Success to send follow/friend request'}, status=status.HTTP_200_OK)
             
