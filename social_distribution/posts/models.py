@@ -17,7 +17,7 @@ class Post(models.Model):
 
     type = models.CharField(max_length=50, default='post')
     title = models.CharField(max_length=200)
-    id = models.CharField(primary_key=True, default=uuid.uuid4, max_length=8, editable=False, unique=True)
+    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False, unique=True)
     # where the post was shared from 
     source = models.CharField(max_length=300, blank=True)
     # where the post was originated 
@@ -87,7 +87,7 @@ class Comment(models.Model):
         default=ContentType.PLAIN)
 
     published = models.DateTimeField(auto_now_add=True)
-    id = models.CharField(primary_key=True, default=uuid.uuid4, max_length=8, editable=False, unique=True)
+    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False, unique=True)
     post = models.ForeignKey(Post, on_delete=models.CASCADE, related_name="commentsSrc")
 
 

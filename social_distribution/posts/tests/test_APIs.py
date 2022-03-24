@@ -203,7 +203,7 @@ class PostDetailTest(APITestCase):
 
     def test_put_post(self):
         self.client.login(username='test1', password='password1')
-        self.url = reverse('posts:post_detail_api', args=[self.author.id, '086abc57'])
+        self.url = reverse('posts:post_detail_api', args=[self.author.id, '7e81fdcf-35c9-4cb1-9090-79f9a24c3b3c'])
         request_body = {
             'title': 'New Title',
             'content': 'New content',
@@ -222,7 +222,7 @@ class PostDetailTest(APITestCase):
 
     def test_put_post_unauthorized(self):
         self.client.login(username='test2', password='password2')
-        self.url = reverse('posts:post_detail_api', args=[self.author.id, '086abc57'])
+        self.url = reverse('posts:post_detail_api', args=[self.author.id, '7e81fdcf-35c9-4cb1-9090-79f9a24c3b3c'])
         request_body = {
             'title': 'New Title',
             'content': 'New content',
@@ -336,7 +336,6 @@ class ImagePostTest(APITestCase):
         self.url = reverse('posts:post_image', args=[self.author1.id, self.post_with_image.id])
 
         response = self.client.get(self.url)
-        print(response.content)
         self.assertEqual(response.status_code, 401)
 
     def test_get_post_image_success_redirects_to_image_url(self):

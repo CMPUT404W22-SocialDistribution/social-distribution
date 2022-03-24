@@ -15,7 +15,7 @@ class Author(models.Model):
 
     user = models.OneToOneField(User, on_delete=models.CASCADE, related_name='author')
     type = models.CharField(max_length=50, default="author")
-    id = models.CharField(primary_key=True, default=uuid.uuid4, max_length=8, editable=False, unique=True)
+    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False, unique=True)
     host = models.CharField(max_length=200, default='http://127.0.0.1:8000/', blank=True)
     url = models.CharField(max_length=500, blank=True, null=True)
     displayName = models.CharField(max_length=200, default=f"{str(user)}")
