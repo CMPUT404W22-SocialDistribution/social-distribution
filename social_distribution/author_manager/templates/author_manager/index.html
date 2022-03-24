@@ -195,13 +195,11 @@
 
                         <div class="collapse" id="collapseComments-${post.id}">
                             <div class="card  " >
-                                    <div class= " input-group ">
-                                        <textarea  placeholder="Type your comment here" rows="1" class="form-control comment-text-${post.id}" ></textarea>
-
-                                        <button type="submit" data-answer="${post.id}" class="btn-floating save-comment"><i class="bi bi-plus"></i> </button>
-                                    </div>
+                                    <a style="text-decoration: none;" class= " input-group " href="/authors/${post.author.id}/posts/${post.id}#comment-text-${post.id}" target="_blank">
+                                        <textarea placeholder="Comment on this post's detail page" rows="1" class="form-control comment-text-${post.id}"></textarea>
+                                    </a>
                             </div>
-                            <div class=" card justify-content-center pb-2 comment-wrapper-${post.id}">
+                            ${post.commentsSrc.size ? `<div class=" card justify-content-center pb-2 comment-wrapper-${post.id}">
                                 ${post.commentsSrc.comments.map(comment =>{
                                         var comment_html = `<div class=" justify-content-center py-2">
                                                     <div class="pb-2 px-2 mx-2" style="background-color: #00000008;
@@ -228,8 +226,8 @@
                                         else if ((post.author.id == `{{author.id}}`) || (comment.author.id == `{{author.id}}`) || (comment.author.id == post.author.id)) {
                                             return comment_html
                                         }
-                }).join('')}
-                            </div>
+                                }).join('')}
+                            </div>` : ''}
                         </div>
                     </div>
                 </div>
@@ -339,7 +337,7 @@
                                         <button type="submit" data-answer="${post.id}" class="btn-floating save-comment-remote"><i class="bi bi-plus"></i> </button>
                                     </div>
                             </div>
-                            <div class=" card justify-content-center pb-2 comment-wrapper-${post.id}">
+                            ${post.commentsSrc.size ? `<div class=" card justify-content-center pb-2 comment-wrapper-${post.id}">
                                 ${post.commentsSrc.comments.map(comment =>{
                                     if ( post.visibility != "friends" ) {
                                                 return`<div class=" justify-content-center py-2">
@@ -348,7 +346,7 @@
                                             <p class="card-text"> ${comment.comment}</p>
                                             <div class=" d-flex justify-content-between py-1 pt-2" style="font-size: 13px";>
                                                 <span><a href="#">
-                                                    name_placeholder
+                                                    ${comment.author_displayName}
                                                 </a></span>
                                                 <span>${Timestamp(comment.published)} </span>
                                             </div>
@@ -357,7 +355,7 @@
                                             }
                                             
                 }).join('')}
-                            </div>
+                            </div>` : ''}
                         </div>
                     </div>
                 </div>
@@ -480,83 +478,80 @@
                     });
                 })
             });
-            $(document).ready(function ClickOnComment(){
-                $(".save-comment").off('click').on('click', function(){
-                    var _postid=$(this).data('answer')
-                    var _comment=$(".comment-text-postID".replace("postID", _postid)).val();
+            
+            // $(document).ready(function ClickOnComment(){
+            //     $(".save-comment").off('click').on('click', function(){
+            //         var _postid=$(this).data('answer')
+            //         var _comment=$(".comment-text-postID".replace("postID", _postid)).val();
                    
-                    // AJX
-                    $.ajax({
-                        url:"/authors/{{user.author.id}}/posts/postid/comments".replace("postid", _postid),
-                        type: "post",
-                        data:{
-                            comment:_comment,
-                            post:_postid,
-                            csrfmiddlewaretoken:"{{csrf_token}}"
-                        },
-                        dataType: 'json',
-                        success:function(res){
-                            if(res.bool==true){
-                                console.log("Hello {{user.author.id}}")
-                                $(".comment-text-postID".replace("postID", _postid)).val('')
+            //         // AJX
+            //         $.ajax({
+            //             url:"/authors/{{user.author.id}}/posts/postid/comments".replace("postid", _postid),
+            //             type: "post",
+            //             data:{
+            //                 comment:_comment,
+            //                 post:_postid,
+            //                 csrfmiddlewaretoken:"{{csrf_token}}"
+            //             },
+            //             dataType: 'json',
+            //             success:function(res){
+            //                 if(res.bool==true){
+            //                     console.log("Hello {{user.author.id}}")
+            //                     $(".comment-text-postID".replace("postID", _postid)).val('')
 
-                                // Added new comment
-                                var _url = "{% url 'author_manager:profile' user.author.id%}";
-                                var _html= `<div class=" justify-content-center py-2">
-                                                    <div class="pb-2 px-2 mx-2"
-                                                        style="background-color: #00000008; box-shadow: 5px 5px 2px #cccccc;">
-                                                        <span class="card-text">${_comment}</span>
-                                                        <div class="d-flex justify-content-between py-1 pt-2" style="font-size: 13px";>
-                                                            <span ><a href='${_url}'>{{request.user.author}}</a></span>
-                                                            <span>${Timestamp(res.published)}</span>
-                                                            <div><a href="javascript:void(0)" class="card-link text-muted"
-                                                                    style="text-decoration: none;"
-                                                                    onclick="postLike('${res.author}', '${_postid}', '${res.id}')">
-                                                                <i class="fa-solid fa-thumbs-up"></i>
-                                                                <span> ${getNumLikesText(res.num_likes)}</span>
-                                                            </a></div>
-                                                        </div>
-                                                    </div>
-                                            </div> 
-                                            `;
+            //                     // Added new comment
+            //                     var _url = "{% url 'author_manager:profile' user.author.id%}";
+            //                     var _html= `<div class=" justify-content-center py-2">
+            //                                         <div class="pb-2 px-2 mx-2"
+            //                                             style="background-color: #00000008; box-shadow: 5px 5px 2px #cccccc;">
+            //                                             <span class="card-text">${_comment}</span>
+            //                                             <div class="d-flex justify-content-between py-1 pt-2" style="font-size: 13px";>
+            //                                                 <span ><a href='${_url}'>{{request.user.author}}</a></span>
+            //                                                 <span>${Timestamp(res.published)}</span>
+            //                                                 <div><a href="javascript:void(0)" class="card-link text-muted"
+            //                                                         style="text-decoration: none;"
+            //                                                         onclick="postLike('${res.author}', '${_postid}', '${res.id}')">
+            //                                                     <i class="fa-solid fa-thumbs-up"></i>
+            //                                                     <span> ${getNumLikesText(res.num_likes)}</span>
+            //                                                 </a></div>
+            //                                             </div>
+            //                                         </div>
+            //                                 </div> 
+            //                                 `;
 
-                                $(".comment-wrapper-postID".replace("postID", _postid)).prepend(_html);
-                            }
-                                $(".save-comment").removeClass('disabled');
-                        }
-                    })
-                })
-            });
-
-
-            $(document).ready(function ClickOnComment(){
-                $(".save-comment-remote").off('click').on('click', function(){
-                    var _posturl=$(this).data('answer')
-                    var _postid = _posturl.slice(-8)
-                    var _comment=$(".comment-text-postID".replace("postID", _postid)).val();
-                    console.log(_postid)
-                    console.log(_posturl)
-                    console.log(_comment)     
-                    $.ajax({
+            //                     $(".comment-wrapper-postID".replace("postID", _postid)).prepend(_html);
+            //                 }
+            //                     $(".save-comment").removeClass('disabled');
+            //             }
+            //         })
+            //     })
+            // });
+            // $(document).ready(function ClickOnComment(){
+            //     $(".save-comment-remote").off('click').on('click', function(){
+            //         var _posturl=$(this).data('answer')
+            //         var _postid = _posturl.slice(-8)
+            //         var _comment=$(".comment-text-postID".replace("postID", _postid)).val();
+            //         console.log(_postid)
+            //         console.log(_posturl)
+            //         console.log(_comment)     
+            //         $.ajax({
                         
-                        url:_posturl+"/comments",
-                        type: "post",
-                        // username: "squawker-dev", 
-                        // password: "cmput404",
-                        data:
-                            {comment: _comment,
-                            csrfmiddlewaretoken:"{{csrf_token}}"
-                            },
+            //             url:_posturl+"/comments",
+            //             type: "post",
+            //             // username: "squawker-dev", 
+            //             // password: "cmput404",
+            //             data:
+            //                 {comment: _comment,
+            //                 csrfmiddlewaretoken:"{{csrf_token}}"
+            //                 },
                         
-                        dataType: 'json',
-                        success:function(data, status){
-                           console.log("POST SUCCCESS");
-                        }
-                    })
-                })
-            });
-
-            setTimeout(fetchPosts, 17000);
+            //             dataType: 'json',
+            //             success:function(data, status){
+            //                console.log("POST SUCCCESS");
+            //             }
+            //         })
+            //     })
+            // });
 
         }
 
