@@ -52,3 +52,50 @@ class PostForm(forms.ModelForm):
             ),
             Submit('submit', 'Submit')
         )
+
+class SharePostForm(forms.ModelForm):
+    class Meta:
+        model = Post
+        fields = "__all__"
+        widgets = {
+            'categories': forms.Select(attrs={'rows': 1}),
+        }
+
+    def __init__(self, *args, disabled_project=True, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.fields['title'].disabled = disabled_project
+        self.fields['description'].disabled = disabled_project
+        self.fields['content_type'].disabled = disabled_project
+        self.fields['visibility'].disabled = disabled_project
+        self.fields['visibleTo'].disabled = disabled_project
+        self.fields['categories'].disabled = disabled_project
+        self.fields['content'].disabled = disabled_project
+        self.fields['image'].disabled = disabled_project
+        self.fields['unlisted'].disabled = disabled_project
+        self.helper = FormHelper()
+        self.helper.layout = Layout(
+            Row(
+                Column('title', css_class=col12),
+            ),
+            Row(
+                Column('description', css_class=col12),
+            ),
+            Row(
+                Column('content_type', css_class=col4),
+                Column('visibility', css_class=col4),
+                Column('visibleTo', css_class=col4),
+            ),
+            Row(
+                Column('categories', css_class=col12),
+            ),
+            Row(
+                Column('content', css_class=col12),
+            ),
+            Row(
+                Column('image', css_class=col12),
+            ),
+            Row(
+                Column('unlisted', css_class=col12),
+            ),
+            Submit('submit', 'Share')
+        )

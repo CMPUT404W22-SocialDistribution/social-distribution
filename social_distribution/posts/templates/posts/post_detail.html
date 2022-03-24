@@ -96,7 +96,7 @@ aria-controls="collapseExample">
                 aria-expanded="false"  >
                 <i class="fa-solid fa-comment-dots"></i> Comment</a>
 
-            <a href="#" class="card-link text-muted" style="text-decoration: none;"><i class="fa-solid fa-retweet"></i> Share</a>
+            <a href="{% url 'posts:post_share' post.author.id post.id %}" class="card-link text-muted" style="text-decoration: none;"><i class="fa-solid fa-retweet"></i> Share</a>
         </div>
 
         <div class="collapse show" id="collapseComments">

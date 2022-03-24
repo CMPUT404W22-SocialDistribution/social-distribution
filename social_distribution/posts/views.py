@@ -13,13 +13,16 @@ from rest_framework.decorators import api_view
 import requests
 
 from author_manager.models import *
-from posts.forms import PostForm
+from posts.forms import PostForm, SharePostForm
 from .models import Post, Comment, Like
 from .serializers import PostSerializer, CommentSerializer, LikeSerializer
 from node.models import Node
 from node.authentication import basic_authentication
 
 from django.views.decorators.cache import cache_page
+
+from django.core.files import File
+import urllib
 
 HEADERS = {'Referer': 'http://squawker-cmput404.herokuapp.com/', 'Mode': 'no-cors'}
 URL = 'http://squawker-cmput404.herokuapp.com/'
@@ -127,6 +130,71 @@ def post_edit(request, author_id, post_id):
             return redirect('posts:post_detail', author_id, post_id)
         else:
             return redirect('posts:post_create', author_id)
+
+@login_required
+def post_share(request, author_id, post_id):
+    '''
+    This function allows sharing a post of post_id of author_id.
+
+    Method:
+        POST:   - get the current version of put
+                - Create (Share) a public post with the given post_id
+    '''
+
+    if request.method == "GET":
+        author = Author.objects.get(id=author_id)
+        current_author = request.user.author
+        post = get_object_or_404(Post, id=post_id)
+        print(post.image.url)
+        form = PostForm(instance=post)
+        context = {
+            'form': form,
+            'share': True,
+            'profile': current_author,
+        }
+        return render(request, 'posts/post_create.html', context)
+
+    elif request.method == 'POST':
+        try:
+            author = Author.objects.get(id=author_id)
+            current_author = request.user.author
+            post = get_object_or_404(Post, id=post_id)
+        except Post.DoesNotExist:
+            error = "404 Not Found"
+            return render(request, 'posts/post_create.html', {'error': error}, status=404)
+
+        if post.visibility == 'public':
+            updated_request = request.POST.copy()  # using deepcopy() to make a mutable copy of the object
+
+            source = request.build_absolute_uri()
+            source = source.replace(current_author.id, author_id)
+            source = source.replace("/share", "")
+            origin = post.origin
+
+            image_url = post.image.name
+
+            updated_request.update(
+                {
+                    'author': current_author,
+                    'type': 'post',
+                    'source': source,
+                    'origin': origin,
+                }
+            )
+
+            form = PostForm(updated_request, request.FILES)
+            # new_form = SharePostForm()
+            if form.is_valid():
+                share_post = form.save(commit=False)
+                if post.image:
+                    share_post.image = image_url
+                share_post.save()
+                return redirect('posts:post_detail', current_author.id, share_post.id)
+            else:
+                return redirect('posts:post_create', current_author.id)
+        else:
+            error = "403 Forbidden"
+            return render(request, 'posts/post_create.html', {'error': error}, status=403)
 
 
 @login_required
