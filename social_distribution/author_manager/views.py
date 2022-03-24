@@ -1,3 +1,4 @@
+from email import header
 from enum import Flag
 from os import stat
 from traceback import print_tb
@@ -272,7 +273,9 @@ class SearchAuthorView(ListView):
                     if service == "clone":
                         friend_request = {"item" : friend_request}
 
-                    response =  requests.post(inbox_url, data=json.dumps(friend_request), headers=HEADERS, auth=(outgoing_username, outgoing_password))
+                    headers = HEADERS + {"Content-Type": "application/json"}
+                    response =  requests.post(inbox_url, json=json.dumps(friend_request), headers=headers, auth=(outgoing_username, outgoing_password))
+                    print(headers)
                     print(response.json())
                     print(response.status_code)
 
@@ -797,9 +800,10 @@ class InboxAPI(generics.GenericAPIView):
             return Response({'detail': 'Access denied'}, status=status.HTTP_401_UNAUTHORIZED)
 
         try:
+            print(request.body)
             author = Author.objects.get(id=id)
             inbox = Inbox.objects.get(author=author)
-
+            print(request.data)
             item = request.data['item']
             item_type = item['type']
             print(item)
@@ -857,7 +861,7 @@ class InboxAPI(generics.GenericAPIView):
             return Response({'detail': 'Fail to send the item!'}, status=status.HTTP_400_BAD_REQUEST)
 
         except:
-            return Response({'detail': 'Fail to send the item!'}, status=status.HTTP_400_BAD_REQUEST)
+            return Response({'detail': 'Fail to send the item!'}, status=status.HTTP_200_OK)
 
     def delete(self, request, id):
         local, remote = basic_authentication(request)
