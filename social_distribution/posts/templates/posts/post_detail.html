@@ -30,14 +30,18 @@
                         {% elif post.visibility == "friends" %}
                             <i class="card-link fa-solid text-primary fa-user-group"></i>
                         {% endif %}
-                        {% if sharePost %}
-                            {% if isAuthor %}
+                        {% if isAuthor %}
+                            {% if notSharePost %}
                                 <a href="{% url 'posts:post_edit' post.author.id post.id %}"
                                     class="card-link text-muted"><i class="fa-solid fa-pen-to-square"></i></a>
                                 <a href="{% url 'posts:post_delete' post.author.id post.id %}"
                                     onclick="return confirm('Are you sure you want to delete this post?');"
                                     class="card-link text-muted"><i class="fa-solid fa-trash"></i></a>
-                            {% endif %}
+                            {% else %}
+                                <a href="{% url 'posts:post_delete' post.author.id post.id %}"
+                                    onclick="return confirm('Are you sure you want to delete this post?');"
+                                    class="card-link text-muted"><i class="fa-solid fa-trash"></i></a>
+                            {% endif %}  
                         {% endif %}
                     </div>
                 </div>
