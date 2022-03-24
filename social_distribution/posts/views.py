@@ -1,3 +1,5 @@
+from http.client import LENGTH_REQUIRED
+from operator import length_hint
 import commonmark
 from django.contrib.auth.decorators import login_required
 from django.db.models import Q
@@ -271,7 +273,8 @@ def post_detail(request, author_id, post_id):
             "comments": comments,
             "post": post,
             "isAuthor": isAuthor,
-            "numLikes": numLikes
+            "numLikes": numLikes,
+            "sharePost": sharePost,
         }
         return render(request, 'posts/post_detail.html', context)
 
