@@ -845,29 +845,6 @@ class InboxAPI(generics.GenericAPIView):
 class RemoteInboxAPI(generics.GenericAPIView):
     AUTHOR_INBOX_ENDPOINT = 'api/authors/{}/inbox/'
 
-    @staticmethod
-    def _like_post():
-        pass
-
-    @staticmethod
-    def _like_comment():
-        pass
-
-    @staticmethod
-    def _get_already_liked(author_id, post_id, comment_id):
-        if comment_id:
-            like_query_set = Like.objects.filter(author__id__exact=author_id,
-                                                 post__id__exact=post_id,
-                                                 comment__id__exact=comment_id)
-        else:
-            like_query_set = Like.objects.filter(author__id__exact=author_id,
-                                                 post__id__exact=post_id,
-                                                 comment__id__isnull=True)
-
-        if like_query_set:
-            return like_query_set[0]
-        return None
-
     def post(self, request, author_id):
         if 'node' not in request.headers:
             return HttpResponseBadRequest()

@@ -247,7 +247,7 @@
                 hour: 'numeric', // numeric, 2-digit
                 minute: 'numeric', // numeric, 2-digit
             });
-
+            var postId = new URL(post.id).pathname.split('/')[4];
             var postVisibility = post.visibility;
             var postVisibilityIcon = "";
             switch (postVisibility) {
@@ -320,7 +320,7 @@
                             <div class="card-footer">
                                 <a href="javascript:void(0)" class="card-link text-muted" style="text-decoration: none;"
                                    onclick="remotePostLike('${post.id}')"><i class="fa-solid fa-thumbs-up"></i>
-                                   <span>${remoteGetNumLikesText(post.id)}</span></a>
+                                   <span id="likes-${postId}">Like</span></a>
 
                                 <a class="card-link text-muted" style="text-decoration: none;"
                                 data-bs-toggle="collapse"
@@ -459,6 +459,8 @@
                     document.querySelectorAll("#post-content img:not(.card-img-bottom)").forEach(postContentInlineImg =>
                         postContentInlineImg?.classList.add('card-img-bottom')
                     );
+                    // Set likes count on each post
+                    data.posts.forEach(post => remoteSetNumLikesText(post.id));
                 },
                 error: (error) => {
                     console.log(error);
@@ -630,14 +632,11 @@
         }
 
         async function remotePostLike(likedObject) {
-            console.log(likedObject);
             const objectUrl = new URL(likedObject);
             const objectUrlPath = objectUrl.pathname.split('/');
             const authorId = objectUrlPath[2];
             const postId = objectUrlPath[4];
             const likedObjectType = objectUrlPath[6] ? 'Post' : 'Comment';
-
-            console.log(objectUrl.hostname);
             await fetch(`/api/node/authors/${authorId}/inbox`, {
                 method: 'POST',
                 headers: {
@@ -671,8 +670,41 @@
                 .catch(reason => console.log(reason));
         }
 
-        function remoteGetNumLikesText(postUrl) {
-            return "TODO";
+        async function remoteSetNumLikesText(likedObject) {
+            const objectUrl = new URL(likedObject);
+            const objectUrlPath = objectUrl.pathname.split('/');
+            const authorId = objectUrlPath[2];
+            const postId = objectUrlPath[4];
+            const commentId = objectUrlPath[6];
+            const likedObjectType = typeof commentId === 'undefined' ? 'Post' : 'Comment';
+            let fetchUrl = `/api/node/authors/${authorId}/posts/${postId}`
+            if (likedObjectType === 'Comment') {
+                fetchUrl += `/comments/${commentId}`;
+            }
+            fetchUrl += '/likes';
+            await fetch(fetchUrl, {
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-CSRFToken': '{{ csrf_token }}',
+                        'node': objectUrl.origin + '/'
+                    }
+                }
+            )
+                .then(response => {
+                    if (response.status === 200)
+                        return response.json();
+                })
+                .then(data => {
+                    const numLikes = data?.items?.length || 0;
+                    let numLikesText = "Like";
+                    if (numLikes > 1) {
+                       numLikesText = `${numLikes} Likes`;
+                    } else if (numLikes > 1) {
+                       numLikesText = `${numLikes} Like`;
+                    }
+                    document.querySelector(`span#likes-${postId}`).textContent = numLikesText;
+                })
+                .catch(reason => console.error(reason));
         }
 
     </script>
