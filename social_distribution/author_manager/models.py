@@ -1,5 +1,6 @@
 from email.policy import default
 from importlib.resources import contents
+from multiprocessing.dummy import Array
 import random
 import uuid
 
@@ -50,12 +51,15 @@ class FriendRequest(models.Model):
 class Inbox(models.Model):
     type = models.CharField(max_length=30, default='inbox', editable=False)
     author = models.OneToOneField(Author, on_delete=models.CASCADE, primary_key=True)
-    follows = models.ManyToManyField(FriendRequest, blank=True)
+    # follows = models.ManyToManyField(FriendRequest, blank=True)
     # send posts to inbox
     posts = models.ManyToManyField('posts.Post', blank=True)
     # Send comment to inbox
     comments = models.ManyToManyField('posts.Comment', blank=True)
     likes = models.ManyToManyField('posts.Like', blank=True)
+
+    follows = models.JSONField(default=list, blank=True)
+    
 
     item = models.JSONField(default=dict)
 
