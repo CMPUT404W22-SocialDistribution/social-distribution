@@ -269,15 +269,16 @@ def RemotePostsAPI(request):
         if node.url == 'https://squawker-dev.herokuapp.com/':
             posts_url = node.url + 'api/posts/'
             response = requests.get(posts_url, headers=HEADERS, auth=(node.outgoing_username, node.outgoing_password))
-        
+
             if response.status_code == 200:
                 clone_posts = response.json()['posts']
                 for post in clone_posts:
-                    post['post_id'] =  str(post["id"]).split('/')[-1]
-                    if post["content_type"].lower() in ["image/png;base64", "image/jpeg;base64"]:
-                        post["image"] = post["origin"] + post["image"]
-                    remote_posts.append(post)
-            
+                    if not post['unlisted']:
+                        post['id'] =  str(post["id"]).split('/')[-1]
+                        if post["content_type"].lower() in ["image/png;base64", "image/jpeg;base64"]:
+                            post["image"] = post["origin"] + post["image"]
+                        remote_posts.append(post)
+            print(remote_posts)
 
         # Team 8
         elif node.url == 'http://project-socialdistribution.herokuapp.com/':
@@ -297,77 +298,21 @@ def RemotePostsAPI(request):
                     data = await r.json()
                     team8_posts = data["items"]
                     for post in team8_posts:
-        
-                        if post['visibility'] == 'PUBLIC':
-                            # Need Comment API to create comment objects
-                            # need to convert categories, comments to arr
-                            
-                            # for each post, get all comments
-                            # comments_url = str(post["comments"]) commented out since T08 hasn't have this field set yet
-                            comments = []
-                            post_id = str(post["id"])
-                            comments_url = node.url + 'api/authors/' + author_id + '/posts/' + post_id +'/comments/'
-                            res = requests.get(comments_url, auth=(node.outgoing_username, node.outgoing_password))
-                            if res.status_code == 200:
-                                post_comments =  response.json['items']
-                                for comment in post_comments:
-                                    # comment_id = str(comment["id"]).split('/')[-2]
-                                    comment_data = {
-                                        'author': {
-                                            'id': comment["author"]["id"],
-                                            'host': comment["author"]["host"],
-                                            'displayName': comment["author"]["displayName"],
-                                            'profileImage': 'profile_picture.png',
-                                            'url': comment["author"]["url"]
-                                        },
-                                        'author_displayName' : comment["author"]["displayName"],
-                                        'comment': comment["comment"],
-                                        'contentType': comment["contentType"],
-                                        'published': comment["published"],
-                                        'id': comment["id"]
-                                    }
-                                    comments.append(comment_data)
-                            comments = sorted(comments, key=lambda k:k['published'], reverse=True)
-                            # post with comments
-                            if post["contentType"] == 'text/markdown':
-                                post["content"] = commonmark.commonmark(str(post["content"]))
-                            post_data = {
-                                'author_username' : post["author"]["displayName"],
-                                'author_displayName' : post["author"]["displayName"],
-                                'title' : post["title"],
-                                'id' : post["id"],
-                                'source' : post["source"],
-                                'origin' : "https://project-socialdistribution.herokuapp.com/",
-                                'content_type' : post["contentType"],
-                                'content' : post["content"],
-                                'author' : post["author"],
-                                'categories': post["categories"],
-                                'published': post["published"],
-                                'visibility': 'public',
-                                'unlisted': post['unlisted'],
-                                'author_image': "profile_picture.png",
-                                'comments': '',
-                                'commentsSrc': {
-                                        'size': len(comments),
-                                        'comments': comments
-                                }
-                            }
-                            remote_posts.append(post_data)
-
-                        elif post['visibility'] == 'FRIENDS':
-                            # get all friends posts of my remote friend
-                            friend_url = node.url + '/authors/' + author_id +'/'
-                            # for each post, get my comments and the friend's comments only
-                            # comments_url = str(post["comments"]) commented out since T08 hasn't have this field set yet
-                            comments = []
-                            post_id = str(post["id"])
-                            comments_url = node.url + 'api/authors/' + author_id + '/posts/' + post_id +'/comments/'
-                            res = requests.get(comments_url, auth=(node.outgoing_username, node.outgoing_password))
-                            if res.status_code == 200:
-                                post_comments =  response.json['items']
-                                for comment in post_comments:
-                                    comment_id = str(comment["id"]).split('/')[-2]
-                                    if str(comment["author"]["url"]) == request.user.author.url or str(comment["author"]["url"])== friend_url:                                    
+                        if not post['unlisted']:
+                            if post['visibility'] == 'PUBLIC':
+                                # Need Comment API to create comment objects
+                                # need to convert categories, comments to arr
+                                
+                                # for each post, get all comments
+                                # comments_url = str(post["comments"]) commented out since T08 hasn't have this field set yet
+                                comments = []
+                                post_id = str(post["id"])
+                                comments_url = node.url + 'api/authors/' + author_id + '/posts/' + post_id +'/comments/'
+                                res = requests.get(comments_url, auth=(node.outgoing_username, node.outgoing_password))
+                                if res.status_code == 200:
+                                    post_comments =  response.json['items']
+                                    for comment in post_comments:
+                                        # comment_id = str(comment["id"]).split('/')[-2]
                                         comment_data = {
                                             'author': {
                                                 'id': comment["author"]["id"],
@@ -380,33 +325,89 @@ def RemotePostsAPI(request):
                                             'comment': comment["comment"],
                                             'contentType': comment["contentType"],
                                             'published': comment["published"],
-                                            'id': comment_id
+                                            'id': comment["id"]
+                                        }
+                                        comments.append(comment_data)
+                                comments = sorted(comments, key=lambda k:k['published'], reverse=True)
+                                # post with comments
+                                if post["contentType"] == 'text/markdown':
+                                    post["content"] = commonmark.commonmark(str(post["content"]))
+                                post_data = {
+                                    'author_username' : post["author"]["displayName"],
+                                    'author_displayName' : post["author"]["displayName"],
+                                    'title' : post["title"],
+                                    'id' : post["id"],
+                                    'source' : post["source"],
+                                    'origin' : "https://project-socialdistribution.herokuapp.com/",
+                                    'content_type' : post["contentType"],
+                                    'content' : post["content"],
+                                    'author' : post["author"],
+                                    'categories': post["categories"],
+                                    'published': post["published"],
+                                    'visibility': 'public',
+                                    'unlisted': post['unlisted'],
+                                    'author_image': "profile_picture.png",
+                                    'comments': '',
+                                    'commentsSrc': {
+                                            'size': len(comments),
+                                            'comments': comments
                                     }
-                                    comments.append(comment_data)
-                            if post["contentType"] == 'text/markdown':
-                                post["content"] = commonmark.commonmark(str(post["content"]))
-                            post_data = {
-                                'author_username' : post["author"]["displayName"],
-                                'author_displayName' : post["author"]["displayName"],
-                                'title' : post["title"],
-                                'id' : post["id"],
-                                'source' : post["source"],
-                                'origin' : "https://project-socialdistribution.herokuapp.com/",
-                                'content_type' : post["contentType"],
-                                'content' : post["content"],
-                                'author' : post["author"],
-                                'categories': post["categories"],
-                                'published': post["published"],
-                                'visibility': 'friends',
-                                'unlisted': post['unlisted'],
-                                'author_image': "profile_picture.png",
-                                'comments': '',
-                                'commentsSrc': {
-                                        'size': len(comments),
-                                        'comments': comments
                                 }
-                            }
-                            remote_posts.append(post_data)
+                                remote_posts.append(post_data)
+
+                            elif post['visibility'] == 'FRIENDS':
+                                # get all friends posts of my remote friend
+                                friend_url = node.url + '/authors/' + author_id +'/'
+                                # for each post, get my comments and the friend's comments only
+                                # comments_url = str(post["comments"]) commented out since T08 hasn't have this field set yet
+                                comments = []
+                                post_id = str(post["id"])
+                                comments_url = node.url + 'api/authors/' + author_id + '/posts/' + post_id +'/comments/'
+                                res = requests.get(comments_url, auth=(node.outgoing_username, node.outgoing_password))
+                                if res.status_code == 200:
+                                    post_comments =  response.json['items']
+                                    for comment in post_comments:
+                                        comment_id = str(comment["id"]).split('/')[-2]
+                                        if str(comment["author"]["url"]) == request.user.author.url or str(comment["author"]["url"])== friend_url:                                    
+                                            comment_data = {
+                                                'author': {
+                                                    'id': comment["author"]["id"],
+                                                    'host': comment["author"]["host"],
+                                                    'displayName': comment["author"]["displayName"],
+                                                    'profileImage': 'profile_picture.png',
+                                                    'url': comment["author"]["url"]
+                                                },
+                                                'author_displayName' : comment["author"]["displayName"],
+                                                'comment': comment["comment"],
+                                                'contentType': comment["contentType"],
+                                                'published': comment["published"],
+                                                'id': comment_id
+                                        }
+                                        comments.append(comment_data)
+                                if post["contentType"] == 'text/markdown':
+                                    post["content"] = commonmark.commonmark(str(post["content"]))
+                                post_data = {
+                                    'author_username' : post["author"]["displayName"],
+                                    'author_displayName' : post["author"]["displayName"],
+                                    'title' : post["title"],
+                                    'id' : post["id"],
+                                    'source' : post["source"],
+                                    'origin' : "https://project-socialdistribution.herokuapp.com/",
+                                    'content_type' : post["contentType"],
+                                    'content' : post["content"],
+                                    'author' : post["author"],
+                                    'categories': post["categories"],
+                                    'published': post["published"],
+                                    'visibility': 'friends',
+                                    'unlisted': post['unlisted'],
+                                    'author_image': "profile_picture.png",
+                                    'comments': '',
+                                    'commentsSrc': {
+                                            'size': len(comments),
+                                            'comments': comments
+                                    }
+                                }
+                                remote_posts.append(post_data)
 
                 async def get_posts(remote_authors):
                     async with aiohttp.ClientSession() as session:
