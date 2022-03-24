@@ -21,9 +21,10 @@ from node.authentication import basic_authentication
 
 from django.views.decorators.cache import cache_page
 
-HEADERS = {'Referer': 'http://squawker-cmput404.herokuapp.com/', 'Mode': 'no-cors', 'Access-Control-Allow-Origin': '*'}
+HEADERS = {'Referer': 'http://squawker-cmput404.herokuapp.com/', 'Mode': 'no-cors'}
 URL = 'http://squawker-cmput404.herokuapp.com/'
 
+  
 @login_required
 def post_create(request, author_id):
     '''
@@ -757,6 +758,8 @@ class CommentsAPI(APIView):
     def post(self, request, author_id, post_id):
         # For now, User can add comments for posts they have access to 
         # OR public posts can have comments from friends ??
+        print(author_id)
+        print(post_id)
         post_author = get_object_or_404(Author, id=author_id)  # check on post author id given in url
         post = get_object_or_404(Post, id=post_id)
         current_author = Author.objects.get(user=request.user)
