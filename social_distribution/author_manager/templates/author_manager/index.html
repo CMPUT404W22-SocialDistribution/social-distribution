@@ -414,6 +414,8 @@
                     var rootFirstChild = document.getElementById("remote_node").firstChild;
                     var postLatestElement = rootFirstChild ? rootFirstChild.nextElementSibling : null;
                     var postLatestElementId = postLatestElement ? postLatestElement.id : "empty";
+                    console.log(postLatestElementId)
+                    console.log(postLatestFromApi.post_id)
                     if (postLatestElementId == "empty") {
                         var remoteCardsHtml = '';
                         data.posts.map(post => {
@@ -517,30 +519,30 @@
             });
 
 
-            // $(document).ready(function ClickOnComment(){
-            //     $(".save-comment-remote").off('click').on('click', function(){
-            //         var _posturl=$(this).data('answer')
-            //         var _postid = _posturl.slice(-8)
-            //         var _comment=$(".comment-text-postID".replace("postID", _postid)).val();
-            //         console.log(_postid)
-            //         console.log(_posturl)
-            //         console.log(_comment)     
-            //         $.ajax({
-            //             url:_posturl+"/comments",
-            //             type: "post",
-            //             // contentType: 'application/json',
-            //             username: "cmput404", 
-            //             password: "cmput404",
-            //             data:
-            //                 {comment:_comment,},
+            $(document).ready(function ClickOnComment(){
+                $(".save-comment-remote").off('click').on('click', function(){
+                    var _posturl=$(this).data('answer')
+                    var _postid = _posturl.slice(-8)
+                    var _comment=$(".comment-text-postID".replace("postID", _postid)).val();
+                    console.log(_postid)
+                    console.log(_posturl)
+                    console.log(_comment)     
+                    $.ajax({
+                        url:_posturl+"/comments",
+                        type: "post",
+                        // contentType: 'application/json',
+                        username: "squawker-dev", 
+                        password: "cmput404",
+                        data:
+                            {comment: _comment},
                         
-            //             dataType: 'json',
-            //             success:function(data, status){
-            //                console.log("POST SUCCCESS");
-            //             }
-            //         })
-            //     })
-            // });
+                        dataType: 'json',
+                        success:function(data, status){
+                           console.log("POST SUCCCESS");
+                        }
+                    })
+                })
+            });
 
             setTimeout(fetchPosts, 5000);
 
