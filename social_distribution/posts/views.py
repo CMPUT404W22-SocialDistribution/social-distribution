@@ -13,7 +13,7 @@ from rest_framework.decorators import api_view
 import requests
 
 from author_manager.models import *
-from posts.forms import PostForm, SharePostForm
+from posts.forms import PostForm
 from .models import Post, Comment, Like
 from .serializers import PostSerializer, CommentSerializer, LikeSerializer
 from node.models import Node
@@ -145,12 +145,20 @@ def post_share(request, author_id, post_id):
         author = Author.objects.get(id=author_id)
         current_author = request.user.author
         post = get_object_or_404(Post, id=post_id)
-        print(post.image.url)
         form = PostForm(instance=post)
+        form.fields['title'].disabled = True
+        form.fields['description'].disabled = True
+        form.fields['content_type'].disabled = True
+        form.fields['visibility'].disabled = True
+        form.fields['visibleTo'].disabled = True
+        form.fields['categories'].disabled = True
+        form.fields['content'].disabled = True
+        form.fields['image'].disabled = True
+        form.fields['unlisted'].disabled = True
         context = {
             'form': form,
             'share': True,
-            'profile': current_author,
+            # 'profile': current_author,
         }
         return render(request, 'posts/post_create.html', context)
 
@@ -170,6 +178,12 @@ def post_share(request, author_id, post_id):
             source = source.replace(current_author.id, author_id)
             source = source.replace("/share", "")
             origin = post.origin
+            title = post.title
+            content_type = post.content_type
+            visibility = post.visibility
+            content = post.content
+            description = post.description
+            categories = post.categories
 
             image_url = post.image.name
 
@@ -179,11 +193,16 @@ def post_share(request, author_id, post_id):
                     'type': 'post',
                     'source': source,
                     'origin': origin,
+                    'title': title,
+                    'content_type': content_type,
+                    'visibility': visibility,
+                    'content': content,
+                    'description': description,
                 }
             )
 
             form = PostForm(updated_request, request.FILES)
-            # new_form = SharePostForm()
+            print(form.errors)
             if form.is_valid():
                 share_post = form.save(commit=False)
                 if post.image:
