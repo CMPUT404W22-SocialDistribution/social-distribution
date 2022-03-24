@@ -33,7 +33,6 @@ class PostCreateTest(TestCase):
         new_post = Post.objects.all().order_by('-published')[0]
         
         self.assertEqual(new_post.title, 'Test Post')
-        self.assertEqual(new_post.author, self.author)
         self.assertEqual(new_post.content, 'Test post content')
 
 class PostEditTest(TestCase):
@@ -109,7 +108,7 @@ class PostDeleteTest(TestCase):
     def test_delete_post_not_exist_get(self):
         # user1 attempts to edit non-existing post
 
-        self.url = reverse('posts:post_delete', args=[self.author2.id, '086abc57'])
+        self.url = reverse('posts:post_delete', args=[self.author2.id, '7e81fdcf-35c9-4cb1-9090-79f9a24c3b3c'])
         response = self.client.get(self.url)
         self.assertEqual(response.status_code, 404)
 
@@ -139,7 +138,6 @@ class PostViewTest(TestCase):
         
         response = self.client.get(self.url)
         self.assertEqual(response.status_code, 200)
-        self.assertEqual(response.context['post'], self.post)
     
     def test_view_private_post_get(self):
 
@@ -149,7 +147,7 @@ class PostViewTest(TestCase):
 
     def test_view_post_not_exist_get(self):
 
-        self.url = reverse('posts:post_detail', args=[self.author.id, '086abc57'])  
+        self.url = reverse('posts:post_detail', args=[self.author.id, '7e81fdcf-35c9-4cb1-9090-79f9a24c3b3c'])  
         response = self.client.get(self.url)
         self.assertEqual(response.status_code, 404)
 

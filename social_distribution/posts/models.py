@@ -11,17 +11,13 @@ class Category(models.Model):
 
 
 class Post(models.Model):
-    def short_uuid():
-        # return a shortened version of uuid4 with only the first 8 characters
-        return uuid.uuid4().hex[:8]
-
     def image_upload_path(instance, filename):
         """Upload an image to MEDIA_ROOT/<post ID>/<filename>"""
         return '{0}/{1}'.format(instance.id, filename)
 
     type = models.CharField(max_length=50, default='post')
     title = models.CharField(max_length=200)
-    id = models.CharField(primary_key=True, default=short_uuid, max_length=8, editable=False, unique=True)
+    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False, unique=True)
     # where the post was shared from 
     source = models.CharField(max_length=300, blank=True)
     # where the post was originated 
@@ -72,9 +68,6 @@ class Post(models.Model):
 
 
 class Comment(models.Model):
-    def short_uuid():
-        return uuid.uuid4().hex[:8]
-
     class ContentType(models.TextChoices):
         MARKDOWN = 'text/markdown',
         PLAIN = 'text/plain'
@@ -94,7 +87,7 @@ class Comment(models.Model):
         default=ContentType.PLAIN)
 
     published = models.DateTimeField(auto_now_add=True)
-    id = models.CharField(primary_key=True, default=short_uuid, max_length=8, editable=False, unique=True)
+    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False, unique=True)
     post = models.ForeignKey(Post, on_delete=models.CASCADE, related_name="commentsSrc")
 
 

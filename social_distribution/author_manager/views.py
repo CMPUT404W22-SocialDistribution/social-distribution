@@ -1,7 +1,6 @@
 from email import header
 from enum import Flag
 from os import stat
-from traceback import print_tb
 import requests
 from django.contrib import messages
 from django.contrib.auth import authenticate, login, logout
@@ -273,11 +272,15 @@ class SearchAuthorView(ListView):
                     if service == "clone":
                         friend_request = {"item" : friend_request}
 
+<<<<<<< HEAD
                     headers = HEADERS + {"Content-Type": "application/json"}
                     response =  requests.post(inbox_url, json=json.dumps(friend_request), headers=headers, auth=(outgoing_username, outgoing_password))
                     print(headers)
                     print(response.json())
                     print(response.status_code)
+=======
+                    response =  requests.post(inbox_url, data=json.dumps(friend_request), headers=HEADERS, auth=(outgoing_username, outgoing_password))
+>>>>>>> 388f4ec1159d05c470741010fdf597fba341c1c0
 
                     if response.status_code == 200:
                         messages.success(request, 'Your friend request has been sent.')
@@ -326,7 +329,6 @@ def inbox_view(request, id):
     if request.method == "GET":
         # follow request
         inbox = Inbox.objects.get(author=current_author)
-        print(inbox.follows)
         return render(request, 'inbox/inbox.html', {
             'follows': inbox.follows,
             'posts': inbox.posts.all(),
@@ -377,7 +379,6 @@ def profile_edit(request, id):
             post.save()
             return redirect('author_manager:profile', id)
         else:
-            print(form.errors)
             return redirect('author_manager:editProfile', id)
 
 
@@ -481,6 +482,7 @@ class GetAllAuthors(APIView):
             'type': "authors",
             'items': serializer.data
         }
+       
         return Response(response, status=status.HTTP_200_OK)
 
 
@@ -806,8 +808,6 @@ class InboxAPI(generics.GenericAPIView):
             print(request.data)
             item = request.data['item']
             item_type = item['type']
-            print(item)
-            print(item_type)
 
             if item_type == 'like':
                 like_serializer = LikeSerializer(data=item)
@@ -830,13 +830,11 @@ class InboxAPI(generics.GenericAPIView):
                     # Except for self-likes, send like object to recipient's inbox
                     if id != like_author.id:
                         inbox.likes.add(like_serializer.instance.id)
-
                     return Response(posts.serializers.LikeSerializer().to_representation(like_serializer.instance),
                                     status=status.HTTP_200_OK)
                 return Response(like_serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
             if item_type == 'follow':
-                print("follow")
                 # if author.url != item['object']['id'] or author.url == item['actor']['id']:
                 #     return Response({'detail': 'Fail to send the item!'}, status=status.HTTP_400_BAD_REQUEST)
                 if item in inbox.follows:
@@ -860,8 +858,14 @@ class InboxAPI(generics.GenericAPIView):
 
             return Response({'detail': 'Fail to send the item!'}, status=status.HTTP_400_BAD_REQUEST)
 
+<<<<<<< HEAD
         except:
             return Response({'detail': 'Fail to send the item!'}, status=status.HTTP_200_OK)
+=======
+        except Exception as e:
+            print(e)
+            return Response({'detail': 'Fail to send the item!'}, status=status.HTTP_400_BAD_REQUEST)
+>>>>>>> 388f4ec1159d05c470741010fdf597fba341c1c0
 
     def delete(self, request, id):
         local, remote = basic_authentication(request)
