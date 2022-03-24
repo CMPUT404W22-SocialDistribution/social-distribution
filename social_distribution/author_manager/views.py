@@ -31,6 +31,8 @@ from posts.serializers import CommentSerializer, PostSerializer
 from .forms import SignUpForm, EditProfileForm
 from .models import *
 from .serializers import *
+import json
+
 
 from node.authentication import basic_authentication
 
@@ -247,8 +249,7 @@ class SearchAuthorView(ListView):
 
                 # check if already follow
                 response = requests.get(follow_url, headers=HEADERS, auth=(outgoing_username, outgoing_password))
-                # print(response.json())
-                # print(response.status_code)
+        
                 # if not follow yet
                 if response.status_code == 404 or response.json()["ok"] == []:
                     actor = {
@@ -271,18 +272,18 @@ class SearchAuthorView(ListView):
                     if service == "clone":
                         friend_request = {"item" : friend_request}
 
-                    # response = requests.post(inbox_url, data=friend_request, headers=HEADERS, auth=(outgoing_username, outgoing_password))
-                    print(outgoing_username)
-                    print(outgoing_password)
-                    response =  requests.get(inbox_url, headers=HEADERS, auth=(outgoing_username, outgoing_password))
+                    response =  requests.post(inbox_url, data=json.dumps(friend_request), headers=HEADERS, auth=(outgoing_username, outgoing_password))
                     print(response.json())
                     print(response.status_code)
+
                     if response.status_code == 200:
                         messages.success(request, 'Your friend request has been sent.')
-                        return redirect('author_manager:friends', author_id)
-                
-                messages.warning(request, 'You already followed this author.')
-                return redirect('author_manager:friends', author_id)
+                    elif response.status_code == 204:
+                        messages.success(request, 'You already followed this author.')
+                    else:
+                        messages.warning(request, 'Could not send the friend request to this author !')
+
+                    return redirect('author_manager:friends', author_id)
 
             else:
                 requested_author = get_object_or_404(Author, id=requested_id)
@@ -290,17 +291,6 @@ class SearchAuthorView(ListView):
                 if requested_author in current_author.followings.all():
                     messages.warning(request, 'You already followed this author.')
                     return redirect('author_manager:friends', author_id)
-
-                #friend_request, created = FriendRequest.objects.get_or_create(actor=current_author, object=requested_author)
-
-                # if created:
-                #     inbox = Inbox.objects.get(author=requested_author)
-                #     inbox.follows.add(friend_request)
-                #     messages.success(request, 'Your friend request has been sent.')
-                #     return redirect('author_manager:friends', author_id)
-                # else:
-                #     messages.warning(request, 'You already sent a friend request to this author.')
-                #     return redirect('author_manager:friends', author_id)
 
                 actor = ProfileSerializer(current_author, remove_fields=['user']).data
                 object = ProfileSerializer(requested_author, remove_fields=['user']).data
@@ -312,7 +302,6 @@ class SearchAuthorView(ListView):
                     messages.warning(request, 'You already sent a friend request to this author.')
                     return redirect('author_manager:friends', author_id)
 
-                # print(friend_request)
                 inbox.follows.append(friend_request)
                 inbox.save()
                 messages.success(request, 'Your friend request has been sent.')
@@ -764,7 +753,7 @@ class InboxAPI(generics.GenericAPIView):
     permission_classes = []
     pagination_class = CustomPagination
     serializer_class = InboxSerializer
-    parser_classes = [JSONParser]
+    # parser_classes = [JSONParser]
 
     def get(self, request, id):
         local, remote = basic_authentication(request)
@@ -814,6 +803,8 @@ class InboxAPI(generics.GenericAPIView):
 
             item = request.data['item']
             item_type = item['type']
+            print(item)
+            print(item_type)
 
             if item_type == 'like':
                 like_serializer = LikeSerializer(data=item)
@@ -841,17 +832,18 @@ class InboxAPI(generics.GenericAPIView):
                                     status=status.HTTP_200_OK)
                 return Response(like_serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
-            item_id = item['id']
-
-            if item_type == 'follow':  
-                # follow = FriendRequest.objects.get(id=item_id)
-
-                # if author != follow.object or author == follow.actor:
+            if item_type == 'follow':
+                print("follow")
+                # if author.url != item['object']['id'] or author.url == item['actor']['id']:
                 #     return Response({'detail': 'Fail to send the item!'}, status=status.HTTP_400_BAD_REQUEST)
+                if item in inbox.follows:
+                    return Response({'message': 'Already sent follow/friend request'}, status=status.HTTP_204_NO_CONTENT)
 
-                inbox.follows.add(item)
+                inbox.follows.append(item)
                 inbox.save()
                 return Response({'message': 'Success to send follow/friend request'}, status=status.HTTP_200_OK)
+            
+            item_id = item['id']
 
             if item_type == 'post':
                 post = Post.objects.get(id=item_id)
@@ -877,10 +869,11 @@ class InboxAPI(generics.GenericAPIView):
             author = Author.objects.get(id=id)
             inbox = Inbox.objects.get(author=author)
 
-            inbox.follows.set([], clear=True)
+            inbox.follows = []
             inbox.posts.set([], clear=True)
             inbox.comments.set([], clear=True)
             inbox.likes.set([], clear=True)
+            inbox.save()
 
             return Response({'message': 'Success to clean inbox'}, status=status.HTTP_200_OK)
         except:

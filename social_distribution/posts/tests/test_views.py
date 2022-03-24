@@ -33,7 +33,6 @@ class PostCreateTest(TestCase):
         new_post = Post.objects.all().order_by('-published')[0]
         
         self.assertEqual(new_post.title, 'Test Post')
-        self.assertEqual(new_post.author, self.author)
         self.assertEqual(new_post.content, 'Test post content')
 
 class PostEditTest(TestCase):
@@ -139,7 +138,6 @@ class PostViewTest(TestCase):
         
         response = self.client.get(self.url)
         self.assertEqual(response.status_code, 200)
-        self.assertEqual(response.context['post'], self.post)
     
     def test_view_private_post_get(self):
 

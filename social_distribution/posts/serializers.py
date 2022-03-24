@@ -27,7 +27,7 @@ class PostSerializer(serializers.ModelSerializer):
         return obj.author.displayName
 
     def get_comments_url(self, obj):
-        return obj.author.host + 'api/' + 'authors/' + obj.author.id + '/posts/' + obj.id + '/comments'
+        return obj.author.host + 'api/' + 'authors/' + str(obj.author.id) + '/posts/' + str(obj.id) + '/comments'
 
     def get_num_likes(self, obj):
         return Like.objects.filter(post__id__exact=obj.id, comment__id__isnull=True).count()
@@ -36,7 +36,7 @@ class PostSerializer(serializers.ModelSerializer):
     class Meta:
         model = Post
         fields = ['type', 'author_username', 'author_displayName', 'title', 'id', 'source', 'origin', 'description',
-                  'content_type', 'visibleTo',
+                  'content_type', 'visibleTo', 'unlisted',
                   'content', 'author', 'categories', 'published', 'visibility', 'unlisted', 'author_image', 'image',
                   'comments', 'commentsSrc', 'num_likes']
 
