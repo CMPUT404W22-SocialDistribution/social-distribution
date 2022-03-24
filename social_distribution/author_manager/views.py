@@ -759,6 +759,10 @@ class InboxAPI(generics.GenericAPIView):
     parser_classes = [JSONParser]
 
     def get(self, request, id):
+        local, remote = basic_authentication(request)
+        if not local and not remote:
+            return Response({'detail': 'Access denied'}, status=status.HTTP_401_UNAUTHORIZED)
+
         try:
             author = Author.objects.get(id=id)
             inbox = Inbox.objects.get(author=author)
@@ -792,6 +796,10 @@ class InboxAPI(generics.GenericAPIView):
         return None
 
     def post(self, request, id):
+        local, remote = basic_authentication(request)
+        if not local and not remote:
+            return Response({'detail': 'Access denied'}, status=status.HTTP_401_UNAUTHORIZED)
+
         try:
             author = Author.objects.get(id=id)
             inbox = Inbox.objects.get(author=author)
@@ -853,6 +861,10 @@ class InboxAPI(generics.GenericAPIView):
             return Response({'detail': 'Fail to send the item!'}, status=status.HTTP_400_BAD_REQUEST)
 
     def delete(self, request, id):
+        local, remote = basic_authentication(request)
+        if not local and not remote:
+            return Response({'detail': 'Access denied'}, status=status.HTTP_401_UNAUTHORIZED)
+
         try:
             author = Author.objects.get(id=id)
             inbox = Inbox.objects.get(author=author)
