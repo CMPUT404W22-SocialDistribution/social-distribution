@@ -232,6 +232,9 @@ def post_detail(request, author_id, post_id):
         # current_user = Author.objects.get(user=user)
         author = Author.objects.get(id=author_id)
         post = get_object_or_404(Post, id=post_id)
+        sharePost = True
+        if len(post.source) != 0:
+            sharePost = False 
         numLikes = Like.objects.filter(post__id__exact=post.id, comment__id__isnull=True).count()
         # check if logged in user is author of post
         if current_user.author == author:
@@ -246,7 +249,8 @@ def post_detail(request, author_id, post_id):
                         "comments": comments,
                         "post": post,
                         "isAuthor": isAuthor,
-                        "numLikes": numLikes
+                        "numLikes": numLikes,
+                        "sharePost": sharePost,
                     }
                     return render(request, 'posts/post_detail.html', context)
                 else:
