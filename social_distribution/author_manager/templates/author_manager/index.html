@@ -201,7 +201,7 @@
                                 href="#collapseComments-${post.id}"
                                 aria-expanded="false">
                                 <i class="fa-solid fa-comment-dots"></i> Comment</a>
-                                <a href="#" class="card-link text-muted" style="text-decoration: none;"><i class="fa-solid fa-retweet"></i> Share</a>
+                                <a href="authors/${post.author.id}/posts/${post.id}/share" class="card-link text-muted" style="text-decoration: none;"><i class="fa-solid fa-retweet"></i> Share</a>
                             </div>
                         </div>
 
@@ -345,10 +345,13 @@
 
                         <div class="collapse" id="collapseCommentsRemote-${post.id}">
                             <div class="card  " >
+<<<<<<< HEAD
                                     <div class= " input-group ">
                                         <textarea  placeholder="Type your comment here" rows="1" class="form-control comment-text-${post.id}" ></textarea>
                                         <button type="submit" data-answer="${post.id}" class="btn-floating save-comment-remote"><i class="bi bi-plus"></i> </button>
                                     </div>
+=======
+>>>>>>> 595ebb7d83270b21cf9e75f2e1f3a7f0a5f70dc0
                             </div>
                             ${post.commentsSrc.size ? `<div class=" card justify-content-center pb-2 comment-wrapper-${post.id}">
                                 ${post.commentsSrc.comments.map(comment =>{
@@ -366,7 +369,7 @@
                                                         style="text-decoration: none;"
                                                         onclick="remotePostLike('${comment.id}')">
                                                     <i class="fa-solid fa-thumbs-up"></i>
-                                                    <span> ${getNumLikesText(comment.id)}</span>
+                                                    <span id="likes-${comment.id.split('/')[8]}">Like</span>
                                                 </a></div>
                                             </div>
                                         </div>
@@ -496,7 +499,10 @@
                         postContentInlineImg?.classList.add('card-img-bottom')
                     );
                     // Set likes count on each post
-                    data.posts.forEach(post => remoteSetNumLikesText(post.source));
+                    data.posts.forEach((post) => {
+                        remoteSetNumLikesText(post.source);
+                        post.commentsSrc.comments.forEach(comment => remoteSetNumLikesText(comment.id));
+                    });
                 },
                 error: (error) => {
                     console.log(error);
@@ -675,17 +681,21 @@
                 body: JSON.stringify({
                     item: {
                         type: 'like',
-                        summary: `'{{ request.user.author }} Liked your ${likedObjectType}`,
+                        summary: `{{ request.user.author }} Liked your ${likedObjectType}`,
                         author: {
                             type: 'author',
-                            id: '{{ request.user.author.id }}',
-                            host: 'https://squawker-cmput404.herokuapp.com/',
+                            id: 'https://{{ request.get_host }}/api/authors/{{ request.user.author.id }}/',
+                            host: 'https://{{ request.get_host }}/',
                             displayName: '{{ request.user.author.displayName }}',
-                            url: 'https://squawker-cmput404.herokuapp.com/authors/{{ request.user.author.id }}/',
-                            github: 'http://github.com/{{ request.user.author.github }}/',
-                            profileImage: 'https://squawker-cmput404.herokuapp.com/static/img/{{ request.user.author.profileImage }}/'
+                            url: 'https://{{ request.get_host }}/api/authors/{{ request.user.author.id }}/',
+                            github: {% if request.user.author.github %}
+                                        'http://github.com/{{ request.user.author.github }}/',
+                                    {% else %}
+                                        '',
+                                    {% endif %}
+                            profileImage: 'https://{{ request.get_host }}/static/img/{{ request.user.author.profileImage }}'
                         },
-                        object: postId,
+                        object: likedObject,
                     }
                 })
             })
@@ -727,10 +737,10 @@
                     let numLikesText = "Like";
                     if (numLikes > 1) {
                        numLikesText = `${numLikes} Likes`;
-                    } else if (numLikes > 1) {
+                    } else if (numLikes > 0) {
                        numLikesText = `${numLikes} Like`;
                     }
-                    document.querySelector(`span#likes-${postId}`).textContent = numLikesText;
+                    document.querySelector(`span#likes-${commentId || postId}`).textContent = numLikesText;
                 })
                 .catch(reason => console.error(reason));
         }
