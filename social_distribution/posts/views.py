@@ -588,7 +588,7 @@ class MyPostsAPI(generics.GenericAPIView):
             for post in posts:
                 if post.content_type == 'text/markdown':
                     post.content = commonmark.commonmark(post.content)
-
+                
             serializer = PostSerializer(posts, many=True)
             
             content = {
@@ -608,6 +608,8 @@ class MyPostsAPI(generics.GenericAPIView):
             for post in post_data:
                 post['id'] = author.url + '/posts/' + post['id']
                 post['author']['id'] = author.url
+                if post["content_type"].lower() in ["image/png;base64", "image/jpeg;base64"]:
+                    post["image"] = post["origin"] + post["image"]
                 for comment in post['commentsSrc']['comments']:
                     comment['author']['id'] = comment['author']['url']
                     comment['id'] = post['comments'] + comment['id']
@@ -682,7 +684,8 @@ class PostDetailAPI(generics.GenericAPIView):
                 serializer = PostSerializer(post)
                 data = serializer.data
                 data['id'] = author.url + '/posts/' + data['id']
-                
+                if data["content_type"].lower() in ["image/png;base64", "image/jpeg;base64"]:
+                    data["image"] = data["origin"] + data["image"]
                 data['author']['id'] = author.url
                 for comment in data['commentsSrc']['comments']:
                     comment['author']['id'] = comment['author']['url']
