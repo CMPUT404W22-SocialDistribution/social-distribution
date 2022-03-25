@@ -61,6 +61,9 @@ def post_create(request, author_id):
 
         if form.is_valid():
             post = form.save(commit=False)
+            # origin = request.build_absolute_uri()
+            # origin = origin.replace("create", str(post.id))
+            # post.origin = origin
             post.save()
             if post.visibility == "public":
                 # send public posts to follower. Since friends are also followers so friends also receive then in their inboxes
@@ -129,6 +132,130 @@ def post_edit(request, author_id, post_id):
         else:
             return redirect('posts:post_create', author_id)
 
+@login_required
+def post_share(request, author_id, post_id):
+    '''
+    This function allows sharing a post of post_id of author_id.
+
+    Method:
+        GET:    - get current verision of post
+        POST:   - Create (Share) a public post with the given post_id
+    '''
+
+    if request.method == "GET":
+        author = Author.objects.get(id=author_id)
+        current_author = request.user.author
+        post = get_object_or_404(Post, id=post_id)
+        form = PostForm(instance=post)
+        form.fields['title'].disabled = True
+        form.fields['description'].disabled = True
+        form.fields['content_type'].disabled = True
+        form.fields['visibility'].disabled = True
+        form.fields['visibleTo'].disabled = True
+        form.fields['categories'].disabled = True
+        form.fields['content'].disabled = True
+        form.fields['image'].disabled = True
+        form.fields['unlisted'].disabled = True
+        context = {
+            'form': form,
+            'share': True,
+            # 'profile': current_author,
+        }
+        return render(request, 'posts/post_create.html', context)
+
+    elif request.method == 'POST':
+        try:
+            author = Author.objects.get(id=author_id)
+            current_author = request.user.author
+            post = get_object_or_404(Post, id=post_id)
+        except Post.DoesNotExist:
+            error = "404 Not Found"
+            return render(request, 'posts/post_create.html', {'error': error}, status=404)
+
+        if post.visibility == 'public':
+            updated_request = request.POST.copy()  # using deepcopy() to make a mutable copy of the object
+
+            source = request.build_absolute_uri()
+            source = source.replace(str(current_author.id), str(author_id))
+            source = source.replace("/share", "")
+            origin = post.origin
+            title = post.title
+            content_type = post.content_type
+            visibility = post.visibility
+            content = post.content
+            description = post.description
+            categories = post.categories
+
+            image_url = post.image.name
+
+            updated_request.update(
+                {
+                    'author': current_author,
+                    'type': 'post',
+                    'source': source,
+                    'origin': origin,
+                    'title': title,
+                    'content_type': content_type,
+                    'visibility': visibility,
+                    'content': content,
+                    'description': description,
+                }
+            )
+
+            form = PostForm(updated_request, request.FILES)
+            print(form.errors)
+            if form.is_valid():
+                share_post = form.save(commit=False)
+                if post.image:
+                    share_post.image = image_url
+                share_post.save()
+                return redirect('posts:post_detail', current_author.id, share_post.id)
+            else:
+                return redirect('posts:post_create', current_author.id)
+                
+        elif post.visibility == 'friends':
+            updated_request = request.POST.copy()  # using deepcopy() to make a mutable copy of the object
+
+            source = request.build_absolute_uri()
+            source = source.replace(current_author.id, author_id)
+            source = source.replace("/share", "")
+            origin = post.origin
+            title = post.title
+            content_type = post.content_type
+            visibility = post.visibility
+            content = post.content
+            description = post.description
+
+            image_url = post.image.name
+
+            updated_request.update(
+                {
+                    'author': current_author,
+                    'type': 'post',
+                    'source': source,
+                    'origin': origin,
+                    'title': title,
+                    'content_type': content_type,
+                    'visibility': visibility,
+                    'content': content,
+                    'description': description,
+                }
+            )
+            form = PostForm(updated_request, request.FILES)
+            print(form.errors)
+            if form.is_valid():
+                share_post = form.save(commit=False)
+                if post.image:
+                    share_post.image = image_url
+                share_post.save()
+                return redirect('posts:post_detail', current_author.id, share_post.id)
+            else:
+                return redirect('posts:post_create', current_author.id)
+
+        
+        else:
+            error = "403 Forbidden"
+            return render(request, 'posts/post_create.html', {'error': error}, status=403)
 
 @login_required
 def post_detail(request, author_id, post_id):
@@ -148,6 +275,9 @@ def post_detail(request, author_id, post_id):
         post = get_object_or_404(Post, id=post_id)
         numLikes = Like.objects.filter(post__id__exact=post.id, comment__id__isnull=True).count()
         # check if logged in user is author of post
+        notSharePost = True
+        if len(post.source) != 0:
+            notSharePost = False 
         if current_user.author == author:
             isAuthor = True
         else:
@@ -160,7 +290,8 @@ def post_detail(request, author_id, post_id):
                         "comments": comments,
                         "post": post,
                         "isAuthor": isAuthor,
-                        "numLikes": numLikes
+                        "numLikes": numLikes,
+                        "notSharePost": notSharePost,
                     }
                     return render(request, 'posts/post_detail.html', context)
                 else:
@@ -181,7 +312,8 @@ def post_detail(request, author_id, post_id):
             "comments": comments,
             "post": post,
             "isAuthor": isAuthor,
-            "numLikes": numLikes
+            "numLikes": numLikes,
+            "notSharePost": notSharePost,
         }
         return render(request, 'posts/post_detail.html', context)
 

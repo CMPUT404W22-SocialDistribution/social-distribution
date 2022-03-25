@@ -1,7 +1,7 @@
 from django.urls import path
 
 from .views import MyPostsAPI, PostsAPI, PostImageAPI, SearchView, PostDetailAPI, my_posts, post_create, post_edit, \
-    post_detail, post_delete, CommentsAPI, create_comment, create_remote_comment, PostLikesAPI, CommentLikesAPI, RemotePostsAPI, \
+    post_detail, post_share, post_delete, CommentsAPI, create_comment, create_remote_comment, PostLikesAPI, CommentLikesAPI, RemotePostsAPI, \
     RemotePostLikesAPI
 
 app_name = 'posts'
@@ -13,6 +13,7 @@ urlpatterns = [
     path('authors/<uuid:author_id>/posts/<uuid:post_id>/edit', post_edit, name="post_edit"),
     path('authors/<uuid:author_id>/posts/<uuid:post_id>', post_detail, name="post_detail"),
     path('authors/<uuid:author_id>/posts/<uuid:post_id>/delete', post_delete, name="post_delete"),
+    path('authors/<uuid:author_id>/posts/<uuid:post_id>/share', post_share, name="post_share"),
     path('api/posts/', PostsAPI.as_view(), name="all_posts_api"),
     path('api/authors/<uuid:author_id>/posts/<uuid:post_id>/comments', CommentsAPI.as_view(), name="comments_api"),
     path('authors/<uuid:author_id>/posts/<uuid:post_id>/comments', create_comment, name="comments"),
