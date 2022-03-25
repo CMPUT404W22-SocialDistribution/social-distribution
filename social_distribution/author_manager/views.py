@@ -223,7 +223,7 @@ def friends_view(request, author_id):
 
         # remote
         if 'http' in requested_id:
-                     
+
             #T08
             if 'project-socialdistribution' in requested_id:
                 follow_url = requested_id.replace('authors', 'api/authors') + 'followers/' + str(author_id) + '/'
@@ -472,6 +472,13 @@ def inbox_view(request, id):
             if 'http' in requesting_id:
                 current_author.remote_followers += f'{requesting_id} '
                 current_author.save()
+                # delete the friend request in inbox:
+                for follow in inbox.follows:
+                    if follow["actor"]["id"] == str(requesting_id) and follow["object"]["id"] == str(id):
+                        inbox.follows.remove(follow)
+                        inbox.save()
+                        # print(inbox.follows)
+                        break
                 messages.success(request, 'Success to accept friend request.')
                 return redirect('author_manager:inbox', id)
 
@@ -486,7 +493,7 @@ def inbox_view(request, id):
                     if follow["actor"]["id"] == str(requesting_id) and follow["object"]["id"] == str(id):
                         inbox.follows.remove(follow)
                         inbox.save()
-                        print(inbox.follows)
+                        # print(inbox.follows)
                         break
                 messages.success(request, 'Success to accept friend request.')
                 return redirect('author_manager:inbox', id)
