@@ -1,6 +1,6 @@
 from email import header
 from enum import Flag
-from os import stat
+from os import remove, stat
 import requests
 from django.contrib import messages
 from django.contrib.auth import authenticate, login, logout
@@ -149,11 +149,75 @@ def friends_view(request, author_id):
     '''
     current_author = Author.objects.get(id=author_id)
     if request.method == "GET":
-        followers = current_author.followers.all()
-        followings = current_author.followings.all()
-        friends = followings & followers
-        return render(request, 'friends/friends.html',
-                      {'followings': followings, 'followers': followers, 'friends': friends})
+        followers = json.loads( json.dumps(
+                        ProfileSerializer(current_author.followers.all(), remove_fields=['user'], many=True)
+                        .data))
+        
+        followings = json.loads( json.dumps(
+                        ProfileSerializer(current_author.followings.all(), remove_fields=['user'], many=True)
+                        .data))
+
+        # get remote followers
+        remote_followers = current_author.remote_followers.split(' ')
+        remote_followers.pop()
+        for follower in remote_followers:
+            #T08
+            if 'project-socialdistribution' in follower:
+                outgoing_username = T08_USERNAME
+                outgoing_password = T08_PASS
+            #T05
+            elif 'cmput404-w22-project-backend' in follower: 
+                outgoing_username = T05_USERNAME
+                outgoing_password = T05_PASS
+            #Clone
+            else:
+                outgoing_username = CLONE_USERNAME
+                outgoing_password = CLONE_PASS
+
+            response = requests.get(follower, headers=HEADERS, auth=(outgoing_username, outgoing_password))
+
+            if response.status_code == 200:
+                follower = response.json()
+                follower['profileImage'] = 'profile_picture.png'
+                followers.append(follower)
+
+        # get remote followings
+        for node in Node.objects.all():
+            # t05
+            if node.url == 'https://cmput404-w22-project-backend.herokuapp.com/':
+                authors_url = node.url + 'service/server_api/authors/'
+            # t08 and clone
+            else:
+                authors_url = node.url + 'api/authors/'
+
+            response = requests.get(authors_url, headers=HEADERS, auth=(node.outgoing_username, node.outgoing_password))
+      
+            if response.status_code == 200:
+                authors = response.json()['items']
+
+                for author in authors:
+                    # t08
+                    if node.url == 'https://cmput404-w22-project-backend.herokuapp.com/':
+                        follower_url = author['url'] + 'followers/' + str(author_id) + '/'
+                    # t05 and clone:
+                    else:
+                        follower_url = author['url'] + '/followers/' + str(author_id)
+                    
+                    response = requests.get(follower_url, headers=HEADERS, auth=(node.outgoing_username, node.outgoing_password))
+                    
+                    # if current author following them
+                    if response.status_code == 200:
+                        author['profileImage'] = 'profile_picture.png'
+                        followings.append(author)           
+
+        # get friends
+        friends = []
+        for follower in followers:
+            if follower in followings:
+                friends.append(follower)
+        # print(followers)
+        # print(friends)
+        return render(request, 'friends/friends.html', {'followings': followings, 'followers': followers, 'friends': friends})
 
     if request.method == "POST":
         requested_id = request.POST['object_id']
@@ -362,6 +426,8 @@ def inbox_view(request, id):
             
             # remote
             if 'http' in requesting_id:
+                current_author.remote_followers += f'{requesting_id} '
+                messages.success(request, 'Success to accept friend request.')
                 return redirect('author_manager:inbox', id)
 
             # local
