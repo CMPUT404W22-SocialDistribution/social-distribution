@@ -243,18 +243,18 @@ class InboxTest(APITestCase):
         )
         self.assertEqual(response.status_code, 200)
 
-    def test_post_create_send_like_to_inbox(self):  
-        request_body = {'item': 
-                            {'type': 'like', 
-                            'summary': 'test1 likes your post', 
-                            'author': self.author.id, 
-                            'post': self.post.id, 
-                            'comment': ''
-                            }
-                        }
-        response = self.client.post(
-                    self.url,
-                    request_body,
-                    format='json'
-        )
-        self.assertEqual(response.status_code, 200)
+    # def test_post_create_send_like_to_inbox(self):  
+    #     request_body = {'item': 
+    #                         {'type': 'like', 
+    #                         'summary': 'test1 likes your post', 
+    #                         'author': self.author.id, 
+    #                         'post': self.post.id, 
+    #                         'comment': ''
+    #                         }
+    #                     }
+    #     response = self.client.post(
+    #                 self.url,
+    #                 request_body,
+    #                 format='json'
+    #     )
+    #     self.assertEqual(response.status_code, 200)

@@ -1,4 +1,5 @@
 import datetime
+import json
 
 import requests
 from django.contrib import messages
@@ -216,7 +217,7 @@ class SearchAuthorView(ListView):
                     service = 't08'
                     requested_id = requested_id.split('/')[-2]
                     author_url = 'http://project-socialdistribution.herokuapp.com/api/authors/' + requested_id + "/"
-                    follow_url = author_url + 'followers/' + author_id + '/'
+                    follow_url = author_url + 'followers/' + str(author_id) + '/'
                     inbox_url = author_url +'inbox/'
                     outgoing_username = T08_USERNAME
                     outgoing_password = T08_PASS
@@ -225,7 +226,7 @@ class SearchAuthorView(ListView):
                     service = 'clone'
                     requested_id = requested_id.split('/')[-1]
                     author_url = 'https://squawker-dev.herokuapp.com/api/authors/' + requested_id
-                    follow_url = author_url + '/followers/' + author_id
+                    follow_url = author_url + '/followers/' + str(author_id)
                     inbox_url = author_url + '/inbox'
                     outgoing_username = CLONE_USERNAME
                     outgoing_password = CLONE_PASS
@@ -240,8 +241,7 @@ class SearchAuthorView(ListView):
 
                 # check if already follow
                 response = requests.get(follow_url, headers=HEADERS, auth=(outgoing_username, outgoing_password))
-                # print(response.json())
-                # print(response.status_code)
+
                 # if not follow yet
                 if response.status_code == 404 or response.json()["ok"] == []:
                     actor = {
@@ -264,18 +264,18 @@ class SearchAuthorView(ListView):
                     if service == "clone":
                         friend_request = {"item" : friend_request}
 
-                    # response = requests.post(inbox_url, data=friend_request, headers=HEADERS, auth=(outgoing_username, outgoing_password))
-                    print(outgoing_username)
-                    print(outgoing_password)
-                    response =  requests.get(inbox_url, headers=HEADERS, auth=(outgoing_username, outgoing_password))
-                    print(response.json())
-                    print(response.status_code)
+                    headers = HEADERS
+                    headers["Content-Type"] = "application/json"
+                    response =  requests.post(inbox_url, data=json.dumps(friend_request), headers=headers, auth=(outgoing_username, outgoing_password))
+
                     if response.status_code == 200:
                         messages.success(request, 'Your friend request has been sent.')
-                    return redirect('author_manager:friends', author_id)
+                    elif response.status_code == 204:
+                        messages.success(request, 'You already followed this author.')
+                    else:
+                        messages.warning(request, 'Could not send the friend request to this author !')
 
-                messages.warning(request, 'You already followed this author.')
-                return redirect('author_manager:friends', author_id)
+                    return redirect('author_manager:friends', author_id)
 
             else:
                 requested_author = get_object_or_404(Author, id=requested_id)
@@ -283,17 +283,6 @@ class SearchAuthorView(ListView):
                 if requested_author in current_author.followings.all():
                     messages.warning(request, 'You already followed this author.')
                     return redirect('author_manager:friends', author_id)
-
-                #friend_request, created = FriendRequest.objects.get_or_create(actor=current_author, object=requested_author)
-
-                # if created:
-                #     inbox = Inbox.objects.get(author=requested_author)
-                #     inbox.follows.add(friend_request)
-                #     messages.success(request, 'Your friend request has been sent.')
-                #     return redirect('author_manager:friends', author_id)
-                # else:
-                #     messages.warning(request, 'You already sent a friend request to this author.')
-                #     return redirect('author_manager:friends', author_id)
 
                 actor = ProfileSerializer(current_author, remove_fields=['user']).data
                 object = ProfileSerializer(requested_author, remove_fields=['user']).data
@@ -305,7 +294,6 @@ class SearchAuthorView(ListView):
                     messages.warning(request, 'You already sent a friend request to this author.')
                     return redirect('author_manager:friends', author_id)
 
-                # print(friend_request)
                 inbox.follows.append(friend_request)
                 inbox.save()
                 messages.success(request, 'Your friend request has been sent.')
@@ -327,7 +315,6 @@ def inbox_view(request, id):
     if request.method == "GET":
         # follow request
         inbox = Inbox.objects.get(author=current_author)
-        print(inbox.follows)
         return render(request, 'inbox/inbox.html', {
             'follows': inbox.follows,
             'posts': inbox.posts.all(),
@@ -378,7 +365,6 @@ def profile_edit(request, id):
             post.save()
             return redirect('author_manager:profile', id)
         else:
-            print(form.errors)
             return redirect('author_manager:editProfile', id)
 
 
@@ -482,6 +468,7 @@ class GetAllAuthors(APIView):
             'type': "authors",
             'items': serializer.data
         }
+
         return Response(response, status=status.HTTP_200_OK)
 
 
@@ -803,7 +790,6 @@ class InboxAPI(generics.GenericAPIView):
         try:
             author = Author.objects.get(id=id)
             inbox = Inbox.objects.get(author=author)
-
             item = request.data['item']
             item_type = item['type']
 
@@ -828,22 +814,22 @@ class InboxAPI(generics.GenericAPIView):
                     # Except for self-likes, send like object to recipient's inbox
                     if id != like_author.id:
                         inbox.likes.add(like_serializer.instance.id)
-
                     return Response(posts.serializers.LikeSerializer().to_representation(like_serializer.instance),
                                     status=status.HTTP_200_OK)
                 return Response(like_serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
-            item_id = item['id']
+            if item_type == 'follow':
+                if author.url != item['object']['id'] or author.url == item['actor']['id']:
+                    return Response({'detail': 'Fail to send the item!'}, status=status.HTTP_400_BAD_REQUEST)
 
-            if item_type == 'follow':  
-                # follow = FriendRequest.objects.get(id=item_id)
+                if item in inbox.follows:
+                    return Response({'message': 'Already sent follow/friend request'}, status=status.HTTP_204_NO_CONTENT)
 
-                # if author != follow.object or author == follow.actor:
-                #     return Response({'detail': 'Fail to send the item!'}, status=status.HTTP_400_BAD_REQUEST)
-
-                inbox.follows.add(item)
+                inbox.follows.append(item)
                 inbox.save()
                 return Response({'message': 'Success to send follow/friend request'}, status=status.HTTP_200_OK)
+
+            item_id = item['id']
 
             if item_type == 'post':
                 post = Post.objects.get(id=item_id)
@@ -857,7 +843,8 @@ class InboxAPI(generics.GenericAPIView):
 
             return Response({'detail': 'Fail to send the item!'}, status=status.HTTP_400_BAD_REQUEST)
 
-        except:
+        except Exception as e:
+            print(e)
             return Response({'detail': 'Fail to send the item!'}, status=status.HTTP_400_BAD_REQUEST)
 
     def delete(self, request, id):
@@ -869,10 +856,11 @@ class InboxAPI(generics.GenericAPIView):
             author = Author.objects.get(id=id)
             inbox = Inbox.objects.get(author=author)
 
-            inbox.follows.set([], clear=True)
+            inbox.follows = []
             inbox.posts.set([], clear=True)
             inbox.comments.set([], clear=True)
             inbox.likes.set([], clear=True)
+            inbox.save()
 
             return Response({'message': 'Success to clean inbox'}, status=status.HTTP_200_OK)
         except:

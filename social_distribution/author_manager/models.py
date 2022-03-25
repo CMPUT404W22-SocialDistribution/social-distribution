@@ -9,17 +9,13 @@ from django.db import models
 from django.core.validators import int_list_validator
 
 class Author(models.Model):
-    def short_uuid():
-        # return a shortened ID of only first 8 uuid4 characters 
-        return uuid.uuid4().hex[:8]
-
     def randomImage():
         # randomize profile images 
         return str(random.randint(0, 6)) + '.svg'
 
     user = models.OneToOneField(User, on_delete=models.CASCADE, related_name='author')
     type = models.CharField(max_length=50, default="author")
-    id = models.CharField(primary_key=True, default=short_uuid, max_length=8, editable=False, unique=True)
+    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False, unique=True)
     host = models.CharField(max_length=200, default='http://127.0.0.1:8000/', blank=True)
     url = models.CharField(max_length=500, blank=True, null=True)
     displayName = models.CharField(max_length=200, default=f"{str(user)}")
@@ -35,6 +31,9 @@ class Author(models.Model):
     followings = models.ManyToManyField('self', symmetrical=False, blank=True, related_name='my_followings')
     followers = models.ManyToManyField('self', symmetrical=False, blank=True, related_name='my_followers')
 
+    remote_followings = models.TextField(validators=[int_list_validator], null=True, blank=True)
+    remote_followers = models.TextField(validators=[int_list_validator], null=True, blank=True)
+    
     # list of remote friends' id
     def __str__(self):
         return self.displayName
