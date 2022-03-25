@@ -219,18 +219,64 @@ def friends_view(request, author_id):
         # print(friends)
         return render(request, 'friends/friends.html', {'followings': followings, 'followers': followers, 'friends': friends})
 
+    # unfriend
     if request.method == "POST":
         requested_id = request.POST['object_id']
-        try:
-            requested_author = get_object_or_404(Author, id=requested_id)
-            current_author.followings.remove(requested_author)
-            requested_author.followers.remove(current_author)
 
-            mess = 'Your are now unfriend with ' + requested_author.displayName
-            messages.success(request, mess)
-            return redirect('author_manager:friends', author_id)
-        except:
-            return redirect('author_manager:friends', author_id)
+        # remote
+        if 'http' in requested_id:
+            #T08
+            if 'project-socialdistribution' in requested_id:
+                follow_url = requested_id + 'followers/' + str(author_id) + '/'
+                outgoing_username = T08_USERNAME
+                outgoing_password = T08_PASS
+
+            #T05
+            elif 'cmput404-w22-project-backend' in requested_id:
+                follow_url = requested_id + '/followers/' + str(author_id)
+                outgoing_username = T05_USERNAME
+                outgoing_password = T05_PASS
+
+            #Clone
+            else:
+                follow_url = requested_id + '/followers/' + str(author_id)
+                outgoing_username = CLONE_USERNAME
+                outgoing_password = CLONE_PASS
+
+            response = requests.get(requested_id, headers=HEADERS, auth=(outgoing_username, outgoing_password))
+
+            # if not found following author, then accept remove
+            if response.status_code != 200:
+                current_author.remote_followers = current_author.remote_followers.replace(requested_id, '')
+                current_author.save()
+                messages.success(request, 'Your are now unfriend with the selected author !')
+                return redirect('author_manager:friends', author_id)
+            
+            # if found following author
+            else:
+                response = requests.delete(follow_url, headers=HEADERS, auth=(outgoing_username, outgoing_password))
+
+                if response.status_code == 200 or response.status_code == 404:
+                    current_author.remote_followers = current_author.remote_followers.replace(requested_id, '')
+                    current_author.save()
+                    messages.success(request, 'Your are now unfriend with the selected author !')
+                    return redirect('author_manager:friends', author_id)
+                
+                messages.warning(request, 'Failed to unfriend the selected author !')
+                return redirect('author_manager:friends', author_id)
+        
+        #local
+        else:
+            try:
+                requested_author = get_object_or_404(Author, id=requested_id)
+                current_author.followings.remove(requested_author)
+                requested_author.followers.remove(current_author)
+
+                messages.success(request, 'Your are now unfriend with the selected author !')
+                return redirect('author_manager:friends', author_id)
+            except:
+                messages.warning(request, 'Failed to unfriend the selected author !')
+                return redirect('author_manager:friends', author_id)
 
 
 class SearchAuthorView(ListView):
@@ -427,6 +473,7 @@ def inbox_view(request, id):
             # remote
             if 'http' in requesting_id:
                 current_author.remote_followers += f'{requesting_id} '
+                current_author.save()
                 messages.success(request, 'Success to accept friend request.')
                 return redirect('author_manager:inbox', id)
 
@@ -756,9 +803,10 @@ class FriendDetailAPI(APIView):
             for follower in remote_followers:
                 if str(follower_id) in follower:
                     author.remote_followers = author.remote_followers.replace(follower, '')
+                    author.save()
                     break
             return Response({'message': 'Success to unfriend/unfollow'}, status=status.HTTP_200_OK)
-            
+
         except:
             return Response({'detail': 'Not Found!'}, status=status.HTTP_404_NOT_FOUND)
 
