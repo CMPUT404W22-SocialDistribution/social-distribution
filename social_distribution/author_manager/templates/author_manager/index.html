@@ -299,7 +299,7 @@
                                 </div>
                             </div>
                             <div class="card-body">
-                                <h3 class="card-title"><a href="#" style="text-decoration: none;color: black">${post.title}</a></h3>
+                                <h3 class="card-title"><a href="/authors/${post.author_id}/posts/${post.id}?remote=${post.origin}" target="_blank" style="text-decoration: none;color: black">${post.title}</a></h3>
                                 <div class="card-text fs-6 text-muted">
                                     <i class="fa-solid fa-calendar-day"> </i><i>&nbsp;&nbsp;${postTimestamp}</i>
                                 </div>
@@ -460,8 +460,7 @@
                     var rootFirstChild = document.getElementById("remote_node").firstChild;
                     var postLatestElement = rootFirstChild ? rootFirstChild.nextElementSibling : null;
                     var postLatestElementId = postLatestElement ? postLatestElement.id : "empty";
-                    console.log(postLatestElementId)
-                    console.log(postLatestFromApi.id)
+                    console.log(data)
                     if (postLatestElementId == "empty") {
                         var remoteCardsHtml = '';
                         data.posts.map(post => {
