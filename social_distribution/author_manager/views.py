@@ -180,8 +180,11 @@ def friends_view(request, author_id):
             if node.url == 'https://cmput404-w22-project-backend.herokuapp.com/':
                 authors_url = node.url + 'service/server_api/authors/'
             # t08 and clone
+            elif node.url == 'https://squawker-dev.herokuapp.com/':
+                authors_url = node.url + 'api/authors'
             else:
                 authors_url = node.url + 'api/authors/'
+
 
             response = requests.get(authors_url, headers=HEADERS, auth=(node.outgoing_username, node.outgoing_password))
       
@@ -311,6 +314,8 @@ class SearchAuthorView(ListView):
                 #     authors_url = node.url + 'api/authors/'
                 if node.url == "https://cmput404-w22-project-backend.herokuapp.com/":
                     authors_url = node.url + 'service/server_api/authors/'
+                elif node.url == 'https://squawker-dev.herokuapp.com/':
+                    authors_url = node.url + 'api/authors'
                 else:
                     authors_url = node.url + 'api/authors/'
                 response = requests.get(authors_url, headers=HEADERS, auth=(node.outgoing_username, node.outgoing_password))
