@@ -312,7 +312,7 @@ def post_detail(request, author_id, post_id):
             numLikes = Like.objects.filter(post__id__exact=post.id, comment__id__isnull=True).count()
             # check if logged in user is author of post
             notSharePost = True
-            if len(post.source) != 0:
+            if request.build_absolute_uri() != post.source:
                 notSharePost = False
             if current_user.author == author:
                 isAuthor = True
