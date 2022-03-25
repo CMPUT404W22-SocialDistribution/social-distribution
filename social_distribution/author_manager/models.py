@@ -1,8 +1,4 @@
-from email.policy import default
-from importlib.resources import contents
-from multiprocessing.dummy import Array
 import random
-from turtle import back
 import uuid
 
 from django.contrib.auth.models import User
