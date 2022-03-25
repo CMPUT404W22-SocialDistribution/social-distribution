@@ -245,7 +245,7 @@
                 hour: 'numeric', // numeric, 2-digit
                 minute: 'numeric', // numeric, 2-digit
             });
-            var postId = new URL(post.id).pathname.split('/')[4];
+
             var postVisibility = post.visibility;
             var postVisibilityIcon = "";
             switch (postVisibility) {
@@ -317,8 +317,8 @@
                             </div>
                             <div class="card-footer">
                                 <a href="javascript:void(0)" class="card-link text-muted" style="text-decoration: none;"
-                                   onclick="remotePostLike('${post.id}')"><i class="fa-solid fa-thumbs-up"></i>
-                                   <span id="likes-${postId}">Like</span></a>
+                                   onclick="remotePostLike('${post.source}')"><i class="fa-solid fa-thumbs-up"></i>
+                                   <span id="likes-${post.id}">Like</span></a>
 
                                 <a class="card-link text-muted" style="text-decoration: none;"
                                 data-bs-toggle="collapse"
@@ -472,7 +472,7 @@
                         postContentInlineImg?.classList.add('card-img-bottom')
                     );
                     // Set likes count on each post
-                    data.posts.forEach(post => remoteSetNumLikesText(post.id));
+                    data.posts.forEach(post => remoteSetNumLikesText(post.source));
                 },
                 error: (error) => {
                     console.log(error);
