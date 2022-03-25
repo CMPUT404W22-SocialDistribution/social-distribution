@@ -22,7 +22,7 @@ from node.models import Node
 from posts.forms import PostForm
 from .models import Post, Comment, Like
 from .serializers import PostSerializer, CommentSerializer, LikeSerializer
-
+import json
 HEADERS = {'Referer': 'http://squawker-cmput404.herokuapp.com/', 'Mode': 'no-cors', 'Access-Control-Allow-Origin': '*'}
 URL = 'http://squawker-cmput404.herokuapp.com/'
 
@@ -733,9 +733,12 @@ def create_remote_comment(request, url, author_id, post_id):
 @login_required
 def create_comment(request, author_id, post_id):
     if request.method == "POST":
-        comment=request.POST['comment']
-        postID=request.POST['post']
-        post=Post.objects.get(id=postID) # Obtain the instance
+        # comment=request.POST['comment']
+        comment = json.load(request)['comment']
+        commentText = commonmark.commonmark(comment)
+        # postID=request.POST['post']
+        print(comment)
+        post=Post.objects.get(id=post_id) # Obtain the instance
         postAuthor = post.author
         author = Author.objects.get(user=request.user) # Obtain the instance
 
@@ -746,7 +749,7 @@ def create_comment(request, author_id, post_id):
             postAuthor.inbox.comments.add(comment)
         # postAuthor.inbox.comments.remove(comment)
 
-    return JsonResponse({"bool":True, 'published': comment.published, 'id': comment.id, 'author': author.id, 'num_likes': num_likes})
+    return JsonResponse({"bool":True, 'comment':commentText, 'published': comment.published, 'id': comment.id, 'author': author.id, 'num_likes': num_likes})
 
 class CommentsAPI(APIView):
     """
