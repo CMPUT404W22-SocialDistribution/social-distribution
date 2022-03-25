@@ -153,6 +153,7 @@ def friends_view(request, author_id):
             remote_followers = current_author.remote_followers.split(' ')
             remote_followers.pop()
             for follower in remote_followers:
+                print(follower)
                 #T08
                 if 'project-socialdistribution' in follower:
                     outgoing_username = T08_USERNAME
@@ -189,11 +190,11 @@ def friends_view(request, author_id):
 
                 for author in authors:
                     # t08
-                    if node.url == 'https://cmput404-w22-project-backend.herokuapp.com/':
-                        follower_url = author['url'] + 'followers/' + str(author_id) + '/'
+                    if node.url == 'https://project-socialdistribution.herokuapp.com/':
+                        follower_url = author['url'].replace('authors', 'api/authors') + 'followers/' + str(author_id) + '/'
                     # t05 and clone:
                     else:
-                        follower_url = author['url'] + '/followers/' + str(author_id)
+                        follower_url = author['url'].replace('authors', 'api/authors') + '/followers/' + str(author_id)
                     
                     response = requests.get(follower_url, headers=HEADERS, auth=(node.outgoing_username, node.outgoing_password))
                     
