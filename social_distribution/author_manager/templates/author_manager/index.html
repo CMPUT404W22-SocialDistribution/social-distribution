@@ -50,7 +50,6 @@
             <div class="col-md-10 mt-3">
                 <div class="row " id="post-stream">
                     
-
                     <div class="col-md-5 ml-5 border-right border-2">
                         <div  id="my_node"></div>
                         <div class=" text-center" >
@@ -59,7 +58,7 @@
                     </div>
                     
                     <div class="col-md-5 ml-5">
-                        <div id="remote_node">
+                        <div  id="remote_node">
                             <div id="remote_fetching">
                                 <div class="d-flex align-items-center">
                                     <h4>Fetching Remote Posts...</h4>
@@ -84,7 +83,7 @@
                             </div>
                         
                         </div>
-                        <div class="text-center" >
+                        <div class="text-center " >
                             <button class="bi bi-three-dots loadmoreBtn-remote" style="visibility: hidden"  ></button>
                         </div>
                     </div>
@@ -186,7 +185,7 @@
                             `,
                 post.image ? `
                                 <hr>
-                                <img class="card-img-bottom" src="${post.image}">
+                                <img class="card-img-bottom" style="object-fit: cover;" src="${post.image}">
                             `
                     : "",
                 `
