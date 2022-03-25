@@ -658,17 +658,21 @@
                 body: JSON.stringify({
                     item: {
                         type: 'like',
-                        summary: `'{{ request.user.author }} Liked your ${likedObjectType}`,
+                        summary: `{{ request.user.author }} Liked your ${likedObjectType}`,
                         author: {
                             type: 'author',
-                            id: '{{ request.user.author.id }}',
-                            host: 'https://squawker-cmput404.herokuapp.com/',
+                            id: 'https://{{ request.get_host }}/api/authors/{{ request.user.author.id }}/',
+                            host: 'https://{{ request.get_host }}/',
                             displayName: '{{ request.user.author.displayName }}',
-                            url: 'https://squawker-cmput404.herokuapp.com/authors/{{ request.user.author.id }}/',
-                            github: 'http://github.com/{{ request.user.author.github }}/',
-                            profileImage: 'https://squawker-cmput404.herokuapp.com/static/img/{{ request.user.author.profileImage }}/'
+                            url: 'https://{{ request.get_host }}/api/authors/{{ request.user.author.id }}/',
+                            github: {% if request.user.author.github %}
+                                        'http://github.com/{{ request.user.author.github }}/',
+                                    {% else %}
+                                        '',
+                                    {% endif %}
+                            profileImage: 'https://{{ request.get_host }}/static/img/{{ request.user.author.profileImage }}'
                         },
-                        object: postId,
+                        object: likedObject,
                     }
                 })
             })
@@ -710,7 +714,7 @@
                     let numLikesText = "Like";
                     if (numLikes > 1) {
                        numLikesText = `${numLikes} Likes`;
-                    } else if (numLikes > 1) {
+                    } else if (numLikes > 0) {
                        numLikesText = `${numLikes} Like`;
                     }
                     document.querySelector(`span#likes-${postId}`).textContent = numLikesText;
