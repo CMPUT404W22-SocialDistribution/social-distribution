@@ -203,7 +203,7 @@ def friends_view(request, author_id):
                         followings.append(author)           
 
         # get friends
-        authors = Author.objects.all()
+        local_authors = Author.objects.all()
         current_user = request.user
         friends = []
         for follower in followers:
@@ -211,7 +211,7 @@ def friends_view(request, author_id):
                 friends.append(follower)
         # print(followers)
         # print(friends)
-        return render(request, 'friends/friends.html', {'followings': followings, 'followers': followers, 'friends': friends, "authors": authors, "current_user": current_user,})
+        return render(request, 'friends/friends.html', {'followings': followings, 'followers': followers, 'friends': friends, "local_authors": local_authors, "current_user": current_user,})
 
     # unfriend
     if request.method == "POST":
@@ -263,11 +263,30 @@ def friends_view(request, author_id):
         else:
             try:
                 requested_author = get_object_or_404(Author, id=requested_id)
-                current_author.followings.remove(requested_author)
-                requested_author.followers.remove(current_author)
 
-                messages.success(request, 'Your are now unfriend with the selected author !')
-                return redirect('author_manager:friends', author_id)
+                if requested_author in current_author.followings.all():
+                    # messages.warning(request, 'You already followed this author.')
+                    # return redirect('author_manager:friends', author_id)
+                    current_author.followings.remove(requested_author)
+                    requested_author.followers.remove(current_author)
+
+                    messages.success(request, 'Your are now unfriend with the selected author !')
+                    return redirect('author_manager:friends', author_id)
+                else:
+                    actor = ProfileSerializer(current_author, remove_fields=['user']).data
+                    object = ProfileSerializer(requested_author, remove_fields=['user']).data
+                    friend_request = {"type": "follow", "actor": actor, "object": object}
+
+                    inbox = Inbox.objects.get(author=requested_author)
+
+                    if friend_request in inbox.follows:
+                        messages.warning(request, 'You already sent a friend request to this author.')
+                        return redirect('author_manager:friends', author_id)
+
+                    inbox.follows.append(friend_request)
+                    inbox.save()
+                    messages.success(request, 'Your friend request has been sent.')
+                    return redirect('author_manager:friends', author_id)
             except:
                 messages.warning(request, 'Failed to unfriend the selected author !')
                 return redirect('author_manager:friends', author_id)
