@@ -987,7 +987,7 @@ class InboxAPI(generics.GenericAPIView):
                 try:
                     author_name = item["author"]["displayName"]
                     host = item["author"]["host"]
-                    post = Post.objects.create(
+                    post = Post.objects.get_or_create(
                         id=item["id"].split('/')[-1],
                         title=f"Remote post from {author_name} of {host}",
                         source=item["id"], # Change this to remote post detail (currently redirect to remote node)
