@@ -18,6 +18,7 @@ class PostForm(forms.ModelForm):
     class Meta:
         model = Post
         fields = "__all__"
+        excludes = ["remote_author"]
         widgets = {
             'categories': forms.Select(attrs={'rows': 1}),
         }

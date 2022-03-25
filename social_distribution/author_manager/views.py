@@ -1,40 +1,31 @@
-from email import header
-from enum import Flag
-from os import remove, stat
+import datetime
+import json
 import requests
 from django.contrib import messages
 from django.contrib.auth import authenticate, login, logout
 from django.contrib.auth.decorators import login_required
 from django.contrib.auth.forms import AuthenticationForm
 from django.db.models import Q
-from django.http import Http404
+from django.http import Http404, HttpResponseBadRequest
 from django.shortcuts import get_object_or_404
 from django.shortcuts import redirect, render
 from django.views.generic import ListView
-from rest_framework import authentication, permissions
-from rest_framework import status
+from requests.auth import HTTPBasicAuth
 from rest_framework import generics, authentication, permissions
+from rest_framework import status
 from rest_framework.pagination import PageNumberPagination
 from rest_framework.parsers import JSONParser
-from node.authentication import basic_authentication
-import requests
-import datetime
-from node.models import Node
-from posts.models import Comment
-
 from rest_framework.response import Response
 from rest_framework.views import APIView
 
 import posts.serializers
+from node.authentication import basic_authentication
+from node.models import Node
+from posts.models import Comment
 from posts.models import Post
 from posts.serializers import CommentSerializer, PostSerializer
 from .forms import SignUpForm, EditProfileForm
-from .models import *
 from .serializers import *
-import json
-
-
-from node.authentication import basic_authentication
 
 HEADERS = {'Referer': 'http://squawker-cmput404.herokuapp.com/', 'Mode': 'no-cors'}
 # URL = 'http://squawker-cmput404.herokuapp.com/'
@@ -296,13 +287,13 @@ class SearchAuthorView(ListView):
             queryset = []
         else:
             queryset = []
-            query_local_authors = Author.objects.filter( 
+            query_local_authors = Author.objects.filter(
                                     Q(user__username__icontains=query)|Q(displayName__icontains=query))
 
             for author in query_local_authors:
-                queryset.append({'id': author.id, 'username': author.user.username, 
+                queryset.append({'id': author.id, 'username': author.user.username,
                                  'profileImage': author.profileImage, 'displayName': author.displayName, 'url': author.url})
-            
+
             for node in Node.objects.all():
                 # # Team 8
                 # if node.url == 'http://project-socialdistribution.herokuapp.com/' :
@@ -321,7 +312,7 @@ class SearchAuthorView(ListView):
                     for author in authors:
                         if query in author["displayName"]:
                             queryset.append(
-                                {'id': author['id'], 'username': 'remote author', 
+                                {'id': author['id'], 'username': 'remote author',
                                     'profileImage': 'profile_picture.png', 'displayName': author['displayName'], 'url': author['url']})
 
         return queryset
@@ -338,7 +329,7 @@ class SearchAuthorView(ListView):
             if 'http' in requested_id:
                 #T08
                 if 'project-socialdistribution' in requested_id:
-                    service = 't08' 
+                    service = 't08'
                     requested_id = requested_id.split('/')[-2]
                     author_url = 'http://project-socialdistribution.herokuapp.com/api/authors/' + requested_id + "/"
                     follow_url = author_url + 'followers/' + str(author_id) + '/'
@@ -376,6 +367,7 @@ class SearchAuthorView(ListView):
 
                 # check if already follow
                 response = requests.get(follow_url, headers=HEADERS, auth=(outgoing_username, outgoing_password))
+
                 # print(response.status_code)
                 # print(response.json())
                 # if not follow yet
@@ -623,7 +615,7 @@ class GetAllAuthors(APIView):
             'type': "authors",
             'items': serializer.data
         }
-       
+
         return Response(response, status=status.HTTP_200_OK)
 
 
@@ -981,20 +973,34 @@ class InboxAPI(generics.GenericAPIView):
             if item_type == 'follow':
                 if author.url != item['object']['id'] or author.url == item['actor']['id']:
                     return Response({'detail': 'Fail to send the item!'}, status=status.HTTP_400_BAD_REQUEST)
-        
+
                 if item in inbox.follows:
                     return Response({'message': 'Already sent follow/friend request'}, status=status.HTTP_204_NO_CONTENT)
 
                 inbox.follows.append(item)
                 inbox.save()
                 return Response({'message': 'Success to send follow/friend request'}, status=status.HTTP_200_OK)
-            
+
             item_id = item['id']
 
-            if item_type == 'post':
-                post = Post.objects.get(id=item_id)
-                inbox.posts.add(post)
-                return Response({'message': 'Success to send post'}, status=status.HTTP_200_OK)
+            if item_type.lower() == 'post':
+                try:
+                    author_name = item["author"]["displayName"]
+                    host = item["author"]["host"]
+                    post = Post.objects.create(
+                        id=item["id"].split('/')[-1],
+                        title=f"Remote post from {author_name} of {host}",
+                        source=item["id"], # Change this to remote post detail (currently redirect to remote node)
+                        remote_author={
+                            "displayName": author_name,
+                            "url": item["author"]["url"],
+                            "profileImage": item["author"]["profileImage"]
+                        }
+                    )
+                    inbox.posts.add(post)
+                    return Response({'message': 'Success to send post'}, status=status.HTTP_200_OK)
+                except Exception as e:
+                    return Response({'message': e}, status_code=400)
 
             if item_type == 'comment':
                 comment = Comment.objects.get(id=item_id)
@@ -1025,4 +1031,26 @@ class InboxAPI(generics.GenericAPIView):
             return Response({'message': 'Success to clean inbox'}, status=status.HTTP_200_OK)
         except:
             return Response({'detail': 'Fail to clear inbox!'}, status=status.HTTP_400_BAD_REQUEST)
-        
+
+
+class RemoteInboxAPI(generics.GenericAPIView):
+    AUTHOR_INBOX_ENDPOINT = 'api/authors/{}/inbox/'
+
+    def post(self, request, author_id):
+        if 'node' not in request.headers:
+            return HttpResponseBadRequest()
+
+        node = get_object_or_404(Node, url=request.headers['node'])
+        post_url = node.url + self.AUTHOR_INBOX_ENDPOINT.format(author_id)
+        try:
+            item = request.data['item']
+            item_type = item['type']
+            if item_type == 'like':
+                with requests.post(post_url, json=item,
+                                   auth=HTTPBasicAuth(node.outgoing_username, node.outgoing_password)) as response:
+                    return Response(status=response.status_code)
+
+            return Response({'detail': 'Remote Inbox POST of Like object failed'}, status=status.HTTP_400_BAD_REQUEST)
+        except Exception as e:
+            print(e)
+            return Response({'detail': 'Fail to send the item!'}, status=status.HTTP_400_BAD_REQUEST)
