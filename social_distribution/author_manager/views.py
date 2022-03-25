@@ -144,8 +144,25 @@ def friends_view(request, author_id):
         followers = current_author.followers.all()
         followings = current_author.followings.all()
         friends = followings & followers
+        remote_authors = []
+        for node in Node.objects.all():
+            # # Team 8
+            # if node.url == 'http://project-socialdistribution.herokuapp.com/' :
+            #     authors_url = node.url + 'api/authors/'
+            # # Clone
+            # elif  node.url == 'https://squawker-dev.herokuapp.com/':
+            #     authors_url = node.url + 'api/authors/'
+            authors_url = node.url + 'api/authors/'
+            response = requests.get(authors_url, headers=HEADERS, auth=(node.outgoing_username, node.outgoing_password))
+            if response.status_code == 200:
+                authors = response.json()['items']
+                for author in authors:
+                    remote_authors.append(
+                        {'id': author['id'], 'username': 'remote author',
+                            'profileImage': 'profile_picture.png', 'displayName': author['displayName'], 'url': author['url']})
+
         return render(request, 'friends/friends.html',
-                      {'followings': followings, 'followers': followers, 'friends': friends, "authors": authors, "current_user": current_user})
+                      {'followings': followings, 'followers': followers, 'friends': friends, "authors": authors, "current_user": current_user, "remote_authors": remote_authors})
 
     if request.method == "POST":
         requested_id = request.POST['object_id']
