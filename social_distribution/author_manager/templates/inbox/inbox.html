@@ -30,8 +30,13 @@
                                                style="color:black; text-decoration: none;">
                                                 <div class="d-flex justify-content-between align-items-center">
                                                     <div class="ml-2">
-                                                        <h5>@{{ follow.actor.username }}</h5>
-                                                        <h6 class="text-muted pl-2">{{ follow.actor.displayName }}</h6>
+                                                        {% if follow.actor.username  %}
+                                                            <h5>@{{ follow.actor.username }}</h5>
+                                                            <h6 class="text-muted pl-2">{{ follow.actor.displayName }}</h6>
+                                                        {% else %}
+                                                            <h5>@{{ follow.actor.displayName }}</h5>
+                                                            <h6 class="text-muted pl-2"> remote author </h6>
+                                                        {% endif %}
                                                     </div>
                                                 </div>
                                             </a>
