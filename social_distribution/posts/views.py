@@ -73,6 +73,9 @@ def post_create(request, author_id):
                 # send public posts to follower. Since friends are also followers so friends also receive then in their inboxes
                 for follower in author.followers.all():
                     follower.inbox.posts.add(post)
+                # send public posts to remote authors
+                for node in Node.objects.all():
+
             elif post.visibility == "friends":
                 friends = author.followers.all() & author.followings.all()
                 for friend in friends:
@@ -277,8 +280,6 @@ def RemotePostsAPI(request):
 
                     if not post['unlisted']:
                         post['id'] =  str(post["id"]).split('/')[-1]
-                        # if post["content_type"].lower() in ["image/png;base64", "image/jpeg;base64"]:
-                        #     post["image"] = post["origin"] + post["image"]
                         remote_posts.append(post)
            
         # Team 8
@@ -320,12 +321,18 @@ def RemotePostsAPI(request):
                     team8_posts = data["items"]
                     for post in team8_posts:
                         if not post['unlisted']:
-                            if post['visibility'] == 'PUBLIC':
+                            if post['visibility'] == 'PUBLIC' or post['visibility'] == 'FRIENDS':
                                 # Need Comment API to create comment objects
                                 # need to convert categories, comments to arr
                                 
                                 # for each post, get all comments
                                 # comments_url = str(post["comments"]) commented out since T08 hasn't have this field set yet
+                                
+                                # FRIENDS ONLY
+                                # friend_url = node.url + '/authors/' + author_id +'/'
+                                # for each post, get my comments and the friend's comments only
+                                # comments_url = str(post["comments"]) commented out since T08 hasn't have this field set yet
+                                
                                 comments = []
                                 post_id = str(post["id"]).split('/')[-2]
                                 comments_url = posts_url + post_id +'/comments/'
@@ -358,7 +365,7 @@ def RemotePostsAPI(request):
                                     'author' : post["author"],
                                     'categories': post["categories"],
                                     'published': post["published"],
-                                    'visibility': 'public',
+                                    'visibility': post['visibility'].lower(),
                                     'unlisted': post['unlisted'],
                                     'author_image': "profile_picture.png",
                                     'comments': '',
@@ -371,52 +378,7 @@ def RemotePostsAPI(request):
                                 }
                                 remote_posts.append(post_data)
 
-                            elif post['visibility'] == 'FRIENDS':
-                                # get all friends posts of my remote friend
-                                friend_url = node.url + '/authors/' + author_id +'/'
-                                # for each post, get my comments and the friend's comments only
-                                # comments_url = str(post["comments"]) commented out since T08 hasn't have this field set yet
-                                comments = []
-                                post_id = str(post["id"]).split('/')[-2]
-                                comments_url = posts_url + post_id +'/comments/'
-                                res = requests.get(comments_url, auth=(node.outgoing_username, node.outgoing_password))
-                                if res.status_code == 200:
-                                    post_comments =  res.json()['items']
-                                    for comment in post_comments:
-                                        comment_id = str(comment["id"]).split('/')[-2]
-                                        if str(comment["author"]["url"]) == request.user.author.url or str(comment["author"]["url"])== friend_url:                                    
-                                            comment_data = {
-                                                'author_displayName' : comment["author"]["displayName"],
-                                                'comment': comment["comment"],
-                                                'contentType': comment["contentType"],
-                                                'published': comment["published"],
-                                                'id': comment_id
-                                        }
-                                        comments.append(comment_data)
-                                if post["contentType"] == 'text/markdown':
-                                    post["content"] = commonmark.commonmark(str(post["content"]))
-                                post_data = {
-                                    'author_username' : post["author"]["displayName"],
-                                    'author_displayName' : post["author"]["displayName"],
-                                    'title' : post["title"],
-                                    'id' : post_id,
-                                    'source' : post["source"],
-                                    'origin' : "https://project-socialdistribution.herokuapp.com/",
-                                    'content_type' : post["contentType"],
-                                    'content' : post["content"],
-                                    'author' : post["author"],
-                                    'categories': post["categories"],
-                                    'published': post["published"],
-                                    'visibility': 'friends',
-                                    'unlisted': post['unlisted'],
-                                    'author_image': "profile_picture.png",
-                                    'comments': '',
-                                    'commentsSrc': {
-                                            'size': len(comments),
-                                            'comments': comments
-                                    }
-                                }
-                                remote_posts.append(post_data)
+ 
         elif team == "team5":
             node = remote_nodes["team5"]
             posts_url = node.url + 'service/server_api/authors/' + author_id + '/posts/'
@@ -537,7 +499,7 @@ class PostsAPI(APIView):
             post_data = serializer.data
             for post in post_data:
                 post['id'] = post["author"]["url"] + '/posts/' + post['id']
-                if post["content_type"].lower() in ["image/png;base64", "image/jpeg;base64"]:
+                if post["content_type"].lower() in ["image/png;base64", "image/jpeg;base64"] or post["image"]:
                     post["image"] = post["origin"] + post["image"]
                 post['author']['id'] = post["author"]["url"]
                 for comment in post['commentsSrc']['comments']:
@@ -605,7 +567,7 @@ class MyPostsAPI(generics.GenericAPIView):
             for post in post_data:
                 post['id'] = author.url + '/posts/' + post['id']
                 post['author']['id'] = author.url
-                if post["content_type"].lower() in ["image/png;base64", "image/jpeg;base64"]:
+                if post["content_type"].lower() in ["image/png;base64", "image/jpeg;base64"] or post["image"]:
                     post["image"] = post["origin"] + post["image"]
                 for comment in post['commentsSrc']['comments']:
                     comment['author']['id'] = comment['author']['url']
@@ -681,7 +643,7 @@ class PostDetailAPI(generics.GenericAPIView):
                 serializer = PostSerializer(post)
                 data = serializer.data
                 data['id'] = author.url + '/posts/' + data['id']
-                if data["content_type"].lower() in ["image/png;base64", "image/jpeg;base64"]:
+                if data["content_type"].lower() in ["image/png;base64", "image/jpeg;base64"] or data["image"]:
                     data["image"] = data["origin"] + data["image"]
                 data['author']['id'] = author.url
                 for comment in data['commentsSrc']['comments']:
