@@ -86,7 +86,7 @@ class Comment(models.Model):
     contentType = models.CharField(
         max_length=50,
         choices=ContentType.choices,
-        default=ContentType.PLAIN)
+        default=ContentType.MARKDOWN)
 
     published = models.DateTimeField(auto_now_add=True)
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False, unique=True)

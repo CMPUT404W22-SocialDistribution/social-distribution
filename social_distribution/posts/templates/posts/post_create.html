@@ -12,10 +12,15 @@
                         {% if edit %}
                             <h2 class="text-center bg-light border-bottom"
                                 style="padding: 10px; font-family: Segoe UI">Edit Post</h1>
-                        {% else %}
-                            <h2 class="text-center bg-light border-bottom"
-                                style="padding: 10px; font-family: Segoe UI">Create Post</h1>
-                        {% endif %}
+                            {% else %}
+                                {% if share %}
+                                    <h2 class="text-center bg-light border-bottom"
+                                        style="padding: 10px; font-family: Segoe UI">Share Post</h1>
+                                {% else %}
+                                    <h2 class="text-center bg-light border-bottom"
+                                        style="padding: 10px; font-family: Segoe UI">Create Post</h1>
+                                {% endif %}
+                            {% endif %}
                     </div>
                     <div class="card-body">{% crispy form %}</div>
                 </div>

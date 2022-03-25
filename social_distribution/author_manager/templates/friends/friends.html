@@ -30,8 +30,13 @@
                                 <a href="{{following.url}}" style="color:black; text-decoration: none;">
                                     <div class="d-flex justify-content-between align-items-center">
                                         <div class="ml-2">
-                                            <h5>@{{following.user.username}}</h5>
-                                            <h6 class="text-muted pl-2">{{following.displayName}}</h6>
+                                            {% if following.username %}
+                                                <h5>@{{following.username}}</h5>
+                                                <h6 class="text-muted pl-2">{{following.displayName}}</h6>
+                                            {% else %}
+                                                <h5>@{{following.displayName}}</h5>
+                                                <h6 class="text-muted pl-2">remote author</h6>
+                                            {% endif %}
                                         </div>
                                     </div>
                                 </a>
@@ -70,8 +75,13 @@
                                 <a href="{{follower.url}}" style="color:black; text-decoration: none;">
                                     <div class="d-flex justify-content-between align-items-center">
                                         <div class="ml-2">
-                                            <h5>@{{follower.user.username}}</h5>
-                                            <h6 class="text-muted pl-2">{{follower.displayName}}</h6>
+                                            {% if follower.username %}
+                                                <h5>@{{follower.username}}</h5>
+                                                <h6 class="text-muted pl-2">{{follower.displayName}}</h6>
+                                            {% else %}
+                                                <h5>@{{follower.displayName}}</h5>
+                                                <h6 class="text-muted pl-2">remote author</h6>
+                                            {% endif %}
                                         </div>
                                     </div>
                                 </a>
@@ -103,8 +113,13 @@
                                 <a href="{{friend.url}}" style="color:black; text-decoration: none;">
                                     <div class="d-flex justify-content-between align-items-center">
                                         <div class="ml-2">
-                                            <h5>@{{friend.user.username}}</h5>
-                                            <h6 class="text-muted pl-2">{{friend.displayName}}</h6>
+                                            {% if friend.username %}
+                                                <h5>@{{friend.username}}</h5>
+                                                <h6 class="text-muted pl-2">{{friend.displayName}}</h6>
+                                            {% else %}
+                                                <h5>@{{friend.displayName}}</h5>
+                                                <h6 class="text-muted pl-2">remote author</h6>
+                                            {% endif %}
                                         </div>
                                     </div>
                                 </a>
