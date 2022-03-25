@@ -218,6 +218,47 @@ def post_share(request, author_id, post_id):
                 return redirect('posts:post_detail', current_author.id, share_post.id)
             else:
                 return redirect('posts:post_create', current_author.id)
+                
+        elif post.visibility == 'friends':
+            updated_request = request.POST.copy()  # using deepcopy() to make a mutable copy of the object
+
+            source = request.build_absolute_uri()
+            source = source.replace(current_author.id, author_id)
+            source = source.replace("/share", "")
+            origin = post.origin
+            title = post.title
+            content_type = post.content_type
+            visibility = post.visibility
+            content = post.content
+            description = post.description
+
+            image_url = post.image.name
+
+            updated_request.update(
+                {
+                    'author': current_author,
+                    'type': 'post',
+                    'source': source,
+                    'origin': origin,
+                    'title': title,
+                    'content_type': content_type,
+                    'visibility': visibility,
+                    'content': content,
+                    'description': description,
+                }
+            )
+            form = PostForm(updated_request, request.FILES)
+            print(form.errors)
+            if form.is_valid():
+                share_post = form.save(commit=False)
+                if post.image:
+                    share_post.image = image_url
+                share_post.save()
+                return redirect('posts:post_detail', current_author.id, share_post.id)
+            else:
+                return redirect('posts:post_create', current_author.id)
+
+        
         else:
             error = "403 Forbidden"
             return render(request, 'posts/post_create.html', {'error': error}, status=403)
