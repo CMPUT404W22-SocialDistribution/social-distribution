@@ -716,7 +716,7 @@ class FriendsAPI(APIView):
 
 class FriendDetailAPI(APIView):
     """
-        To do: remote and put
+        To do: remote
     """
     authentication_classes = [authentication.SessionAuthentication]
     permission_classes = []
@@ -729,16 +729,19 @@ class FriendDetailAPI(APIView):
 
         try:
             author = Author.objects.get(id=author_id)
-            follower = Author.objects.get(id=follower_id)
-            
-            if follower in author.followers.all():
-                if local:
-                    followers_serializer = ProfileSerializer(follower, remove_fields=['user'], many=False)
+            remote_followers = author.remote_followers.split(' ')
+            remote_followers.pop()
+
+            for follower in remote_followers:
+                #t08
+                if 'project-socialdistribution' in follower:
+                    id = follower.split('/')[-2]
+                #t05 and clone
                 else:
-                    followers_serializer = RemoteProfileSerializer(follower, many=False)
-
-                return Response(followers_serializer.data, status=status.HTTP_200_OK)
-
+                    id = follower.split('/')[-1]
+                
+                if str(follower_id) == id:
+                    return Response({'message': 'Is follower'}, status=status.HTTP_200_OK)
             return Response({'detail': 'Not Found!'}, status=status.HTTP_404_NOT_FOUND)
 
         except:
@@ -747,14 +750,15 @@ class FriendDetailAPI(APIView):
     def delete(self, request, author_id, follower_id):
         try:
             author = Author.objects.get(id=author_id)
-            follower = Author.objects.get(id=follower_id)
+            remote_followers = author.remote_followers.split(' ')
+            remote_followers.pop()
             
-            if follower in author.followers.all():
-                author.followers.remove(follower)
-                return Response({'message': 'Success to unfriend/unfollow'}, status=status.HTTP_200_OK)
-
-            return Response({'detail': 'Not Found!'}, status=status.HTTP_404_NOT_FOUND)
-
+            for follower in remote_followers:
+                if str(follower_id) in follower:
+                    author.remote_followers = author.remote_followers.replace(follower, '')
+                    break
+            return Response({'message': 'Success to unfriend/unfollow'}, status=status.HTTP_200_OK)
+            
         except:
             return Response({'detail': 'Not Found!'}, status=status.HTTP_404_NOT_FOUND)
 
