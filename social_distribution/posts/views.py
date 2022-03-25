@@ -1,5 +1,6 @@
 import asyncio
 import sys
+from urllib import response
 
 import aiohttp
 import commonmark
@@ -61,6 +62,7 @@ def post_create(request, author_id):
 
         if form.is_valid():
             post = form.save(commit=False)
+            post.source = author.host + 'authors/' + str(author.id) + '/posts/' + str(post.id)
             post.save()
             if post.visibility == "public":
                 # send public posts to follower. Since friends are also followers so friends also receive then in their inboxes
@@ -69,7 +71,35 @@ def post_create(request, author_id):
                 # send public posts to remote authors
                 for node in Node.objects.all():
                     # Clone
-                    pass
+                    if node.url == 'https://squawker-dev.herokuapp.com/':
+                        authors = []
+                        authors_url = f'{node.url}api/authors'
+                        response = requests.get(authors_url, headers=HEADERS, auth=(node.outgoing_username, node.outgoing_password))
+                        if response.status_code == 200: 
+                            clone_authors = response.json()['items']
+                            for item in clone_authors:
+                                authors.append(item["id"].split('/')[-1])
+                            for item in authors: 
+                                inbox_url = f'{authors_url}/{item}/inbox'
+                                print(inbox_url)
+                                payload = {
+                                    'item': {
+                                        'type': 'post',
+                                        'id': post.source,
+                                        'author': {
+                                            'id': author.url,
+                                            'type': 'author',
+                                            'host': author.host,
+                                            'displayName': author.displayName,
+                                            'github': author.github,
+                                            'profileImage': author.profileImage,
+                                            'url': author.url,
+                                        }
+                                    }
+                                }
+                                response = requests.post(inbox_url, json=payload, auth=(node.outgoing_username, node.outgoing_password))
+                                print(response.status_code)
+                    
 
             elif post.visibility == "friends":
                 friends = author.followers.all() & author.followings.all()
@@ -143,49 +173,164 @@ def post_detail(request, author_id, post_id):
             
     '''
     if request.method == "GET":
-        current_user = request.user
-        # Using user name to get author 
-        # current_user = Author.objects.get(user=user)
-        author = Author.objects.get(id=author_id)
-        post = get_object_or_404(Post, id=post_id)
-        numLikes = Like.objects.filter(post__id__exact=post.id, comment__id__isnull=True).count()
-        # check if logged in user is author of post
-        if current_user.author == author:
-            isAuthor = True
+        if not request.GET.get("remote"):
+            current_user = request.user
+            # Using user name to get author 
+            # current_user = Author.objects.get(user=user)
+            author = Author.objects.get(id=author_id)
+            post = get_object_or_404(Post, id=post_id)
+            numLikes = Like.objects.filter(post__id__exact=post.id, comment__id__isnull=True).count()
+            # check if logged in user is author of post
+            if current_user.author == author:
+                isAuthor = True
+            else:
+                # auth user is not user
+                isAuthor = False
+                if post.visibility == "private":
+                    if post.visibleTo == current_user.username:
+                        comments = post.commentsSrc.all().order_by('-published')
+                        context = {
+                            "comments": comments,
+                            "post": post,
+                            "isAuthor": isAuthor,
+                            "numLikes": numLikes
+                        }
+                        return render(request, 'posts/post_detail.html', context)
+                    else:
+                        error = "404 Not Found"
+                        return render(request, 'posts/post_create.html', {'error': error}, status=404)
+
+                elif post.visibility == "friends":
+                    # post only visible if user is friend to owner
+                    if not (
+                            request.user.author in author.followings.all() and request.user.author in author.followers.all()):
+                        error = "404 Not Found"
+                        return render(request, 'posts/post_create.html', {'error': error}, status=404)
+            if post.content_type == 'text/markdown':
+                post.content = commonmark.commonmark(post.content)
+            comments = CommentSerializer(post.commentsSrc.all().order_by('-published'), many=True).data
+            context = {
+                "comments": comments,
+                "post": post,
+                "isAuthor": isAuthor,
+                "numLikes": numLikes
+            }
+            return render(request, 'posts/post_detail.html', context)
         else:
-            # auth user is not user
-            isAuthor = False
-            if post.visibility == "private":
-                if post.visibleTo == current_user.username:
-                    comments = post.commentsSrc.all().order_by('-published')
-                    context = {
-                        "comments": comments,
-                        "post": post,
-                        "isAuthor": isAuthor,
-                        "numLikes": numLikes
+            node_url = request.GET.get("remote")
+            if node_url[-1] != "/":
+                node_url += "/"
+            # Team 8
+            if node_url == "https://project-socialdistribution.herokuapp.com/":
+                node_url.replace("https", "http")
+                post_url = f"{node_url}api/authors/{author_id}/posts/{post_id}"
+                response = requests.get(post_url, auth=("squawker", "sQu@k3r"))
+                if response.status_code == 200:
+                    data = response.json()
+
+                    comments_url = f'{post_url}/comments/'
+                    res = requests.get(comments_url, auth=("squawker", "sQu@k3r"))
+                    if res.status_code == 200:
+                        comments = []
+                        post_comments =  res.json()['items']
+                        for comment in post_comments:
+                            comment_id = str(comment["id"]).split('/')[-2]
+                            comment_data = {
+                                'author' : {
+                                    'displayName': comment["author"]["displayName"],
+                                    'host': node_url},
+                                'comment': comment["comment"],
+                                'contentType': comment["contentType"],
+                                'published': comment["published"],
+                                'id': comment_id
+                            }
+                            comments.append(comment_data)
+                    comments = sorted(comments, key=lambda k:k['published'], reverse=True)
+
+                    if data["contentType"] == 'text/markdown':
+                        data["content"] = commonmark.commonmark(str(data["content"]))
+                    
+                    image = data["image"] if "image" in data else ''
+                    author_image = data['author']['profileImage'] if data['author']['profileImage'] else '/static/img/profile_picture.png'
+                    post = {
+                        "title": data["title"],
+                        "description": data["description"],
+                        "source": data["source"],
+                        "origin": data["origin"],
+                        "published": data["published"],
+                        "visibility": data["visibility"].lower(),
+                        "content": data["content"],
+                        "image": image,
+                        "author" : {
+                            "displayName": data["author"]["displayName"],
+                            "host": data["author"]["host"],
+                            "profileImage": author_image,
+                        }
                     }
-                    return render(request, 'posts/post_detail.html', context)
-                else:
-                    error = "404 Not Found"
-                    return render(request, 'posts/post_create.html', {'error': error}, status=404)
-
-            elif post.visibility == "friends":
-                # post only visible if user is friend to owner
-                if not (
-                        request.user.author in author.followings.all() and request.user.author in author.followers.all()):
-                    error = "404 Not Found"
-                    return render(request, 'posts/post_create.html', {'error': error}, status=404)
-        if post.content_type == 'text/markdown':
-            post.content = commonmark.commonmark(post.content)
-        comments = CommentSerializer(post.commentsSrc.all().order_by('-published'), many=True).data
-
-        context = {
-            "comments": comments,
-            "post": post,
-            "isAuthor": isAuthor,
-            "numLikes": numLikes
-        }
-        return render(request, 'posts/post_detail.html', context)
+                    context = {
+                        "post": post,
+                        "comments": comments
+                    }
+            # Team 5
+            elif node_url == "https://cmput404-w22-project-backend.herokuapp.com/":
+                posts_url = f"{node_url}service/server_api/authors/{author_id}/posts/{post_id}"
+                response = requests.get(posts_url)
+                if response.status_code == 200:
+                    data = response.json()
+                    if data["contentType"] == 'text/markdown':
+                        data["content"] = commonmark.commonmark(str(data["content"]))
+                    image = data["image"] if data["image"] else ''
+                    author_image = data['author']['profileImage'] if data['author']['profileImage'] else '/static/img/profile_picture.png'
+                    post = {
+                        "title": data["title"],
+                        "description": data["description"],
+                        "source": '',
+                        "origin": node_url,
+                        "published": data["published"],
+                        "visibility": data["visibility"].lower(),
+                        "content": data["content"],
+                        "image": image,
+                        "author" : {
+                            "displayName": data["author"]["displayName"],
+                            "host": data["author"]["host"],
+                            "profileImage": author_image,
+                        }
+                    }
+                    context = {
+                        "post": post,
+                        "comments": data["commentsSrc"]
+                    }
+            # Dev
+            elif node_url == "http://squawker-dev.herokuapp.com/" or node_url == "https://squawker-dev.herokuapp.com/":
+                posts_url = f"{node_url}api/authors/{author_id}/posts/{post_id}"
+                response = requests.get(posts_url, headers=HEADERS, auth=("squawker-dev", "cmput404"))
+                if response.status_code == 200:
+                    data = response.json()
+                    if data["content_type"] == 'text/markdown':
+                        data["content"] = commonmark.commonmark(str(data["content"]))
+                    image = data["image"] if data["image"] else ''
+                    post = {
+                        "title": data["title"],
+                        "description": data["description"],
+                        "source": data["source"],
+                        "origin": data["origin"],
+                        "published": data["published"],
+                        "visibility": data["visibility"],
+                        "content": data["content"],
+                        "image": image,
+                        "author" : {
+                            "displayName": data["author_username"],
+                            "host": data["author"]["host"],
+                            "profileImage": data["author"]["host"] + "static/img/" + data["author"]["profileImage"],
+                        }
+                    }
+                    context = {
+                        "post": post,
+                        "comments": data["commentsSrc"]["comments"]
+                    }
+                
+            return render(request, 'posts/post_detail_remote.html', context)
+            
 
 
 @login_required
@@ -273,9 +418,11 @@ def RemotePostsAPI(request):
             if response.status_code == 200:
                 clone_posts = response.json()['posts']
                 for post in clone_posts:
-
                     if not post['unlisted']:
                         post['id'] =  str(post["id"]).split('/')[-1]
+                        post['author_id'] = post["author"]["id"].split('/')[-1]
+                        if post["content_type"] == 'text/markdown':
+                            post["content"] = commonmark.commonmark(str(post["content"]))
                         remote_posts.append(post)
 
         # Team 8
@@ -342,7 +489,7 @@ def RemotePostsAPI(request):
                                             'comment': comment["comment"],
                                             'contentType': comment["contentType"],
                                             'published': comment["published"],
-                                            'id': comment["id"]
+                                            'id': comment_id
                                         }
                                         comments.append(comment_data)
                                 comments = sorted(comments, key=lambda k:k['published'], reverse=True)
@@ -359,6 +506,7 @@ def RemotePostsAPI(request):
                                     'content_type' : post["contentType"],
                                     'content' : post["content"],
                                     'author' : post["author"],
+                                    'author_id': author_id,
                                     'categories': post["categories"],
                                     'published': post["published"],
                                     'visibility': post['visibility'].lower(),
@@ -402,6 +550,7 @@ def RemotePostsAPI(request):
                                     'content_type' : post["contentType"],
                                     'content' : post["content"],
                                     'author' : post["author"],
+                                    'author_id': author_id,
                                     'categories': post["categories"],
                                     'published': post["published"],
                                     'visibility': post["visibility"].lower(),

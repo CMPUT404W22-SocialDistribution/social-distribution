@@ -317,9 +317,10 @@ def inbox_view(request, id):
         inbox = Inbox.objects.get(author=current_author)
         return render(request, 'inbox/inbox.html', {
             'follows': inbox.follows,
-            'posts': inbox.posts.all(),
+            'posts': list(inbox.posts.all())[::-1],
             'comments': inbox.comments.all(),
-            'likes': inbox.likes.all().order_by('-id')
+            'likes': inbox.likes.all().order_by('-id'),
+            'current_author': current_author
         })
 
     if request.method == "POST":
@@ -818,7 +819,7 @@ class InboxAPI(generics.GenericAPIView):
                                     status=status.HTTP_200_OK)
                 return Response(like_serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
-            if item_type == 'follow':
+            elif item_type == 'follow':
                 if author.url != item['object']['id'] or author.url == item['actor']['id']:
                     return Response({'detail': 'Fail to send the item!'}, status=status.HTTP_400_BAD_REQUEST)
 
@@ -842,15 +843,19 @@ class InboxAPI(generics.GenericAPIView):
                         remote_author={
                             "displayName": author_name,
                             "url": item["author"]["url"],
-                            "profileImage": item["author"]["profileImage"]
+                            "profileImage": item["author"]["profileImage"],
+                            "host": item["author"]["host"],
+                            "author_id":item["author"]["id"].split('/')[-1] 
                         }
                     )
+                    
                     inbox.posts.add(post)
                     return Response({'message': 'Success to send post'}, status=status.HTTP_200_OK)
                 except Exception as e:
+                    print(e)
                     return Response({'message': e}, status_code=400)
 
-            if item_type == 'comment':
+            elif item_type == 'comment':
                 comment = Comment.objects.get(id=item_id)
                 inbox.comments.add(comment)
                 return Response({'message': 'Success to send comment'}, status=status.HTTP_200_OK)
