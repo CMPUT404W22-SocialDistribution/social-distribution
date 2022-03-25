@@ -101,7 +101,6 @@ def post_create(request, author_id):
                                     }
                                 }
                                 response = requests.post(inbox_url, json=payload, auth=(node.outgoing_username, node.outgoing_password))
-                                print(response.status_code)
                     elif node.url ==  "https://project-socialdistribution.herokuapp.com/":
                         authors = []
                         authors_url = f'{node.url}api/authors'
@@ -118,6 +117,30 @@ def post_create(request, author_id):
                                     'id': post.source
                                 } 
                                 response = requests.post(inbox_url, json=payload, auth=(node.outgoing_username, node.outgoing_password))               
+                    elif node.url == "https://cmput404-w22-project-backend.herokuapp.com/":
+                        print('hello')
+                        authors = []
+                        authors_url = f'{node.url}service/server_api/authors/'
+                        response = requests.get(authors_url)
+                        if response.status_code == 200: 
+                            print(2)
+                            team5_authors = response.json()['items']  
+                            for item in team5_authors:
+                                authors.append(item["id"].split('/')[-1])
+                            print(authors)
+                            post_serializer = PostSerializer(post)
+                            for item in authors:
+                                inbox_url = f'{authors_url}{item}/inbox'
+                                print(inbox_url)
+                               
+                                payload = {
+                                    'content': post_serializer.data
+                                } 
+                                response = requests.post(inbox_url, json=payload)      
+                                
+                                print('hello')
+                                print(response.status_code)   
+
             elif post.visibility == "friends":
                 friends = author.followers.all() & author.followings.all()
                 for friend in friends:
