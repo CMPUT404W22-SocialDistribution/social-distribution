@@ -139,11 +139,13 @@ def friends_view(request, author_id):
     '''
     current_author = Author.objects.get(id=author_id)
     if request.method == "GET":
+        authors = Author.objects.all()
+        current_user = request.user
         followers = current_author.followers.all()
         followings = current_author.followings.all()
         friends = followings & followers
         return render(request, 'friends/friends.html',
-                      {'followings': followings, 'followers': followers, 'friends': friends})
+                      {'followings': followings, 'followers': followers, 'friends': friends, "authors": authors, "current_user": current_user})
 
     if request.method == "POST":
         requested_id = request.POST['object_id']
