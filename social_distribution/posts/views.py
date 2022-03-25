@@ -67,8 +67,9 @@ def post_create(request, author_id):
                 for follower in author.followers.all():
                     follower.inbox.posts.add(post)
                 # send public posts to remote authors
-                # for node in Node.objects.all():
-
+                for node in Node.objects.all():
+                    # Clone
+                    pass
 
             elif post.visibility == "friends":
                 friends = author.followers.all() & author.followings.all()
@@ -460,19 +461,19 @@ class PostsAPI(APIView):
         if local:
             author = Author.objects.get(user=request.user)
             # get public posts
-            public_posts = Post.objects.filter(visibility='public', unlisted=False).order_by('-published')
+            public_posts = Post.objects.filter(visibility='public', unlisted=False, author__isnull=False).order_by('-published')
             # get friends of current user
             followers = author.followers.all()
             followings = author.followings.all()
             friends = followings & followers
             # get friends' posts that have visibility= friends
-            friend_posts = Post.objects.filter(author__in=friends, visibility="friends", unlisted=False).order_by(
+            friend_posts = Post.objects.filter(author__in=friends, visibility="friends", unlisted=False, author__isnull=False).order_by(
                 '-published')
             # private post only visible to certain people that author shared to
             # eg. visibleTo is eqaul to certain author.
-            private_posts = Post.objects.filter(visibility="private", visibleTo=author.user, unlisted=False).order_by(
+            private_posts = Post.objects.filter(visibility="private", visibleTo=author.user, unlisted=False, author__isnull=False).order_by(
                 '-published')
-            my_posts = Post.objects.filter(author=author, unlisted=False).order_by('-published')
+            my_posts = Post.objects.filter(author=author, unlisted=False, author__isnull=False).order_by('-published')
             local_posts = public_posts | my_posts | friend_posts | private_posts
 
             for post in local_posts:
