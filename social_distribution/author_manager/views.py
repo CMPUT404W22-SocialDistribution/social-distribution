@@ -831,10 +831,24 @@ class InboxAPI(generics.GenericAPIView):
 
             item_id = item['id']
 
-            if item_type == 'post':
-                post = Post.objects.get(id=item_id)
-                inbox.posts.add(post)
-                return Response({'message': 'Success to send post'}, status=status.HTTP_200_OK)
+            if item_type.lower() == 'post':
+                try:
+                    author_name = item["author"]["displayName"]
+                    host = item["author"]["host"]
+                    post = Post.objects.create(
+                        id=item["id"].split('/')[-1],
+                        title=f"Remote post from {author_name} of {host}",
+                        source=item["id"], # Change this to remote post detail (currently redirect to remote node)
+                        remote_author={
+                            "displayName": author_name,
+                            "url": item["author"]["url"],
+                            "profileImage": item["author"]["profileImage"]
+                        }
+                    )
+                    inbox.posts.add(post)
+                    return Response({'message': 'Success to send post'}, status=status.HTTP_200_OK)
+                except Exception as e:
+                    return Response({'message': e}, status_code=400)
 
             if item_type == 'comment':
                 comment = Comment.objects.get(id=item_id)

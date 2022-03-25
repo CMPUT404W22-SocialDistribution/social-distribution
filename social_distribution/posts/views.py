@@ -65,14 +65,16 @@ def post_create(request, author_id):
             # origin = request.build_absolute_uri()
             # origin = origin.replace("create", str(post.id))
             # post.origin = origin
+            post.source = author.host + 'authors/' + str(author.id) + '/posts/' + str(post.id)
             post.save()
             if post.visibility == "public":
                 # send public posts to follower. Since friends are also followers so friends also receive then in their inboxes
                 for follower in author.followers.all():
                     follower.inbox.posts.add(post)
                 # send public posts to remote authors
-                # for node in Node.objects.all():
-
+                for node in Node.objects.all():
+                    # Clone
+                    pass
 
             elif post.visibility == "friends":
                 friends = author.followers.all() & author.followings.all()
@@ -86,6 +88,7 @@ def post_create(request, author_id):
             return redirect('posts:post_detail', author_id, post.id)
         else:
             # if form is invalid, return the same html page
+            print(form.errors)
             return redirect('posts:post_create', author_id)
 
 
@@ -408,7 +411,9 @@ def RemotePostsAPI(request):
                 for post in clone_posts:
 
                     if not post['unlisted']:
-                        post['id'] = str(post["id"]).split('/')[-1]
+                        post['id'] =  str(post["id"]).split('/')[-1]
+                        post['author_image'] = '/static/img/' + post['author_image']
+
                         remote_posts.append(post)
 
         # Team 8
@@ -483,6 +488,7 @@ def RemotePostsAPI(request):
                                 # post with comments
                                 if post["contentType"] == 'text/markdown':
                                     post["content"] = commonmark.commonmark(str(post["content"]))
+                                author_image = post['author']['profileImage'] if post['author']['profileImage'] else 'static/img/profile_picture.png'
                                 post_data = {
                                     'author_username': post["author"]["displayName"],
                                     'author_displayName': post["author"]["displayName"],
@@ -497,7 +503,7 @@ def RemotePostsAPI(request):
                                     'published': post["published"],
                                     'visibility': post['visibility'].lower(),
                                     'unlisted': post['unlisted'],
-                                    'author_image': "profile_picture.png",
+                                    'author_image': author_image,
                                     'comments': '',
                                     'commentsSrc': {
                                         'size': len(comments),
@@ -525,6 +531,7 @@ def RemotePostsAPI(request):
                                 # post with comments
                                 if post["contentType"] == 'text/markdown':
                                     post["content"] = commonmark.commonmark(str(post["content"]))
+                                author_image = post['author']['profileImage'] if post['author']['profileImage'] else '/static/img/profile_picture.png'
                                 post_data = {
                                     'author_username': post["author"]["displayName"],
                                     'author_displayName': post["author"]["displayName"],
@@ -538,7 +545,7 @@ def RemotePostsAPI(request):
                                     'categories': post["categories"],
                                     'published': post["published"],
                                     'visibility': post["visibility"].lower(),
-                                    'author_image': "profile_picture.png",
+                                    'author_image': author_image,
                                     'comments': '',
                                     'commentsSrc': {
                                         'size': len(post['commentsSrc']),
@@ -594,19 +601,19 @@ class PostsAPI(APIView):
         if local:
             author = Author.objects.get(user=request.user)
             # get public posts
-            public_posts = Post.objects.filter(visibility='public', unlisted=False).order_by('-published')
+            public_posts = Post.objects.filter(visibility='public', unlisted=False, author__isnull=False).order_by('-published')
             # get friends of current user
             followers = author.followers.all()
             followings = author.followings.all()
             friends = followings & followers
             # get friends' posts that have visibility= friends
-            friend_posts = Post.objects.filter(author__in=friends, visibility="friends", unlisted=False).order_by(
+            friend_posts = Post.objects.filter(author__in=friends, visibility="friends", unlisted=False, author__isnull=False).order_by(
                 '-published')
             # private post only visible to certain people that author shared to
             # eg. visibleTo is eqaul to certain author.
-            private_posts = Post.objects.filter(visibility="private", visibleTo=author.user, unlisted=False).order_by(
+            private_posts = Post.objects.filter(visibility="private", visibleTo=author.user, unlisted=False, author__isnull=False).order_by(
                 '-published')
-            my_posts = Post.objects.filter(author=author, unlisted=False).order_by('-published')
+            my_posts = Post.objects.filter(author=author, unlisted=False, author__isnull=False).order_by('-published')
             local_posts = public_posts | my_posts | friend_posts | private_posts
 
             for post in local_posts:
