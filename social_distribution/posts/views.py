@@ -317,8 +317,6 @@ def post_detail(request, author_id, post_id):
             current_source = current_source.replace("http://", "")
             post_source = post.source
             post_source = post_source.replace("http://", "")
-            print(current_source)
-            print(post_source)
             if current_source != post_source:
                 notSharePost = False
             if current_user.author == author:
