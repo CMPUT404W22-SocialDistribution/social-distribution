@@ -1075,8 +1075,9 @@ class RemoteInboxAPI(generics.GenericAPIView):
     def post(self, request, author_id):
         if 'node' not in request.headers:
             return HttpResponseBadRequest()
-
+        
         node = get_object_or_404(Node, url=request.headers['node'])
+        
         post_url = node.url + self.AUTHOR_INBOX_ENDPOINT.format(author_id)
         try:
             item = request.data['item']
@@ -1085,7 +1086,12 @@ class RemoteInboxAPI(generics.GenericAPIView):
                 with requests.post(post_url, json=item,
                                    auth=HTTPBasicAuth(node.outgoing_username, node.outgoing_password)) as response:
                     return Response(status=response.status_code)
-
+            elif item_type == 'comment':
+                with requests.post(post_url, json=item,
+                                   auth=HTTPBasicAuth(node.outgoing_username, node.outgoing_password)) as response:
+                    # print(response.content)
+                    # print(response.url)
+                    return Response(status=response.status_code)
             return Response({'detail': 'Remote Inbox POST of Like object failed'}, status=status.HTTP_400_BAD_REQUEST)
         except Exception as e:
             print(e)
