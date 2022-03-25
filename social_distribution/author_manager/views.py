@@ -323,42 +323,39 @@ class SearchAuthorView(ListView):
         current_author = Author.objects.get(id=author_id)
         requested_id = request.POST['object_id']
 
-        if requested_id == author_id:
-            messages.warning(request, 'You cannot be friend with yourself')
-            return redirect('author_manager:friends', author_id)
         try:
             if 'http' in requested_id:
                 #T08
                 if 'project-socialdistribution' in requested_id:
                     service = 't08'
-                    requested_id = requested_id.split('/')[-2]
-                    author_url = 'http://project-socialdistribution.herokuapp.com/api/authors/' + requested_id + "/"
-                    follow_url = author_url + 'followers/' + str(author_id) + '/'
-                    inbox_url = author_url + 'inbox/'
+                    # requested_id = requested_id.split('/')[-2]
+                    # author_url = 'http://project-socialdistribution.herokuapp.com/api/authors/' + requested_id + "/"
+                    follow_url = requested_id + 'followers/' + str(author_id) + '/'
+                    inbox_url = requested_id + 'inbox/'
                     outgoing_username = T08_USERNAME
                     outgoing_password = T08_PASS
 
                 #T05
                 elif 'cmput404-w22-project-backend' in requested_id:
                     service = 't05' 
-                    requested_id = requested_id.split('/')[-1]
-                    author_url = 'https://cmput404-w22-project-backend.herokuapp.com/service/server_api/authors/' + requested_id
-                    follow_url = author_url + '/followers/' + str(author_id)
-                    inbox_url = author_url + '/inbox'
+                    # requested_id = requested_id.split('/')[-1]
+                    # author_url = 'https://cmput404-w22-project-backend.herokuapp.com/service/server_api/authors/' + requested_id
+                    follow_url = requested_id + '/followers/' + str(author_id)
+                    inbox_url = requested_id + '/inbox'
                     outgoing_username = T05_USERNAME
                     outgoing_password = T05_PASS
 
                 #Clone
                 else:
                     service = 'clone'
-                    requested_id = requested_id.split('/')[-1]
-                    author_url = 'https://squawker-dev.herokuapp.com/api/authors/' + requested_id
-                    follow_url = author_url + '/followers/' + str(author_id)
-                    inbox_url = author_url + '/inbox'
+                    # requested_id = requested_id.split('/')[-1]
+                    # author_url = 'https://squawker-dev.herokuapp.com/api/authors/' + requested_id
+                    follow_url = requested_id + '/followers/' + str(author_id)
+                    inbox_url = requested_id + '/inbox'
                     outgoing_username = CLONE_USERNAME
                     outgoing_password = CLONE_PASS
     
-                response = requests.get(author_url, headers=HEADERS, auth=(outgoing_username, outgoing_password))
+                response = requests.get(requested_id, headers=HEADERS, auth=(outgoing_username, outgoing_password))
 
                 if response.status_code == 200:
                     object = response.json()
