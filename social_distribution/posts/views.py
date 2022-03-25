@@ -56,17 +56,12 @@ def post_create(request, author_id):
     elif request.method == "POST":
 
         updated_request = request.POST.copy()  # using deepcopy() to make a mutable copy of the object
-        if 'Origin' in request.headers:
-            origin = str(request.headers['Origin'])
-            origin = origin.replace('https', 'http')
-        else:
-            origin=''
 
         updated_request.update(
             {
                 'author': author,
                 'type': 'post',
-                'origin': origin
+                'origin': author.host.strip('/')
             }
         )
         form = PostForm(updated_request, request.FILES)
@@ -282,8 +277,8 @@ def RemotePostsAPI(request):
 
                     if not post['unlisted']:
                         post['id'] =  str(post["id"]).split('/')[-1]
-                        if post["content_type"].lower() in ["image/png;base64", "image/jpeg;base64"]:
-                            post["image"] = post["origin"] + post["image"]
+                        # if post["content_type"].lower() in ["image/png;base64", "image/jpeg;base64"]:
+                        #     post["image"] = post["origin"] + post["image"]
                         remote_posts.append(post)
            
         # Team 8
