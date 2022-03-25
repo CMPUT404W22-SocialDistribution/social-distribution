@@ -65,6 +65,7 @@ def post_create(request, author_id):
             # origin = request.build_absolute_uri()
             # origin = origin.replace("create", str(post.id))
             # post.origin = origin
+            post.source = author.host + 'authors/' + str(author.id) + '/posts/' + str(post.id)
             post.save()
             if post.visibility == "public":
                 # send public posts to follower. Since friends are also followers so friends also receive then in their inboxes
@@ -412,7 +413,7 @@ def RemotePostsAPI(request):
                     if not post['unlisted']:
                         post['id'] =  str(post["id"]).split('/')[-1]
                         post['author_image'] = '/static/img/' + post['author_image']
-                        
+
                         remote_posts.append(post)
 
         # Team 8
