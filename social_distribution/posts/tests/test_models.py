@@ -17,7 +17,7 @@ class PostTest(TestCase):
         self.assertEqual(self.post.description, 'No description')
     
     def test_content_type_set_on_creation(self):
-        self.assertEqual(self.post.content_type, 'text/markdown')
+        self.assertEqual(self.post.content_type, 'text/plain')
     
     def test_visibility_set_on_creation(self):
         self.assertEqual(self.post.visibility, 'public')
@@ -32,6 +32,6 @@ class CommentTest(TestCase):
     def test_type_set_on_creation(self):
         self.assertEqual(self.comment.type, 'comment')
     def test_content_type_set_on_creation(self):
-        self.assertEqual(self.comment.contentType, 'text/plain')
+        self.assertEqual(self.comment.contentType, 'text/markdown')
     def test_comment_set_on_creation(self):
         self.assertEqual(self.comment.comment, 'Hello')
