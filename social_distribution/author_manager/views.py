@@ -40,6 +40,8 @@ HEADERS = {'Referer': 'http://squawker-cmput404.herokuapp.com/', 'Mode': 'no-cor
 # URL = 'http://squawker-cmput404.herokuapp.com/'
 T08_USERNAME = 'squawker'
 T08_PASS = 'sQu@k3r'
+T05_USERNAME = 'proxy'
+T05_PASS = 'proxy123!'
 CLONE_USERNAME = 'squawker-dev'
 CLONE_PASS = 'cmput404'
 
@@ -198,8 +200,12 @@ class SearchAuthorView(ListView):
                 # # Clone
                 # elif  node.url == 'https://squawker-dev.herokuapp.com/':
                 #     authors_url = node.url + 'api/authors/'
-                authors_url = node.url + 'api/authors/'
+                if node.url == "https://cmput404-w22-project-backend.herokuapp.com/":
+                    authors_url = node.url + 'service/server_api/authors/'
+                else:
+                    authors_url = node.url + 'api/authors/'
                 response = requests.get(authors_url, headers=HEADERS, auth=(node.outgoing_username, node.outgoing_password))
+                print(response)
                 if response.status_code == 200:
                     authors = response.json()['items']
                     for author in authors:
