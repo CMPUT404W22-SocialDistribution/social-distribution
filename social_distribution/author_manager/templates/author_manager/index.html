@@ -80,7 +80,7 @@
                     </div>
                     <div class="col-md-5 ml-4 text-center" >
                         <button class="bi bi-three-dots loadmoreBtn" style="visibility: hidden" ></button>
-                    </div>    
+                    </div>
 
                 </div>
             </div>
@@ -317,8 +317,8 @@
                             </div>
                             <div class="card-footer">
                                 <a href="javascript:void(0)" class="card-link text-muted" style="text-decoration: none;"
-                                   onclick="remotePostLike('${post.author.id}', '${post.id}')"><i class="fa-solid fa-thumbs-up"></i>
-                                   
+                                   onclick="remotePostLike('${post.source}')"><i class="fa-solid fa-thumbs-up"></i>
+                                   <span id="likes-${post.id}">Like</span></a>
 
                                 <a class="card-link text-muted" style="text-decoration: none;"
                                 data-bs-toggle="collapse"
@@ -349,11 +349,42 @@
                                                     ${comment.author_displayName}
                                                 </a></span>
                                                 <span>${Timestamp(comment.published)} </span>
+                                                <div><a href="javascript:void(0)" class="card-link text-muted"
+                                                        style="text-decoration: none;"
+                                                        onclick="remotePostLike('${comment.id}')">
+                                                    <i class="fa-solid fa-thumbs-up"></i>
+                                                    <span> ${getNumLikesText(comment.id)}</span>
+                                                </a></div>
                                             </div>
                                         </div>
                                     </div>`
                                             }
-                                            
+
+                                            //current user is the author of that post, or current user is comment author or that comment belongs to post author
+                                            else if ((post.author.id == `{{author.id}}`) || (comment.author.id == `{{author.id}}`) || (comment.author.id == post.author.id)) {
+                                                return `
+                                                    <div class=" justify-content-center py-2">
+                                                        <div class="pb-2 px-2 mx-2"
+                                                        style="background-color: #00000008; box-shadow: 5px 5px 2px #cccccc;"
+                                                        >  <p class="card-text"> ${comment.comment}</p>
+                                                        <div class=" d-flex justify-content-between py-1 pt-2" style="font-size: 13px";>
+                                                            <span ><a href="/authors/${comment.author.id}">
+                                                                ${comment.author_displayName}</a></span>
+                                                                <span>${Timestamp(comment.published)} </span>
+                                                                <div><a href="javascript:void(0)" class="card-link text-muted"
+                                                                        style="text-decoration: none;"
+                                                                        onclick="remotePostLike('${comment.id}')">
+                                                                    <i class="fa-solid fa-thumbs-up"></i>
+                                                                    <span> ${getNumLikesText(comment.id)}</span>
+                                                                </a></div>
+                                                            </div>
+                                                        </div>
+                                                    </div>
+                                                    `
+
+
+                                            }
+
                 }).join('')}
                             </div>` : ''}
                         </div>
@@ -362,27 +393,27 @@
                 <br>
                 `];
             return remoteCardsHtmlParts.join('');
-        
-        }
-        
 
-  
+        }
+
+
+
         var pageNumb = 1;
-       
+
         function fetchPosts(){
 
             $.ajax({
                 type: 'GET',
                 url: "{% url 'posts:all_posts_api' %}",
                 dataType: 'json',
-                success: (data, status) => {                   
+                success: (data, status) => {
                     // Get the latest post from the API
                     var postLatestFromApi = data.posts[0];
                     // Get the latest post from the DOM
                     var rootFirstChild = document.getElementById("my_node").firstChild;
                     var postLatestElement = rootFirstChild ? rootFirstChild.nextElementSibling : null;
                     var postLatestElementId = postLatestElement ? postLatestElement.id : "empty";
-                    
+
                     if (postLatestElementId == "empty") {
                         var postCardsHtml = '';
                         data.posts.map(post => {
@@ -391,14 +422,14 @@
                         });
                         document.getElementById("my_node").innerHTML += postCardsHtml;
                     }
-                    else if (postLatestElementId != postLatestFromApi.id) {                        
+                    else if (postLatestElementId != postLatestFromApi.id) {
                         var rootElement = document.getElementById("my_node")
                         rootElement.innerHTML = createPostCard(postLatestFromApi) + rootElement.innerHTML
                     }
                     var countPosts =  $(".postCard").length;
                     if (countPosts == 5) {
                         document.getElementsByClassName("loadmoreBtn")[0].style.visibility = 'visible';
-                    } 
+                    }
                     // Inject bootstrap class card-img-bottom to constrain inline image sizes
                     document.querySelectorAll("#post-content img:not(.card-img-bottom)").forEach(postContentInlineImg =>
                         postContentInlineImg?.classList.add('card-img-bottom')
@@ -440,14 +471,16 @@
                     document.querySelectorAll("#post-content img:not(.card-img-bottom)").forEach(postContentInlineImg =>
                         postContentInlineImg?.classList.add('card-img-bottom')
                     );
+                    // Set likes count on each post
+                    data.posts.forEach(post => remoteSetNumLikesText(post.source));
                 },
                 error: (error) => {
                     console.log(error);
                 }
             });
-          
-            
-           
+
+
+
             $(document).ready(function OnClickLoadMore(){
                 $(".loadmoreBtn").off('click').on('click', function(){
                     pageNumb++;
@@ -458,8 +491,8 @@
                             page: pageNumb,
                         },
                         dataType: 'json',
-                        success: (data, status) => {                   
-                            
+                        success: (data, status) => {
+
                             var postCardsHtml = '';
                             data.posts.map(post => {
                                 postCardsHtml += createPostCard(post);
@@ -468,7 +501,7 @@
                             var countPosts =  $(".postCard").length;
                             if (countPosts == data.count) {
                                 $(".loadmoreBtn").remove();
-                                
+
                             }
                         },
                         error: (error) => {
@@ -478,12 +511,12 @@
                     });
                 })
             });
-            
+
             // $(document).ready(function ClickOnComment(){
             //     $(".save-comment").off('click').on('click', function(){
             //         var _postid=$(this).data('answer')
             //         var _comment=$(".comment-text-postID".replace("postID", _postid)).val();
-                   
+
             //         // AJX
             //         $.ajax({
             //             url:"/authors/{{user.author.id}}/posts/postid/comments".replace("postid", _postid),
@@ -516,7 +549,7 @@
             //                                                 </a></div>
             //                                             </div>
             //                                         </div>
-            //                                 </div> 
+            //                                 </div>
             //                                 `;
 
             //                     $(".comment-wrapper-postID".replace("postID", _postid)).prepend(_html);
@@ -533,18 +566,18 @@
             //         var _comment=$(".comment-text-postID".replace("postID", _postid)).val();
             //         console.log(_postid)
             //         console.log(_posturl)
-            //         console.log(_comment)     
+            //         console.log(_comment)
             //         $.ajax({
-                        
+
             //             url:_posturl+"/comments",
             //             type: "post",
-            //             // username: "squawker-dev", 
+            //             // username: "squawker-dev",
             //             // password: "cmput404",
             //             data:
             //                 {comment: _comment,
             //                 csrfmiddlewaretoken:"{{csrf_token}}"
             //                 },
-                        
+
             //             dataType: 'json',
             //             success:function(data, status){
             //                console.log("POST SUCCCESS");
@@ -555,7 +588,7 @@
 
         }
 
-        
+
         fetchPosts();
 
         function getNumLikesText(numLikes) {
@@ -609,6 +642,81 @@
                 });
         }
 
+        async function remotePostLike(likedObject) {
+            const objectUrl = new URL(likedObject);
+            const objectUrlPath = objectUrl.pathname.split('/');
+            const authorId = objectUrlPath[2];
+            const postId = objectUrlPath[4];
+            const likedObjectType = typeof objectUrlPath[6] === 'undefined' ? 'Post' : 'Comment';
+            await fetch(`/api/node/authors/${authorId}/inbox`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRFToken': '{{ csrf_token }}',
+                    'node': objectUrl.origin + '/'
+                },
+                body: JSON.stringify({
+                    item: {
+                        type: 'like',
+                        summary: `'{{ request.user.author }} Liked your ${likedObjectType}`,
+                        author: {
+                            type: 'author',
+                            id: '{{ request.user.author.id }}',
+                            host: 'https://squawker-cmput404.herokuapp.com/',
+                            displayName: '{{ request.user.author.displayName }}',
+                            url: 'https://squawker-cmput404.herokuapp.com/authors/{{ request.user.author.id }}/',
+                            github: 'http://github.com/{{ request.user.author.github }}/',
+                            profileImage: 'https://squawker-cmput404.herokuapp.com/static/img/{{ request.user.author.profileImage }}/'
+                        },
+                        object: postId,
+                    }
+                })
+            })
+                .then(() => {
+                    const numLikesRegex = /\d+/;
+                    const commentLikeSpan = document.querySelector(`a[onclick="remotePostLike('${likedObject}')"]>span`);
+                    const numLikes = parseInt(commentLikeSpan.innerText.match(numLikesRegex)) || 0;
+                    commentLikeSpan.innerText = getNumLikesText(numLikes + 1);
+                    })
+                .catch(reason => console.log(reason));
+        }
+
+        async function remoteSetNumLikesText(likedObject) {
+            const objectUrl = new URL(likedObject);
+            const objectUrlPath = objectUrl.pathname.split('/');
+            const authorId = objectUrlPath[2];
+            const postId = objectUrlPath[4];
+            const commentId = objectUrlPath[6];
+            const likedObjectType = typeof commentId === 'undefined' ? 'Post' : 'Comment';
+            let fetchUrl = `/api/node/authors/${authorId}/posts/${postId}`
+            if (likedObjectType === 'Comment') {
+                fetchUrl += `/comments/${commentId}`;
+            }
+            fetchUrl += '/likes';
+            await fetch(fetchUrl, {
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-CSRFToken': '{{ csrf_token }}',
+                        'node': objectUrl.origin + '/'
+                    }
+                }
+            )
+                .then(response => {
+                    if (response.status === 200)
+                        return response.json();
+                })
+                .then(data => {
+                    const numLikes = data?.items?.length || 0;
+                    let numLikesText = "Like";
+                    if (numLikes > 1) {
+                       numLikesText = `${numLikes} Likes`;
+                    } else if (numLikes > 1) {
+                       numLikesText = `${numLikes} Like`;
+                    }
+                    document.querySelector(`span#likes-${postId}`).textContent = numLikesText;
+                })
+                .catch(reason => console.error(reason));
+        }
 
     </script>
 
