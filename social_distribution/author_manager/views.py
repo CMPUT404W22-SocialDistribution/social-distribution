@@ -203,13 +203,15 @@ def friends_view(request, author_id):
                         followings.append(author)           
 
         # get friends
+        authors = Author.objects.all()
+        current_user = request.user
         friends = []
         for follower in followers:
             if follower in followings:
                 friends.append(follower)
         # print(followers)
         # print(friends)
-        return render(request, 'friends/friends.html', {'followings': followings, 'followers': followers, 'friends': friends})
+        return render(request, 'friends/friends.html', {'followings': followings, 'followers': followers, 'friends': friends, "authors": authors, "current_user": current_user,})
 
     # unfriend
     if request.method == "POST":
