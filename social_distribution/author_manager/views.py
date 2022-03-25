@@ -232,9 +232,20 @@ class SearchAuthorView(ListView):
                     requested_id = requested_id.split('/')[-2]
                     author_url = 'http://project-socialdistribution.herokuapp.com/api/authors/' + requested_id + "/"
                     follow_url = author_url + 'followers/' + str(author_id) + '/'
-                    inbox_url = author_url +'inbox/'
+                    inbox_url = author_url + 'inbox/'
                     outgoing_username = T08_USERNAME
                     outgoing_password = T08_PASS
+
+                #T05
+                elif 'cmput404-w22-project-backend' in requested_id:
+                    service = 't05' 
+                    requested_id = requested_id.split('/')[-1]
+                    author_url = 'https://cmput404-w22-project-backend.herokuapp.com/service/server_api/authors/' + requested_id
+                    follow_url = author_url + '/followers/' + str(author_id)
+                    inbox_url = author_url + '/inbox'
+                    outgoing_username = T05_USERNAME
+                    outgoing_password = T05_PASS
+
                 #Clone
                 else:
                     service = 'clone'
@@ -244,7 +255,7 @@ class SearchAuthorView(ListView):
                     inbox_url = author_url + '/inbox'
                     outgoing_username = CLONE_USERNAME
                     outgoing_password = CLONE_PASS
-
+    
                 response = requests.get(author_url, headers=HEADERS, auth=(outgoing_username, outgoing_password))
 
                 if response.status_code == 200:
@@ -255,9 +266,10 @@ class SearchAuthorView(ListView):
 
                 # check if already follow
                 response = requests.get(follow_url, headers=HEADERS, auth=(outgoing_username, outgoing_password))
-        
+                # print(response.status_code)
+                # print(response.json())
                 # if not follow yet
-                if response.status_code == 404 or response.json()["ok"] == []:
+                if response.status_code == 404 or response.status_code == 400 or response.json()["ok"] == []:
                     actor = {
                         "type": "author",
                         "id": current_author.url,
@@ -277,12 +289,16 @@ class SearchAuthorView(ListView):
 
                     if service == "clone":
                         friend_request = {"item" : friend_request}
+                    elif service == "t05":
+                        friend_request = {"content" : friend_request}
 
                     headers = HEADERS
                     headers["Content-Type"] = "application/json"
                     response =  requests.post(inbox_url, data=json.dumps(friend_request), headers=headers, auth=(outgoing_username, outgoing_password))
 
-                    if response.status_code == 200:
+                    # print(response.status_code)
+                    # print(response.json())
+                    if response.status_code == 200 or response.status_code == 201:
                         messages.success(request, 'Your friend request has been sent.')
                     elif response.status_code == 204:
                         messages.success(request, 'You already followed this author.')
@@ -321,14 +337,17 @@ class SearchAuthorView(ListView):
 
 @login_required
 def inbox_view(request, id):
-    current_author = Author.objects.get(id=id)
-
+    try:
+        current_author = Author.objects.get(id=id)
+        inbox = Inbox.objects.get(author=current_author)
+    except:
+        return redirect('author_manager:home')
+    
     if request.user.author != current_author:
         return redirect('author_manager:login')
 
     if request.method == "GET":
         # follow request
-        inbox = Inbox.objects.get(author=current_author)
         return render(request, 'inbox/inbox.html', {
             'follows': inbox.follows,
             'posts': inbox.posts.all(),
@@ -339,18 +358,27 @@ def inbox_view(request, id):
     if request.method == "POST":
         # Accept follow request -> follow back-> true friends
         if request.POST['type'] == 'befriend':
-            requesting_author = Author.objects.get(id=request.POST['actor_id'])
-            current_author.followers.add(requesting_author)
-            requesting_author.followings.add(current_author)
+            requesting_id = request.POST['actor_id']
+            
+            # remote
+            if 'http' in requesting_id:
+                return redirect('author_manager:inbox', id)
 
-            # delete the friend request:
-            try:
-                follow = FriendRequest.objects.get(actor=requesting_author, object=current_author)
-                follow.delete()
-            except:
-                pass
-            messages.success(request, 'Success to accept friend request.')
-            return redirect('author_manager:inbox', id)
+            # local
+            else:
+                requesting_author = Author.objects.get(id=requesting_id)
+                current_author.followers.add(requesting_author)
+                requesting_author.followings.add(current_author)
+
+                # delete the friend request in inbox:
+                for follow in inbox.follows:
+                    if follow["actor"]["id"] == str(requesting_id) and follow["object"]["id"] == str(id):
+                        inbox.follows.remove(follow)
+                        inbox.save()
+                        print(inbox.follows)
+                        break
+                messages.success(request, 'Success to accept friend request.')
+                return redirect('author_manager:inbox', id)
 
         if request.POST['type'] == 'comment':
             comment = request.POST['comment']
