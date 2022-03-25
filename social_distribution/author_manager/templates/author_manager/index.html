@@ -331,11 +331,6 @@
 
                         <div class="collapse" id="collapseCommentsRemote-${post.id}">
                             <div class="card  " >
-                                    <div class= " input-group ">
-                                        <textarea  placeholder="Type your comment here" rows="1" class="form-control comment-text-${post.id}" ></textarea>
-
-                                        <button type="submit" data-answer="${post.id}" class="btn-floating save-comment-remote"><i class="bi bi-plus"></i> </button>
-                                    </div>
                             </div>
                             ${post.commentsSrc.size ? `<div class=" card justify-content-center pb-2 comment-wrapper-${post.id}">
                                 ${post.commentsSrc.comments.map(comment =>{
@@ -353,7 +348,7 @@
                                                         style="text-decoration: none;"
                                                         onclick="remotePostLike('${comment.id}')">
                                                     <i class="fa-solid fa-thumbs-up"></i>
-                                                    <span> ${getNumLikesText(comment.id)}</span>
+                                                    <span id="likes-${comment.id.split('/')[8]}">Like</span>
                                                 </a></div>
                                             </div>
                                         </div>
@@ -472,7 +467,10 @@
                         postContentInlineImg?.classList.add('card-img-bottom')
                     );
                     // Set likes count on each post
-                    data.posts.forEach(post => remoteSetNumLikesText(post.source));
+                    data.posts.forEach((post) => {
+                        remoteSetNumLikesText(post.source);
+                        post.commentsSrc.comments.forEach(comment => remoteSetNumLikesText(comment.id));
+                    });
                 },
                 error: (error) => {
                     console.log(error);
@@ -717,7 +715,7 @@
                     } else if (numLikes > 0) {
                        numLikesText = `${numLikes} Like`;
                     }
-                    document.querySelector(`span#likes-${postId}`).textContent = numLikesText;
+                    document.querySelector(`span#likes-${commentId || postId}`).textContent = numLikesText;
                 })
                 .catch(reason => console.error(reason));
         }

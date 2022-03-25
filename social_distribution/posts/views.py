@@ -26,6 +26,7 @@ from .serializers import PostSerializer, CommentSerializer, LikeSerializer
 HEADERS = {'Referer': 'http://squawker-cmput404.herokuapp.com/', 'Mode': 'no-cors', 'Access-Control-Allow-Origin': '*'}
 URL = 'http://squawker-cmput404.herokuapp.com/'
 
+
 @login_required
 def post_create(request, author_id):
     '''
@@ -132,6 +133,7 @@ def post_edit(request, author_id, post_id):
         else:
             return redirect('posts:post_create', author_id)
 
+
 @login_required
 def post_share(request, author_id, post_id):
     '''
@@ -212,7 +214,7 @@ def post_share(request, author_id, post_id):
                 return redirect('posts:post_detail', current_author.id, share_post.id)
             else:
                 return redirect('posts:post_create', current_author.id)
-                
+
         elif post.visibility == 'friends':
             updated_request = request.POST.copy()  # using deepcopy() to make a mutable copy of the object
 
@@ -252,10 +254,11 @@ def post_share(request, author_id, post_id):
             else:
                 return redirect('posts:post_create', current_author.id)
 
-        
+
         else:
             error = "403 Forbidden"
             return render(request, 'posts/post_create.html', {'error': error}, status=403)
+
 
 @login_required
 def post_detail(request, author_id, post_id):
@@ -277,7 +280,7 @@ def post_detail(request, author_id, post_id):
         # check if logged in user is author of post
         notSharePost = True
         if len(post.source) != 0:
-            notSharePost = False 
+            notSharePost = False
         if current_user.author == author:
             isAuthor = True
         else:
@@ -405,7 +408,7 @@ def RemotePostsAPI(request):
                 for post in clone_posts:
 
                     if not post['unlisted']:
-                        post['id'] =  str(post["id"]).split('/')[-1]
+                        post['id'] = str(post["id"]).split('/')[-1]
                         remote_posts.append(post)
 
         # Team 8
@@ -441,7 +444,8 @@ def RemotePostsAPI(request):
             node = remote_nodes["team8"]
             # node_url = 'http://project-socialdistribution.herokuapp.com/'
             posts_url = node.url + 'api/authors/' + author_id + '/posts/'
-            async with session.get(posts_url, auth=aiohttp.BasicAuth(node.outgoing_username, node.outgoing_password)) as r:
+            async with session.get(posts_url,
+                                   auth=aiohttp.BasicAuth(node.outgoing_username, node.outgoing_password)) as r:
                 if r.status == 200:
                     data = await r.json()
                     team8_posts = data["items"]
@@ -453,42 +457,42 @@ def RemotePostsAPI(request):
 
                                 # for each post, get all comments
                                 # comments_url = str(post["comments"]) commented out since T08 hasn't have this field set yet
-                                
+
                                 # FRIENDS ONLY
                                 # friend_url = node.url + '/authors/' + author_id +'/'
                                 # for each post, get my comments and the friend's comments only
                                 # comments_url = str(post["comments"]) commented out since T08 hasn't have this field set yet
-                                
+
                                 comments = []
                                 post_id = str(post["id"]).split('/')[-2]
-                                comments_url = posts_url + post_id +'/comments/'
+                                comments_url = posts_url + post_id + '/comments/'
                                 res = requests.get(comments_url, auth=(node.outgoing_username, node.outgoing_password))
                                 if res.status_code == 200:
-                                    post_comments =  res.json()['items']
+                                    post_comments = res.json()['items']
                                     for comment in post_comments:
                                         comment_id = str(comment["id"]).split('/')[-2]
                                         comment_data = {
-                                            'author_displayName' : comment["author"]["displayName"],
+                                            'author_displayName': comment["author"]["displayName"],
                                             'comment': comment["comment"],
                                             'contentType': comment["contentType"],
                                             'published': comment["published"],
                                             'id': comment["id"]
                                         }
                                         comments.append(comment_data)
-                                comments = sorted(comments, key=lambda k:k['published'], reverse=True)
+                                comments = sorted(comments, key=lambda k: k['published'], reverse=True)
                                 # post with comments
                                 if post["contentType"] == 'text/markdown':
                                     post["content"] = commonmark.commonmark(str(post["content"]))
                                 post_data = {
-                                    'author_username' : post["author"]["displayName"],
-                                    'author_displayName' : post["author"]["displayName"],
-                                    'title' : post["title"],
-                                    'id' : post_id,
-                                    'source' : post["source"],
-                                    'origin' : "https://project-socialdistribution.herokuapp.com/",
-                                    'content_type' : post["contentType"],
-                                    'content' : post["content"],
-                                    'author' : post["author"],
+                                    'author_username': post["author"]["displayName"],
+                                    'author_displayName': post["author"]["displayName"],
+                                    'title': post["title"],
+                                    'id': post_id,
+                                    'source': post["source"],
+                                    'origin': "https://project-socialdistribution.herokuapp.com/",
+                                    'content_type': post["contentType"],
+                                    'content': post["content"],
+                                    'author': post["author"],
                                     'categories': post["categories"],
                                     'published': post["published"],
                                     'visibility': post['visibility'].lower(),
@@ -496,16 +500,15 @@ def RemotePostsAPI(request):
                                     'author_image': "profile_picture.png",
                                     'comments': '',
                                     'commentsSrc': {
-                                            'size': len(comments),
-                                            'comments': comments
+                                        'size': len(comments),
+                                        'comments': comments
                                     }
-
 
                                 }
                                 remote_posts.append(post_data)
 
 
-                        
+
         elif team == "team5":
             node = remote_nodes["team5"]
             posts_url = node.url + 'service/server_api/authors/' + author_id + '/posts/'
@@ -516,30 +519,30 @@ def RemotePostsAPI(request):
                     for post in team5_posts:
                         if not post['unlisted']:
 
-                            if post['visibility'].upper() == 'PUBLIC' or post['visibility'].upper() == 'FRIENDS':                            
+                            if post['visibility'].upper() == 'PUBLIC' or post['visibility'].upper() == 'FRIENDS':
                                 post_id = str(post["id"]).split('/')[-1]
-                                
+
                                 # post with comments
                                 if post["contentType"] == 'text/markdown':
                                     post["content"] = commonmark.commonmark(str(post["content"]))
                                 post_data = {
-                                    'author_username' : post["author"]["displayName"],
-                                    'author_displayName' : post["author"]["displayName"],
-                                    'title' : post["title"],
-                                    'id' : post_id,
-                                    'source' : '',
-                                    'origin' : "https://cmput404-w22-project-backend.herokuapp.com/",
-                                    'content_type' : post["contentType"],
-                                    'content' : post["content"],
-                                    'author' : post["author"],
+                                    'author_username': post["author"]["displayName"],
+                                    'author_displayName': post["author"]["displayName"],
+                                    'title': post["title"],
+                                    'id': post_id,
+                                    'source': '',
+                                    'origin': "https://cmput404-w22-project-backend.herokuapp.com/",
+                                    'content_type': post["contentType"],
+                                    'content': post["content"],
+                                    'author': post["author"],
                                     'categories': post["categories"],
                                     'published': post["published"],
                                     'visibility': post["visibility"].lower(),
                                     'author_image': "profile_picture.png",
                                     'comments': '',
                                     'commentsSrc': {
-                                            'size': len(post['commentsSrc']),
-                                            'comments': post['commentsSrc']
+                                        'size': len(post['commentsSrc']),
+                                        'comments': post['commentsSrc']
                                     }
 
                                 }
@@ -562,12 +565,12 @@ def RemotePostsAPI(request):
             return results
 
     asyncio.run(get_posts(remote_authors))
-    remote_posts = sorted(remote_posts, key=lambda k:k['published'], reverse=True)
+    remote_posts = sorted(remote_posts, key=lambda k: k['published'], reverse=True)
 
     print("--- %s seconds ---" % (time.time() - start_time))
 
-
     return JsonResponse({"posts": remote_posts}, status=200)
+
 
 class PostsAPI(APIView):
     # local use
@@ -583,7 +586,6 @@ class PostsAPI(APIView):
     authentication_classes = [authentication.SessionAuthentication]
     permission_classes = []
     serializer_class = PostSerializer
-
 
     def get(self, request):
         local, remote = basic_authentication(request)
@@ -611,9 +613,8 @@ class PostsAPI(APIView):
                 if post.content_type == 'text/markdown':
                     post.content = commonmark.commonmark(post.content)  # parse and render content of type markdown
 
-
             paginator = PageNumberPagination()
-            result_page = paginator.paginate_queryset(local_posts,request)
+            result_page = paginator.paginate_queryset(local_posts, request)
             serializer = PostSerializer(result_page, many=True)
             response = {
                 'count': len(local_posts),
@@ -677,7 +678,7 @@ class MyPostsAPI(generics.GenericAPIView):
             for post in posts:
                 if post.content_type == 'text/markdown':
                     post.content = commonmark.commonmark(post.content)
-                
+
             serializer = PostSerializer(posts, many=True)
 
             content = {
@@ -856,20 +857,22 @@ class PostDetailAPI(generics.GenericAPIView):
                 else:
                     return Response(serializer.errors, 400)
 
+
 @login_required
 @api_view(['POST'])
 def create_remote_comment(request, url, author_id, post_id):
     print(request.path)
     print(request.url)
 
+
 @login_required
 def create_comment(request, author_id, post_id):
     if request.method == "POST":
-        comment=request.POST['comment']
-        postID=request.POST['post']
-        post=Post.objects.get(id=postID) # Obtain the instance
+        comment = request.POST['comment']
+        postID = request.POST['post']
+        post = Post.objects.get(id=postID)  # Obtain the instance
         postAuthor = post.author
-        author = Author.objects.get(user=request.user) # Obtain the instance
+        author = Author.objects.get(user=request.user)  # Obtain the instance
 
         comment = Comment.objects.create(author=author, post=post, comment=comment)
         num_likes = Like.objects.filter(comment__id__exact=comment.id).count()
@@ -878,7 +881,9 @@ def create_comment(request, author_id, post_id):
             postAuthor.inbox.comments.add(comment)
         # postAuthor.inbox.comments.remove(comment)
 
-    return JsonResponse({"bool":True, 'published': comment.published, 'id': comment.id, 'author': author.id, 'num_likes': num_likes})
+    return JsonResponse(
+        {"bool": True, 'published': comment.published, 'id': comment.id, 'author': author.id, 'num_likes': num_likes})
+
 
 class CommentsAPI(APIView):
     """
@@ -908,7 +913,7 @@ class CommentsAPI(APIView):
         data = serializer.data
 
         if remote:
-        # for remote only
+            # for remote only
             for comment in data:
                 comment['id'] = post_author.url + '/posts/' + post.id + '/comments/' + comment['id']
                 comment['author']['id'] = comment['author']['url']
@@ -980,6 +985,22 @@ class RemotePostLikesAPI(generics.GenericAPIView):
         node = get_object_or_404(Node, url=request.headers['node'])
         post_likes_url = node.url + self.POST_LIKES_API_ENDPOINT.format(author_id, post_id)
         with requests.get(post_likes_url,
+                          auth=HTTPBasicAuth(node.outgoing_username, node.outgoing_password)) as response:
+            if response.ok:
+                return Response(data=response.json(), status=response.status_code)
+        return Response({'detail': response.reason}, status=response.status_code)
+
+
+class RemoteCommentLikesAPI(generics.GenericAPIView):
+    COMMENT_LIKES_API_ENDPOINT = 'api/authors/{}/posts/{}/comments/{}/likes/'
+
+    def get(self, request, author_id, post_id, comment_id):
+        if 'node' not in request.headers:
+            return HttpResponseBadRequest()
+
+        node = get_object_or_404(Node, url=request.headers['node'])
+        comment_likes_url = node.url + self.COMMENT_LIKES_API_ENDPOINT.format(author_id, post_id, comment_id)
+        with requests.get(comment_likes_url,
                           auth=HTTPBasicAuth(node.outgoing_username, node.outgoing_password)) as response:
             if response.ok:
                 return Response(data=response.json(), status=response.status_code)
