@@ -17,7 +17,7 @@ class PostTest(TestCase):
         self.assertEqual(self.post.description, 'No description')
     
     def test_content_type_set_on_creation(self):
-        self.assertEqual(self.post.content_type, 'text/plain')
+        self.assertEqual(self.post.content_type, 'text/markdown')
     
     def test_visibility_set_on_creation(self):
         self.assertEqual(self.post.visibility, 'public')
