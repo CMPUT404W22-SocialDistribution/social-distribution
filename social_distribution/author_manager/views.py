@@ -149,28 +149,29 @@ def friends_view(request, author_id):
                         .data))
 
         # get remote followers
-        remote_followers = current_author.remote_followers.split(' ')
-        remote_followers.pop()
-        for follower in remote_followers:
-            #T08
-            if 'project-socialdistribution' in follower:
-                outgoing_username = T08_USERNAME
-                outgoing_password = T08_PASS
-            #T05
-            elif 'cmput404-w22-project-backend' in follower: 
-                outgoing_username = T05_USERNAME
-                outgoing_password = T05_PASS
-            #Clone
-            else:
-                outgoing_username = CLONE_USERNAME
-                outgoing_password = CLONE_PASS
+        if current_author.remote_followers: 
+            remote_followers = current_author.remote_followers.split(' ')
+            remote_followers.pop()
+            for follower in remote_followers:
+                #T08
+                if 'project-socialdistribution' in follower:
+                    outgoing_username = T08_USERNAME
+                    outgoing_password = T08_PASS
+                #T05
+                elif 'cmput404-w22-project-backend' in follower: 
+                    outgoing_username = T05_USERNAME
+                    outgoing_password = T05_PASS
+                #Clone
+                else:
+                    outgoing_username = CLONE_USERNAME
+                    outgoing_password = CLONE_PASS
 
-            response = requests.get(follower, headers=HEADERS, auth=(outgoing_username, outgoing_password))
+                response = requests.get(follower, headers=HEADERS, auth=(outgoing_username, outgoing_password))
 
-            if response.status_code == 200:
-                follower = response.json()
-                follower['profileImage'] = 'profile_picture.png'
-                followers.append(follower)
+                if response.status_code == 200:
+                    follower = response.json()
+                    follower['profileImage'] = 'profile_picture.png'
+                    followers.append(follower)
 
         # get remote followings
         for node in Node.objects.all():
