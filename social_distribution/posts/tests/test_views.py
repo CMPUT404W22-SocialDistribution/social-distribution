@@ -5,7 +5,7 @@ from posts.models import Post, Comment
 from author_manager.models import Author
 from django.test import TestCase, Client
 from django.urls import reverse 
-
+import json, commonmark
 class PostCreateTest(TestCase):
     def setUp(self):
         self.client = Client()
@@ -192,11 +192,10 @@ class CommentCreate(TestCase):
         self.url = reverse('posts:comments', args=[self.author.id, self.post.id])  
 
     def test_create_comment(self):
-
-        request_body = {'comment': 'This is my first comment in this post', 'post': self.post.id}
-        response = self.client.post(self.url, request_body)
+        comment = {'comment': 'This is my first comment in this post'}
+        response = self.client.post(self.url, comment, content_type='application/json')
         self.assertEqual(response.status_code, 200)
         
         new_comment = Comment.objects.all().order_by('-published')[0]
-        self.assertEqual(new_comment.comment, 'This is my first comment in this post')
+        self.assertEqual(new_comment.comment, commonmark.commonmark('This is my first comment in this post'))
 
