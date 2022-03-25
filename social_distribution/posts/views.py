@@ -276,6 +276,7 @@ def RemotePostsAPI(request):
 
                     if not post['unlisted']:
                         post['id'] =  str(post["id"]).split('/')[-1]
+                        post['author_image'] = '/static/img/' + post['author_image']
                         remote_posts.append(post)
 
         # Team 8
@@ -349,6 +350,7 @@ def RemotePostsAPI(request):
                                 # post with comments
                                 if post["contentType"] == 'text/markdown':
                                     post["content"] = commonmark.commonmark(str(post["content"]))
+                                author_image = post['author']['profileImage'] if post['author']['profileImage'] else 'static/img/profile_picture.png'
                                 post_data = {
                                     'author_username' : post["author"]["displayName"],
                                     'author_displayName' : post["author"]["displayName"],
@@ -363,7 +365,7 @@ def RemotePostsAPI(request):
                                     'published': post["published"],
                                     'visibility': post['visibility'].lower(),
                                     'unlisted': post['unlisted'],
-                                    'author_image': "profile_picture.png",
+                                    'author_image': author_image,
                                     'comments': '',
                                     'commentsSrc': {
                                             'size': len(comments),
@@ -392,6 +394,7 @@ def RemotePostsAPI(request):
                                 # post with comments
                                 if post["contentType"] == 'text/markdown':
                                     post["content"] = commonmark.commonmark(str(post["content"]))
+                                author_image = post['author']['profileImage'] if post['author']['profileImage'] else '/static/img/profile_picture.png'
                                 post_data = {
                                     'author_username' : post["author"]["displayName"],
                                     'author_displayName' : post["author"]["displayName"],
@@ -405,7 +408,7 @@ def RemotePostsAPI(request):
                                     'categories': post["categories"],
                                     'published': post["published"],
                                     'visibility': post["visibility"].lower(),
-                                    'author_image': "profile_picture.png",
+                                    'author_image': author_image,
                                     'comments': '',
                                     'commentsSrc': {
                                             'size': len(post['commentsSrc']),
