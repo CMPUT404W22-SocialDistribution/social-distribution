@@ -67,7 +67,8 @@ def post_create(request, author_id):
                 for follower in author.followers.all():
                     follower.inbox.posts.add(post)
                 # send public posts to remote authors
-                for node in Node.objects.all():
+                # for node in Node.objects.all():
+
 
             elif post.visibility == "friends":
                 friends = author.followers.all() & author.followings.all()
