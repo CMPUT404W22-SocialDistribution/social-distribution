@@ -28,8 +28,8 @@ class Author(models.Model):
     followings = models.ManyToManyField('self', symmetrical=False, blank=True, related_name='my_followings')
     followers = models.ManyToManyField('self', symmetrical=False, blank=True, related_name='my_followers')
 
-    remote_followings = models.TextField(validators=[int_list_validator], null=True, blank=True)
-    remote_followers = models.TextField(validators=[int_list_validator], null=True, blank=True)
+    remote_followings = models.TextField(validators=[int_list_validator], null=False, blank=True, default='')
+    remote_followers = models.TextField(validators=[int_list_validator], null=False, blank=True, default='')
     
     # list of remote friends' id
     def __str__(self):
