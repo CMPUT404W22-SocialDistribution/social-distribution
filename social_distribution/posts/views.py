@@ -431,32 +431,9 @@ def RemotePostsAPI(request):
                     team5_posts = data["items"]
                     for post in team5_posts:
                         if not post['unlisted']:
-                            if post['visibility'].upper() == 'PUBLIC':
-                                # Need Comment API to create comment objects
-                                # need to convert categories, comments to arr
-                                
-                                # for each post, get all comments
-                                # comments_url = str(post["comments"]) commented out since T08 hasn't have this field set yet
-                                comments = []
+                            if post['visibility'].upper() == 'PUBLIC' or post['visibility'].upper() == 'FRIENDS':                            
                                 post_id = str(post["id"]).split('/')[-1]
-                                comments_url = posts_url + post_id +'/comments/'
-                                res = requests.get(comments_url)
-                                if res.status_code == 200:
-                                    post_comments =  res.json()['items']
-                                    for comment in post_comments:
-                                        try: 
-                                            comment_id = str(comment["id"]).split('/')[-2]
-                                            comment_data = {
-                                                'author_displayName' : comment["author"]["displayName"],
-                                                'comment': comment["comment"],
-                                                'contentType': comment["contentType"],
-                                                'published': comment["published"],
-                                                'id': comment["id"]
-                                            }
-                                            comments.append(comment_data)
-                                        except: 
-                                            None
-                                comments = sorted(comments, key=lambda k:k['published'], reverse=True)
+                                
                                 # post with comments
                                 if post["contentType"] == 'text/markdown':
                                     post["content"] = commonmark.commonmark(str(post["content"]))
@@ -472,12 +449,12 @@ def RemotePostsAPI(request):
                                     'author' : post["author"],
                                     'categories': post["categories"],
                                     'published': post["published"],
-                                    'visibility': 'public',
+                                    'visibility': post["visibility"].lower(),
                                     'author_image': "profile_picture.png",
                                     'comments': '',
                                     'commentsSrc': {
-                                            'size': len(comments),
-                                            'comments': comments
+                                            'size': len(post['commentsSrc']),
+                                            'comments': post['commentsSrc']
                                     }
 
                                 }
@@ -611,7 +588,7 @@ class MyPostsAPI(generics.GenericAPIView):
             for post in posts:
                 if post.content_type == 'text/markdown':
                     post.content = commonmark.commonmark(post.content)
-
+                
             serializer = PostSerializer(posts, many=True)
             
             content = {
@@ -631,6 +608,8 @@ class MyPostsAPI(generics.GenericAPIView):
             for post in post_data:
                 post['id'] = author.url + '/posts/' + post['id']
                 post['author']['id'] = author.url
+                if post["content_type"].lower() in ["image/png;base64", "image/jpeg;base64"]:
+                    post["image"] = post["origin"] + post["image"]
                 for comment in post['commentsSrc']['comments']:
                     comment['author']['id'] = comment['author']['url']
                     comment['id'] = post['comments'] + comment['id']
@@ -705,7 +684,8 @@ class PostDetailAPI(generics.GenericAPIView):
                 serializer = PostSerializer(post)
                 data = serializer.data
                 data['id'] = author.url + '/posts/' + data['id']
-                
+                if data["content_type"].lower() in ["image/png;base64", "image/jpeg;base64"]:
+                    data["image"] = data["origin"] + data["image"]
                 data['author']['id'] = author.url
                 for comment in data['commentsSrc']['comments']:
                     comment['author']['id'] = comment['author']['url']
