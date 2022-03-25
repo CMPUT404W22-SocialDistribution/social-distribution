@@ -495,6 +495,8 @@ class PostsAPI(APIView):
             post_data = serializer.data
             for post in post_data:
                 post['id'] = post["author"]["url"] + '/posts/' + post['id']
+                if post["content_type"].lower() in ["image/png;base64", "image/jpeg;base64"]:
+                    post["image"] = post["origin"] + post["image"]
                 post['author']['id'] = post["author"]["url"]
                 for comment in post['commentsSrc']['comments']:
                     comment['author']['id'] = comment['author']['url']
