@@ -85,7 +85,6 @@ def post_create(request, author_id):
                                 authors.append(item["id"].split('/')[-1])
                             for item in authors: 
                                 inbox_url = f'{authors_url}/{item}/inbox'
-                                print(inbox_url)
                                 payload = {
                                     'item': {
                                         'type': 'post',
@@ -103,8 +102,22 @@ def post_create(request, author_id):
                                 }
                                 response = requests.post(inbox_url, json=payload, auth=(node.outgoing_username, node.outgoing_password))
                                 print(response.status_code)
-                    
-
+                    elif node.url ==  "https://project-socialdistribution.herokuapp.com/":
+                        authors = []
+                        authors_url = f'{node.url}api/authors'
+                        response = requests.get(authors_url, headers=HEADERS, auth=(node.outgoing_username, node.outgoing_password))
+                        if response.status_code == 200: 
+                            team8_authors = response.json()['items']  
+                            for item in team8_authors:
+                                authors.append(item["id"].split('/')[-2])
+                            for item in authors:
+                                inbox_url = f'{authors_url}/{item}/inbox'
+                                payload = {
+                                    'type': 'post',
+                                    'owner': item,
+                                    'id': post.source
+                                } 
+                                response = requests.post(inbox_url, json=payload, auth=(node.outgoing_username, node.outgoing_password))               
             elif post.visibility == "friends":
                 friends = author.followers.all() & author.followings.all()
                 for friend in friends:
@@ -783,7 +796,7 @@ class PostsAPI(APIView):
             return Response(response, 200)
         else:
             visibilities = ['public', 'friends']
-            public_posts = Post.objects.filter(visibility__in=visibilities, unlisted=False).order_by('-published')
+            public_posts = Post.objects.filter(visibility__in=visibilities, unlisted=False, author__isnull=False).order_by('-published')
             serializer = PostSerializer(public_posts, many=True)
             post_data = serializer.data
             for post in post_data:
