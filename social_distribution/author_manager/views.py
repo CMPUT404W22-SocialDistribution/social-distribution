@@ -180,8 +180,11 @@ def friends_view(request, author_id):
             if node.url == 'https://cmput404-w22-project-backend.herokuapp.com/':
                 authors_url = node.url + 'service/server_api/authors/'
             # t08 and clone
+            elif node.url == 'https://squawker-dev.herokuapp.com/':
+                authors_url = node.url + 'api/authors'
             else:
                 authors_url = node.url + 'api/authors/'
+
 
             response = requests.get(authors_url, headers=HEADERS, auth=(node.outgoing_username, node.outgoing_password))
       
@@ -330,6 +333,8 @@ class SearchAuthorView(ListView):
                 #     authors_url = node.url + 'api/authors/'
                 if node.url == "https://cmput404-w22-project-backend.herokuapp.com/":
                     authors_url = node.url + 'service/server_api/authors/'
+                elif node.url == 'https://squawker-dev.herokuapp.com/':
+                    authors_url = node.url + 'api/authors'
                 else:
                     authors_url = node.url + 'api/authors/'
                 response = requests.get(authors_url, headers=HEADERS, auth=(node.outgoing_username, node.outgoing_password))
@@ -1019,6 +1024,7 @@ class InboxAPI(generics.GenericAPIView):
                 try:
                     author_name = item["author"]["displayName"]
                     host = item["author"]["host"]
+                
                     post = Post.objects.get_or_create(
                         id=item["id"].split('/')[-1],
                         title=f"Remote post from {author_name} of {host}",
@@ -1030,7 +1036,7 @@ class InboxAPI(generics.GenericAPIView):
                             "host": item["author"]["host"],
                             "author_id":item["author"]["id"].split('/')[-1] 
                         }
-                    )
+                    )[0]
                     
                     inbox.posts.add(post)
                     return Response({'message': 'Success to send post'}, status=status.HTTP_200_OK)
