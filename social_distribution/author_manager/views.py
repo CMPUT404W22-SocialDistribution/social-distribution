@@ -894,7 +894,8 @@ class RemoteInboxAPI(generics.GenericAPIView):
             item = request.data['item']
             item_type = item['type']
             if item_type == 'like':
-                with requests.post(post_url, json=item, auth=HTTPBasicAuth(node.outgoing_username, node.outgoing_password)) as response:
+                with requests.post(post_url, json=item,
+                                   auth=HTTPBasicAuth(node.outgoing_username, node.outgoing_password)) as response:
                     return Response(status=response.status_code)
 
             return Response({'detail': 'Remote Inbox POST of Like object failed'}, status=status.HTTP_400_BAD_REQUEST)
