@@ -66,7 +66,7 @@ class Post(models.Model):
     # owner can see the post in My Posts page
     unlisted = models.BooleanField(default=False)
 
-    remote_author = models.JSONField(default=dict)
+    remote_author = models.JSONField(default=dict, null=True, blank=True)
 
 
 class Comment(models.Model):

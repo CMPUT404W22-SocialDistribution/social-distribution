@@ -83,6 +83,7 @@ def post_create(request, author_id):
             return redirect('posts:post_detail', author_id, post.id)
         else:
             # if form is invalid, return the same html page
+            print(form.errors)
             return redirect('posts:post_create', author_id)
 
 
