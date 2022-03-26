@@ -118,16 +118,13 @@ def post_create(request, author_id):
                                 } 
                                 response = requests.post(inbox_url, json=payload, auth=(node.outgoing_username, node.outgoing_password))               
                     elif node.url == "https://cmput404-w22-project-backend.herokuapp.com/":
-                        print('hello')
                         authors = []
                         authors_url = f'{node.url}service/server_api/authors/'
                         response = requests.get(authors_url)
                         if response.status_code == 200: 
-                            print(2)
                             team5_authors = response.json()['items']  
                             for item in team5_authors:
                                 authors.append(item["id"].split('/')[-1])
-                            print(authors)
                             post_serializer = PostSerializer(post)
                             for item in authors:
                                 inbox_url = f'{authors_url}{item}/inbox'
@@ -1110,7 +1107,7 @@ class CommentsAPI(APIView):
         if remote:
             # for remote only
             for comment in data:
-                comment['id'] = post_author.url + '/posts/' + post.id + '/comments/' + comment['id']
+                comment['id'] = post_author.url + '/posts/' + str(post.id) + '/comments/' + comment['id']
                 comment['author']['id'] = comment['author']['url']
 
         # page,id
@@ -1120,6 +1117,7 @@ class CommentsAPI(APIView):
             'post': post_id,
             'comments': data,
         }
+        print(response)
         return Response(response, status=status.HTTP_200_OK)
 
     def post(self, request, author_id, post_id):
