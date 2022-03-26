@@ -502,7 +502,34 @@ def post_detail(request, author_id, post_id):
                         "post": post,
                         "comments": data["commentsSrc"]["comments"]
                     }
-                
+            elif node_url == 'http://squawker-cmput404.herokuapp.com/':
+                posts_url = f"{node_url}api/authors/{author_id}/posts/{post_id}"
+                response = requests.get(posts_url, headers=HEADERS, auth=("squawker", "cmput404"))
+                if response.status_code == 200:
+                    data = response.json()
+                    if data["content_type"] == 'text/markdown':
+                        data["content"] = commonmark.commonmark(str(data["content"]))
+                    image = data["image"] if data["image"] else ''
+                    post = {
+                        "title": data["title"],
+                        "description": data["description"],
+                        "source": data["source"],
+                        "origin": data["origin"],
+                        "published": data["published"],
+                        "visibility": data["visibility"],
+                        "content": data["content"],
+                        "image": image,
+                        "author" : {
+                            "displayName": data["author_username"],
+                            "host": data["author"]["host"],
+                            "profileImage": data["author"]["host"] + "static/img/" + data["author"]["profileImage"],
+                        }
+                    }
+                    context = {
+                        "post": post,
+                        "comments": data["commentsSrc"]["comments"]
+                    }
+
             return render(request, 'posts/post_detail_remote.html', context)
             
 
