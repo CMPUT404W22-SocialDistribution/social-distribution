@@ -153,21 +153,24 @@ def friends_view(request, author_id):
             remote_followers = current_author.remote_followers.split(' ')
             remote_followers.pop()
             for follower in remote_followers:
-                print(follower)
+                # print(follower)
                 #T08
                 if 'project-socialdistribution' in follower:
+                    follower_url = follower.replace('authors', 'api/authors')
                     outgoing_username = T08_USERNAME
                     outgoing_password = T08_PASS
                 #T05
-                elif 'cmput404-w22-project-backend' in follower: 
+                elif 'cmput404-w22-project-backend' in follower:
+                    follower_url = follower.replace('authors', 'service/server_api/authors')
                     outgoing_username = T05_USERNAME
                     outgoing_password = T05_PASS
                 #Clone
                 else:
+                    follower_url = follower.replace('authors', 'api/authors')
                     outgoing_username = CLONE_USERNAME
                     outgoing_password = CLONE_PASS
 
-                response = requests.get(follower, headers=HEADERS, auth=(outgoing_username, outgoing_password))
+                response = requests.get(follower_url, headers=HEADERS, auth=(outgoing_username, outgoing_password))
 
                 if response.status_code == 200:
                     follower = response.json()
@@ -194,15 +197,15 @@ def friends_view(request, author_id):
                 for author in authors:
                     # t08
                     if node.url == 'https://project-socialdistribution.herokuapp.com/':
-                        follower_url = author['url'].replace('authors', 'api/authors') + 'followers/' + str(author_id) + '/'
+                        following_url = author['url'].replace('authors', 'api/authors') + 'followers/' + str(author_id) + '/'
                     # t05:
                     elif node.url =='https://cmput404-w22-project-backend.herokuapp.com/':
-                        follower_url = author['url'].replace('authors', 'service/server_api/authors') + '/followers/' + str(author_id)
+                        following_url = author['url'].replace('authors', 'service/server_api/authors') + '/followers/' + str(author_id)
                     # clone
                     else:
-                        follower_url = author['url'].replace('authors', 'api/authors') + '/followers/' + str(author_id)
+                        following_url = author['url'].replace('authors', 'api/authors') + '/followers/' + str(author_id)
                     
-                    response = requests.get(follower_url, headers=HEADERS, auth=(node.outgoing_username, node.outgoing_password))
+                    response = requests.get(following_url, headers=HEADERS, auth=(node.outgoing_username, node.outgoing_password))
                     
                     # if current author following them
                     if response.status_code == 200:
@@ -337,8 +340,9 @@ class SearchAuthorView(ListView):
                     authors_url = node.url + 'api/authors'
                 else:
                     authors_url = node.url + 'api/authors/'
+                # print(authors_url)
                 response = requests.get(authors_url, headers=HEADERS, auth=(node.outgoing_username, node.outgoing_password))
-                print(response)
+                # print(response)
                 if response.status_code == 200:
                     authors = response.json()['items']
                     for author in authors:
@@ -498,7 +502,8 @@ def inbox_view(request, id):
                 current_author.save()
                 # delete the friend request in inbox:
                 for follow in inbox.follows:
-                    if follow["actor"]["id"] == str(requesting_id) and follow["object"]["id"] == str(id):
+                    if follow["actor"]["url"] == str(requesting_id) and follow["object"]["url"] == current_author.url:
+                        print("access 2")
                         inbox.follows.remove(follow)
                         inbox.save()
                         # print(inbox.follows)
@@ -1008,7 +1013,7 @@ class InboxAPI(generics.GenericAPIView):
                 return Response(like_serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
             elif item_type == 'follow':
-                if author.url != item['object']['id'] or author.url == item['actor']['id']:
+                if author.url != item['object']['url'] or author.url == item['actor']['url']:
                     return Response({'detail': 'Fail to send the item!'}, status=status.HTTP_400_BAD_REQUEST)
 
                 if item in inbox.follows:
