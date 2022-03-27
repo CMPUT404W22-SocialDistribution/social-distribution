@@ -187,7 +187,7 @@ def friends_view(request, author_id):
                 authors_url = node.url + 'api/authors/'
             # t03
             elif node.url == 'https://website404.herokuapp.com':
-                authors_url = node.url + 'api/authors/'
+                continue
             # clone
             else:
                 authors_url = node.url + 'api/authors'
