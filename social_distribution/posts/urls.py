@@ -7,7 +7,7 @@ from .views import MyPostsAPI, PostsAPI, PostImageAPI, SearchView, PostDetailAPI
 
 app_name = 'posts'
 urlpatterns = [
-    path('api/authors/<uuid:author_id>/posts/', MyPostsAPI.as_view(), name="my_posts_api"),
+    path('api/authors/<uuid:author_id>/posts', MyPostsAPI.as_view(), name="my_posts_api"),
     path('search/', SearchView.as_view(), name="search"),
     path('authors/<uuid:author_id>/posts/', my_posts, name="posts"),
     path('authors/<uuid:author_id>/posts/create', post_create, name="post_create"),

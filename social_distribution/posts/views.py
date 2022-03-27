@@ -85,7 +85,6 @@ def post_create(request, author_id):
                                 authors.append(item["id"].split('/')[-1])
                             for item in authors: 
                                 inbox_url = f'{authors_url}/{item}/inbox'
-                                print(inbox_url)
                                 payload = {
                                     'item': {
                                         'type': 'post',
@@ -102,8 +101,42 @@ def post_create(request, author_id):
                                     }
                                 }
                                 response = requests.post(inbox_url, json=payload, auth=(node.outgoing_username, node.outgoing_password))
-                                print(response.status_code)
-                    
+                    elif node.url ==  "https://project-socialdistribution.herokuapp.com/":
+                        authors = []
+                        authors_url = f'{node.url}api/authors'
+                        response = requests.get(authors_url, headers=HEADERS, auth=(node.outgoing_username, node.outgoing_password))
+                        if response.status_code == 200: 
+                            team8_authors = response.json()['items']  
+                            for item in team8_authors:
+                                authors.append(item["id"].split('/')[-2])
+                            for item in authors:
+                                inbox_url = f'{authors_url}/{item}/inbox'
+                                payload = {
+                                    'type': 'post',
+                                    'owner': item,
+                                    'id': post.source
+                                } 
+                                response = requests.post(inbox_url, json=payload, auth=(node.outgoing_username, node.outgoing_password))               
+                    elif node.url == "https://cmput404-w22-project-backend.herokuapp.com/":
+                        authors = []
+                        authors_url = f'{node.url}service/server_api/authors/'
+                        response = requests.get(authors_url)
+                        if response.status_code == 200: 
+                            team5_authors = response.json()['items']  
+                            for item in team5_authors:
+                                authors.append(item["id"].split('/')[-1])
+                            post_serializer = PostSerializer(post)
+                            for item in authors:
+                                inbox_url = f'{authors_url}{item}/inbox'
+                                print(inbox_url)
+                               
+                                payload = {
+                                    'content': post_serializer.data
+                                } 
+                                response = requests.post(inbox_url, json=payload)      
+                                
+                                print('hello')
+                                print(response.status_code)   
 
             elif post.visibility == "friends":
                 friends = author.followers.all() & author.followings.all()
@@ -312,7 +345,12 @@ def post_detail(request, author_id, post_id):
             numLikes = Like.objects.filter(post__id__exact=post.id, comment__id__isnull=True).count()
             # check if logged in user is author of post
             notSharePost = True
-            if len(post.source) != 0:
+            current_source = str(request.build_absolute_uri())
+            current_source = current_source.replace("https://", "")
+            current_source = current_source.replace("http://", "")
+            post_source = post.source
+            post_source = post_source.replace("http://", "")
+            if current_source != post_source:
                 notSharePost = False
             if current_user.author == author:
                 isAuthor = True
@@ -464,7 +502,34 @@ def post_detail(request, author_id, post_id):
                         "post": post,
                         "comments": data["commentsSrc"]["comments"]
                     }
-                
+            elif node_url == 'http://squawker-cmput404.herokuapp.com/':
+                posts_url = f"{node_url}api/authors/{author_id}/posts/{post_id}"
+                response = requests.get(posts_url, headers=HEADERS, auth=("squawker", "cmput404"))
+                if response.status_code == 200:
+                    data = response.json()
+                    if data["content_type"] == 'text/markdown':
+                        data["content"] = commonmark.commonmark(str(data["content"]))
+                    image = data["image"] if data["image"] else ''
+                    post = {
+                        "title": data["title"],
+                        "description": data["description"],
+                        "source": data["source"],
+                        "origin": data["origin"],
+                        "published": data["published"],
+                        "visibility": data["visibility"],
+                        "content": data["content"],
+                        "image": image,
+                        "author" : {
+                            "displayName": data["author_username"],
+                            "host": data["author"]["host"],
+                            "profileImage": data["author"]["host"] + "static/img/" + data["author"]["profileImage"],
+                        }
+                    }
+                    context = {
+                        "post": post,
+                        "comments": data["commentsSrc"]["comments"]
+                    }
+
             return render(request, 'posts/post_detail_remote.html', context)
             
 
@@ -778,7 +843,7 @@ class PostsAPI(APIView):
             return Response(response, 200)
         else:
             visibilities = ['public', 'friends']
-            public_posts = Post.objects.filter(visibility__in=visibilities, unlisted=False).order_by('-published')
+            public_posts = Post.objects.filter(visibility__in=visibilities, unlisted=False, author__isnull=False).order_by('-published')
             serializer = PostSerializer(public_posts, many=True)
             post_data = serializer.data
             for post in post_data:
@@ -1069,7 +1134,7 @@ class CommentsAPI(APIView):
         if remote:
             # for remote only
             for comment in data:
-                comment['id'] = post_author.url + '/posts/' + post.id + '/comments/' + comment['id']
+                comment['id'] = post_author.url + '/posts/' + str(post.id) + '/comments/' + comment['id']
                 comment['author']['id'] = comment['author']['url']
 
         # page,id
@@ -1079,6 +1144,7 @@ class CommentsAPI(APIView):
             'post': post_id,
             'comments': data,
         }
+        print(response)
         return Response(response, status=status.HTTP_200_OK)
 
     def post(self, request, author_id, post_id):
