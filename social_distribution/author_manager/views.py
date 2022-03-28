@@ -36,6 +36,9 @@ T05_PASS = 'proxy123!'
 CLONE_USERNAME = 'squawker-dev'
 CLONE_PASS = 'cmput404'
 
+T08 = "http://project-socialdistribution.herokuapp.com/"
+T05 = "https://cmput404-w22-project-backend.herokuapp.com/"
+CLONE = "https://squawker-dev.herokuapp.com/"
 def sign_up(request):
     '''
     The function defines a view that allows account creation
@@ -1030,9 +1033,9 @@ class InboxAPI(generics.GenericAPIView):
                 inbox.save()
                 return Response({'message': 'Success to send follow/friend request'}, status=status.HTTP_200_OK)
 
-            item_id = item['id']
-
+            
             if item_type.lower() == 'post':
+                item_id = item['id']
                 try:
                     author_name = item["author"]["displayName"]
                     host = item["author"]["host"]
@@ -1057,9 +1060,30 @@ class InboxAPI(generics.GenericAPIView):
                     return Response({'message': e}, status_code=400)
 
             elif item_type == 'comment':
-                comment = Comment.objects.get(id=item_id)
-                inbox.comments.add(comment)
-                return Response({'message': 'Success to send comment'}, status=status.HTTP_200_OK)
+                try:
+                    post_id = item["post"].split('/')[-1]   #post is url
+                    post = get_object_or_404(Post, id=post_id)
+                    if remote:
+                        comment = Comment.objects.create(
+                            remote_author={
+                                "id": item["author"]["id"],
+                                "host": item["author"]["host"],
+                                "displayName": item["author"]["displayName"],
+                                "github": item["author"]["github"],
+                                "profileImage": item["author"]["profileImage"]
+                            },
+                            post= post,
+                            comment = item["comment"]
+                        )
+                    else: #local
+                        author_id = item["author"]["id"].split('/')[-1]
+                        author = get_object_or_404(Author, id=author_id)
+                        comment = Comment.objects.create(author=author, post=post, comment=item["comment"])
+                    inbox.comments.add(comment)
+                    return Response({'message': 'Success to send comment'}, status=status.HTTP_200_OK)
+                except Exception as e:
+                    print(e)
+                    return Response({'message': e}, status_code=400)
 
             return Response({'detail': 'Fail to send the item!'}, status=status.HTTP_400_BAD_REQUEST)
 
@@ -1089,7 +1113,7 @@ class InboxAPI(generics.GenericAPIView):
 
 class RemoteInboxAPI(generics.GenericAPIView):
     AUTHOR_INBOX_ENDPOINT = 'api/authors/{}/inbox/'
-
+    AUTHOR_INBOX_ENDPOINT_T05 = 'authors/{}/inbox'
     def post(self, request, author_id):
         if 'node' not in request.headers:
             return HttpResponseBadRequest()
@@ -1105,9 +1129,33 @@ class RemoteInboxAPI(generics.GenericAPIView):
                                    auth=HTTPBasicAuth(node.outgoing_username, node.outgoing_password)) as response:
                     return Response(status=response.status_code)
             elif item_type == 'comment':
+                if str(node.url) == T08:
+                    item['author'] = {
+                        'type': 'author',
+                        'id': 'https://{{ request.get_host }}/api/authors/{{ request.user.author.id }}/',
+                        'host': 'https://{{ request.get_host }}/',
+                        'displayName': '{{request.user.author.displayName }}',
+                        'url': 'https://{{ request.get_host }}/api/authors/{{ request.user.author.id }}/',
+                        'profileImage': 'https://{{ request.get_host }}/static/img/{{ request.user.author.profileImage }}'
+                    }
+                elif str(node.url) == T05:
+                    post_url = node.url + "service/" + "server_api/" + self.AUTHOR_INBOX_ENDPOINT_T05.format(author_id)
+                    # new_item= {"content": 'Hello T05, T01 wants to add comment'}
+                    # item = json.dumps(new_item)
+                    item['content'] = 'Hello T05, T01 wants to add comment' 
+                elif str(node.url) == CLONE:
+                    item['author'] = {
+                        'id': 'https://{{ request.get_host }}/api/authors/{{ request.user.author.id }}/',
+                        'host': 'https://{{ request.get_host }}/',
+                        'displayName': '{{request.user.author.displayName }}',
+                        'github': '{{request.user.author.github }}',
+                        'profileImage': 'https://{{ request.get_host }}/static/img/{{ request.user.author.profileImage }}'
+                    }
+                    new_item = {'item': {item}}
+                    item = json.stringify(new_item)
                 with requests.post(post_url, json=item,
                                    auth=HTTPBasicAuth(node.outgoing_username, node.outgoing_password)) as response:
-                    # print(response.content)
+                    print(response.content)
                     # print(response.url)
                     return Response(status=response.status_code)
             return Response({'detail': 'Remote Inbox POST of Like object failed'}, status=status.HTTP_400_BAD_REQUEST)
