@@ -1258,7 +1258,8 @@ class RemoteCommentLikesAPI(generics.GenericAPIView):
                           auth=HTTPBasicAuth(node.outgoing_username, node.outgoing_password)) as response:
             if response.ok:
                 return Response(data=response.json(), status=response.status_code)
-        return Response({'detail': response.reason}, status=response.status_code)
+        return Response({'detail': f'Unable to get Likes for Comment object {comment_likes_url}'},
+                        status=response.status_code)
 
 
 class CommentLikesAPI(generics.GenericAPIView):
@@ -1267,7 +1268,7 @@ class CommentLikesAPI(generics.GenericAPIView):
     serializer_class = LikeSerializer
 
     def get(self, request, author_id, post_id, comment_id):
-        comment = get_object_or_404(Comment, id=comment_id, post__exact=post_id, author__exact=author_id)
+        comment = get_object_or_404(Comment, id=comment_id, post__exact=post_id)
         likes = comment.likes.all()
         serializer = self.serializer_class(likes, many=True)
         return Response(
