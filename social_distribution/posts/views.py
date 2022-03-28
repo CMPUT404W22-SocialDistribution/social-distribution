@@ -56,16 +56,13 @@ def post_create(request, author_id):
             {
                 'author': author,
                 'type': 'post',
-                'origin': author.host.strip('/')
+                'origin': author.host.strip('/').replace('http', 'https')
             }
         )
         form = PostForm(updated_request, request.FILES)
 
         if form.is_valid():
             post = form.save(commit=False)
-            # origin = request.build_absolute_uri()
-            # origin = origin.replace("create", str(post.id))
-            # post.origin = origin
             post.source = author.host + 'authors/' + str(author.id) + '/posts/' + str(post.id)
             post.save()
             if post.visibility == "public":
@@ -96,7 +93,7 @@ def post_create(request, author_id):
                                             'host': author.host,
                                             'displayName': author.displayName,
                                             'github': author.github,
-                                            'profileImage': author.profileImage,
+                                            'profileImage': '/static/img/' + author.profileImage,
                                             'url': author.url,
                                         }
                                     }
@@ -132,15 +129,12 @@ def post_create(request, author_id):
                             post_serializer = PostSerializer(post)
                             for item in authors:
                                 inbox_url = f'{authors_url}{item}/inbox'
-                                print(inbox_url)
 
                                 payload = {
                                     'content': post_serializer.data
                                 }
                                 response = requests.post(inbox_url, json=payload)
 
-                                print('hello')
-                                print(response.status_code)
 
             elif post.visibility == "friends":
                 friends = author.followers.all() & author.followings.all()
@@ -154,7 +148,6 @@ def post_create(request, author_id):
             return redirect('posts:post_detail', author_id, post.id)
         else:
             # if form is invalid, return the same html page
-            print(form.errors)
             return redirect('posts:post_create', author_id)
 
 
@@ -274,7 +267,6 @@ def post_share(request, author_id, post_id):
             )
 
             form = PostForm(updated_request, request.FILES)
-            print(form.errors)
             if form.is_valid():
                 share_post = form.save(commit=False)
                 if post.image:
@@ -313,7 +305,6 @@ def post_share(request, author_id, post_id):
                 }
             )
             form = PostForm(updated_request, request.FILES)
-            print(form.errors)
             if form.is_valid():
                 share_post = form.save(commit=False)
                 if post.image:
@@ -363,7 +354,7 @@ def post_detail(request, author_id, post_id):
                 isAuthor = False
                 if post.visibility == "private":
                     if post.visibleTo == current_user.username:
-                        comments = post.commentsSrc.all().order_by('-published')
+                        comments = CommentSerializer(post.commentsSrc.all().order_by('-published'), many=True).data
                         context = {
                             "comments": comments,
                             "post": post,
@@ -384,8 +375,8 @@ def post_detail(request, author_id, post_id):
                         return render(request, 'posts/post_create.html', {'error': error}, status=404)
             if post.content_type == 'text/markdown':
                 post.content = commonmark.commonmark(post.content)
+            
             comments = CommentSerializer(post.commentsSrc.all().order_by('-published'), many=True).data
-
             context = {
                 "comments": comments,
                 "post": post,
@@ -410,7 +401,7 @@ def post_detail(request, author_id, post_id):
                     res = requests.get(comments_url, auth=("squawker", "sQu@k3r"))
                     if res.status_code == 200:
                         comments = []
-                        post_comments = res.json()['items']
+                        post_comments = res.json()['comments']
                         for comment in post_comments:
                             comment_id = str(comment["id"]).split('/')[-2]
                             comment_data = {
@@ -536,6 +527,12 @@ def post_detail(request, author_id, post_id):
                         "comments": data["commentsSrc"]["comments"]
                     }
 
+            try:
+                inbox = Inbox.objects.get(author=request.user.author)
+                post = Post.objects.get(id=post_id)
+                inbox.posts.remove(post)
+            except:
+                None
             return render(request, 'posts/post_detail_remote.html', context)
 
 
@@ -625,7 +622,8 @@ def RemotePostsAPI(request):
                 clone_posts = response.json()['posts']
                 for post in clone_posts:
                     if not post['unlisted']:
-                        post['id'] = str(post["id"]).split('/')[-1]
+                        post['source'] = post['id']
+                        post['id'] = str(post["id"]).split('/')[-1]          
                         post['author_id'] = post["author"]["id"].split('/')[-1]
                         if post["content_type"] == 'text/markdown':
                             post["content"] = commonmark.commonmark(str(post["content"]))
@@ -689,7 +687,8 @@ def RemotePostsAPI(request):
                                 comments_url = posts_url + post_id + '/comments/'
                                 res = requests.get(comments_url, auth=(node.outgoing_username, node.outgoing_password))
                                 if res.status_code == 200:
-                                    post_comments = res.json()['items']
+                                    post_comments = res.json()['comments']
+                                    
                                     for comment in post_comments:
                                         comment_id = str(comment["id"]).split('/')[-2]
                                         comment_data = {
@@ -711,6 +710,7 @@ def RemotePostsAPI(request):
                                     'author_displayName': post["author"]["displayName"],
                                     'title': post["title"],
                                     'id': post_id,
+                                    'description': post['description'],
                                     'source': post["source"],
                                     'origin': "https://project-socialdistribution.herokuapp.com/",
                                     'content_type': post["contentType"],
@@ -756,7 +756,8 @@ def RemotePostsAPI(request):
                                     'author_displayName': post["author"]["displayName"],
                                     'title': post["title"],
                                     'id': post_id,
-                                    'source': '',
+                                    'description': post['description'],
+                                    'source': post["id"],
                                     'origin': "https://cmput404-w22-project-backend.herokuapp.com/",
                                     'content_type': post["contentType"],
                                     'content': post["content"],
@@ -933,7 +934,7 @@ class MyPostsAPI(generics.GenericAPIView):
                     post["image"] = post["origin"] + post["image"]
                 for comment in post['commentsSrc']['comments']:
                     comment['author']['id'] = comment['author']['url']
-                    comment['id'] = post['comments'] + comment['id']
+                    comment['id'] = post['comments'].replace('api/', '') + '/' + comment['id']
             return Response({'posts': post_data}, 200)
 
     def post(self, request, author_id):
@@ -1012,7 +1013,7 @@ class PostDetailAPI(generics.GenericAPIView):
                 data['author']['id'] = author.url
                 for comment in data['commentsSrc']['comments']:
                     comment['author']['id'] = comment['author']['url']
-                    comment['id'] = data['comments'] + comment['id']
+                    comment['id'] = data['comments'].replace('api/', '') + '/'+ comment['id']
                 return Response(data, 200)
             return Response({'detail': 'Not Found!'}, 404)
 
@@ -1089,11 +1090,6 @@ class PostDetailAPI(generics.GenericAPIView):
                     return Response(serializer.errors, 400)
 
 
-@login_required
-@api_view(['POST'])
-def create_remote_comment(request, url, author_id, post_id):
-    print(request.path)
-    print(request.url)
 
 
 @login_required
@@ -1157,7 +1153,6 @@ class CommentsAPI(APIView):
             'post': post_id,
             'comments': data,
         }
-        print(response)
         return Response(response, status=status.HTTP_200_OK)
 
     def post(self, request, author_id, post_id):

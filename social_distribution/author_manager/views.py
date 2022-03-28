@@ -38,6 +38,9 @@ T05_PASS = 'proxy123!'
 CLONE_USERNAME = 'squawker-dev'
 CLONE_PASS = 'cmput404'
 
+T08 = "http://project-socialdistribution.herokuapp.com/"
+T05 = "https://cmput404-w22-project-backend.herokuapp.com/"
+CLONE = "https://squawker-dev.herokuapp.com/"
 def sign_up(request):
     '''
     The function defines a view that allows account creation
@@ -53,13 +56,14 @@ def sign_up(request):
         if form.is_valid():
             user = form.save(commit=True)
             if 'HTTP_POST' in request.META:
-                user.author.host = 'https' + '://' + request.META['HTTP_HOST'] + '/'
+                user.author.host = request.scheme + '://' + request.META['HTTP_HOST'] + '/'
                 user.author.url = user.author.host + 'authors/' + str(user.author.id)
                 user.author.save()
             else:
-                user.author.host = 'https' + '://' + request.get_host() + '/'
+                user.author.host = request.scheme + '://' + request.get_host() + '/'
                 user.author.url = user.author.host + 'authors/' + str(user.author.id)
                 user.author.save()
+                
             inbox = Inbox(author=user.author)  # create inbox object
             inbox.save()
             messages.success(request, 'Your account has been created.')
@@ -258,7 +262,7 @@ def friends_view(request, author_id):
 
             # if not found following author, then accept remove
             if response.status_code != 200:
-                current_author.remote_followers = current_author.remote_followers.replace(requested_id, '')
+                current_author.remote_followers = current_author.remote_followers.replace(f'{requested_id} ', '')
                 current_author.save()
                 messages.success(request, 'Your are now unfriend with the selected author !')
                 return redirect('author_manager:friends', author_id)
@@ -536,13 +540,24 @@ def inbox_view(request, id):
                 messages.success(request, 'Success to accept friend request.')
                 return redirect('author_manager:inbox', id)
 
-        if request.POST['type'] == 'comment':
+        elif request.POST['type'] == 'comment':
             comment = request.POST['comment']
             inbox_comment = Comment.objects.get(id=comment)
             current_author.inbox.comments.remove(inbox_comment)
             post_author = request.POST['post_author']
             post =  request.POST['post']
             return redirect('posts:post_detail', post_author, post)
+        
+        elif request.POST['type'] == 'post':
+            post_id = request.POST['post']
+            try:
+                post = Post.objects.get(id=post_id)
+                current_author.inbox.posts.remove(post)
+            except:
+                None
+            author_id = request.POST['author']
+            return redirect('posts:post_detail', author_id, post_id)
+            
 
 @login_required
 def profile_edit(request, id):
@@ -1094,9 +1109,9 @@ class InboxAPI(generics.GenericAPIView):
                 inbox.save()
                 return Response({'message': 'Success to send follow/friend request'}, status=status.HTTP_200_OK)
 
-            item_id = item['id']
-
+            
             if item_type.lower() == 'post':
+                item_id = item['id']
                 try:
                     author_name = item["author"]["displayName"]
                     host = item["author"]["host"]
@@ -1121,9 +1136,30 @@ class InboxAPI(generics.GenericAPIView):
                     return Response({'message': e}, status_code=400)
 
             elif item_type == 'comment':
-                comment = Comment.objects.get(id=item_id)
-                inbox.comments.add(comment)
-                return Response({'message': 'Success to send comment'}, status=status.HTTP_200_OK)
+                try:
+                    post_id = item["post"].split('/')[-1]   #post is url
+                    post = get_object_or_404(Post, id=post_id)
+                    if remote:
+                        comment = Comment.objects.create(
+                            remote_author={
+                                "id": item["author"]["id"],
+                                "host": item["author"]["host"],
+                                "displayName": item["author"]["displayName"],
+                                "github": item["author"]["github"],
+                                "profileImage": item["author"]["profileImage"]
+                            },
+                            post= post,
+                            comment = item["comment"]
+                        )
+                    else: #local
+                        author_id = item["author"]["id"].split('/')[-1]
+                        author = get_object_or_404(Author, id=author_id)
+                        comment = Comment.objects.create(author=author, post=post, comment=item["comment"])
+                    inbox.comments.add(comment)
+                    return Response({'message': 'Success to send comment'}, status=status.HTTP_200_OK)
+                except Exception as e:
+                    print(e)
+                    return Response({'message': e}, status_code=400)
 
             return Response({'detail': 'Fail to send the item!'}, status=status.HTTP_400_BAD_REQUEST)
 
@@ -1153,13 +1189,13 @@ class InboxAPI(generics.GenericAPIView):
 
 class RemoteInboxAPI(generics.GenericAPIView):
     AUTHOR_INBOX_ENDPOINT = 'api/authors/{}/inbox/'
-
+    AUTHOR_INBOX_ENDPOINT_T05 = 'authors/{}/inbox'
+    AUTHOR_INBOX_ENDPOINT_CLONE = 'api/authors/{}/inbox'
     def post(self, request, author_id):
         if 'node' not in request.headers:
             return HttpResponseBadRequest()
         
         node = get_object_or_404(Node, url=request.headers['node'])
-        
         post_url = node.url + self.AUTHOR_INBOX_ENDPOINT.format(author_id)
         try:
             item = request.data['item']
@@ -1169,9 +1205,35 @@ class RemoteInboxAPI(generics.GenericAPIView):
                                    auth=HTTPBasicAuth(node.outgoing_username, node.outgoing_password)) as response:
                     return Response(status=response.status_code)
             elif item_type == 'comment':
+                if str(node.url) == T08:
+                    item['author'] = {
+                        'type': 'author',
+                        'id': f'https://{request.get_host}/api/authors/{request.user.author.id}/',
+                        'host': f'https://{request.get_host}/',
+                        'displayName': f'{request.user.author.displayName}',
+                        'url': f'https://{request.get_host}/api/authors/{request.user.author.id}/',
+                        'profileImage': f'https://{request.get_host}/static/img/{request.user.author.profileImage}'
+                    }
+                elif str(node.url) == T05:
+                    post_url = node.url + "service/" + "server_api/" + self.AUTHOR_INBOX_ENDPOINT_T05.format(author_id)
+                    # new_item= {"content": 'Hello T05, T01 wants to add comment'}
+                    # item = json.dumps(new_item)
+                    item['content'] = 'Hello T05, T01 wants to add comment' 
+                elif str(node.url) == CLONE:
+                    post_url = node.url + self.AUTHOR_INBOX_ENDPOINT_CLONE.format(author_id)
+                    request.data['item']['author'] = {
+                        'id': f'https://{request.get_host}/api/authors/{request.user.author.id}/',
+                        'host': f'https://{request.get_host}/',
+                        'displayName': f'{request.user.author.displayName}',
+                        'github': f'{request.user.author.github}',
+                        'profileImage': f'https://{request.get_host}/static/img/{request.user.author.profileImage}'
+                    }
+                    item = request.data
+                    # new_item = {'item': {item}}
+                    # item = json.dumps(new_item)
                 with requests.post(post_url, json=item,
                                    auth=HTTPBasicAuth(node.outgoing_username, node.outgoing_password)) as response:
-                    # print(response.content)
+                    print(response.content)
                     # print(response.url)
                     return Response(status=response.status_code)
             return Response({'detail': 'Remote Inbox POST of Like object failed'}, status=status.HTTP_400_BAD_REQUEST)
