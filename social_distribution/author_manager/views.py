@@ -28,13 +28,7 @@ from .forms import SignUpForm, EditProfileForm
 from .serializers import *
 
 HEADERS = {'Referer': 'http://squawker-cmput404.herokuapp.com/', 'Mode': 'no-cors'}
-# URL = 'http://squawker-cmput404.herokuapp.com/'
-T08_USERNAME = 'squawker'
-T08_PASS = 'sQu@k3r'
-T05_USERNAME = 'proxy'
-T05_PASS = 'proxy123!'
-CLONE_USERNAME = 'squawker-dev'
-CLONE_PASS = 'cmput404'
+
 
 def sign_up(request):
     '''
@@ -154,23 +148,21 @@ def friends_view(request, author_id):
             remote_followers.pop()
             for follower in remote_followers:
                 # print(follower)
-                #T08
+                # t08
                 if 'project-socialdistribution' in follower:
+                    node = Node.objects.get(url='https://project-socialdistribution.herokuapp.com/')
                     follower_url = follower.replace('authors', 'api/authors')
-                    outgoing_username = T08_USERNAME
-                    outgoing_password = T08_PASS
-                #T05
+                # t05
                 elif 'cmput404-w22-project-backend' in follower:
+                    node = Node.objects.get(url='https://cmput404-w22-project-backend.herokuapp.com/')
                     follower_url = follower.replace('authors', 'service/server_api/authors')
-                    outgoing_username = T05_USERNAME
-                    outgoing_password = T05_PASS
-                #Clone
+                # t03
+                # clone
                 else:
+                    node = Node.objects.get(url='https://squawker-dev.herokuapp.com/')
                     follower_url = follower.replace('authors', 'api/authors')
-                    outgoing_username = CLONE_USERNAME
-                    outgoing_password = CLONE_PASS
 
-                response = requests.get(follower_url, headers=HEADERS, auth=(outgoing_username, outgoing_password))
+                response = requests.get(follower_url, headers=HEADERS, auth=(node.outgoing_username, node.outgoing_password))
 
                 if response.status_code == 200:
                     follower = response.json()
@@ -235,25 +227,24 @@ def friends_view(request, author_id):
         # remote
         if 'http' in requested_id:
 
-            #T08
+            # t08
             if 'project-socialdistribution' in requested_id:
+                node = Node.objects.get(url='http://project-socialdistribution.herokuapp.com/')
                 follow_url = requested_id.replace('authors', 'api/authors') + 'followers/' + str(author_id) + '/'
-                outgoing_username = T08_USERNAME
-                outgoing_password = T08_PASS
-
-            #T05
+            
+            # t05
             elif 'cmput404-w22-project-backend' in requested_id:
+                node = Node.objects.get(url='https://cmput404-w22-project-backend.herokuapp.com/')
                 follow_url = requested_id.replace('authors', 'service/server_api/authors') + '/followers/' + str(author_id)
-                outgoing_username = T05_USERNAME
-                outgoing_password = T05_PASS
-
-            #Clone
+            
+            # t03 
+            # clone
             else:
+                node = Node.objects.get(url='https://squawker-dev.herokuapp.com/')
                 follow_url = requested_id.replace('authors', 'api/authors') + '/followers/' + str(author_id)
-                outgoing_username = CLONE_USERNAME
-                outgoing_password = CLONE_PASS
+                
 
-            response = requests.get(requested_id, headers=HEADERS, auth=(outgoing_username, outgoing_password))
+            response = requests.get(requested_id, headers=HEADERS, auth=(node.outgoing_username, node.outgoing_password))
 
             # if not found following author, then accept remove
             if response.status_code != 200:
@@ -264,10 +255,10 @@ def friends_view(request, author_id):
             
             # if found following author
             else:
-                response = requests.delete(follow_url, headers=HEADERS, auth=(outgoing_username, outgoing_password))
+                response = requests.delete(follow_url, headers=HEADERS, auth=(node.outgoing_username, node.outgoing_password))
 
                 if response.status_code == 200 or response.status_code == 404:
-                    current_author.remote_followers = current_author.remote_followers.replace(requested_id, '')
+                    current_author.remote_followers = current_author.remote_followers.replace(f'{requested_id} ', '')
                     current_author.save()
                     messages.success(request, 'Your are now unfriend with the selected author !')
                     return redirect('author_manager:friends', author_id)
@@ -391,40 +382,32 @@ class SearchAuthorView(ListView):
 
         try:
             if 'http' in requested_id:
-                #T08
+                # t08
                 if 'project-socialdistribution' in requested_id:
+                    node = Node.objects.get(url='http://project-socialdistribution.herokuapp.com/')
                     service = 't08'
-                    # requested_id = requested_id.split('/')[-2]
-                    # author_url = 'http://project-socialdistribution.herokuapp.com/api/authors/' + requested_id + "/"
                     author_url = requested_id.replace('authors', 'api/authors')
                     follow_url = author_url + 'followers/' + str(author_id) + '/'
                     inbox_url = author_url + 'inbox/'
-                    outgoing_username = T08_USERNAME
-                    outgoing_password = T08_PASS
 
-                #T05
+                # t05
                 elif 'cmput404-w22-project-backend' in requested_id:
+                    node = Node.objects.get(url='https://cmput404-w22-project-backend.herokuapp.com/')
                     service = 't05' 
-                    # requested_id = requested_id.split('/')[-1]
-                    # author_url = 'https://cmput404-w22-project-backend.herokuapp.com/service/server_api/authors/' + requested_id
                     author_url = requested_id.replace('authors', 'service/server_api/authors')
                     follow_url = author_url + '/followers/' + str(author_id)
                     inbox_url = author_url + '/inbox'
-                    outgoing_username = T05_USERNAME
-                    outgoing_password = T05_PASS
-
-                #Clone
+                
+                #t03
+                # clone
                 else:
+                    node = Node.objects.get(url='https://squawker-dev.herokuapp.com/')
                     service = 'clone'
-                    # requested_id = requested_id.split('/')[-1]
-                    # author_url = 'https://squawker-dev.herokuapp.com/api/authors/' + requested_id
                     author_url = requested_id.replace('authors', 'api/authors')
                     follow_url = author_url + '/followers/' + str(author_id)
                     inbox_url = author_url + '/inbox'
-                    outgoing_username = CLONE_USERNAME
-                    outgoing_password = CLONE_PASS
-    
-                response = requests.get(author_url, headers=HEADERS, auth=(outgoing_username, outgoing_password))
+                   
+                response = requests.get(author_url, headers=HEADERS, auth=(node.outgoing_username, node.outgoing_password))
 
                 if response.status_code == 200:
                     object = response.json()
@@ -433,7 +416,7 @@ class SearchAuthorView(ListView):
                     return redirect('author_manager:friends', author_id)
 
                 # check if already follow
-                response = requests.get(follow_url, headers=HEADERS, auth=(outgoing_username, outgoing_password))
+                response = requests.get(follow_url, headers=HEADERS, auth=(node.outgoing_username, node.outgoing_password))
 
                 # print(response.status_code)
                 # print(response.json())
@@ -463,7 +446,7 @@ class SearchAuthorView(ListView):
 
                     headers = HEADERS
                     headers["Content-Type"] = "application/json"
-                    response =  requests.post(inbox_url, data=json.dumps(friend_request), headers=headers, auth=(outgoing_username, outgoing_password))
+                    response =  requests.post(inbox_url, data=json.dumps(friend_request), headers=headers, auth=(node.outgoing_username, node.outgoing_password))
 
                     # print(response.status_code)
                     # print(response.json())
