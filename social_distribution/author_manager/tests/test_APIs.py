@@ -234,14 +234,14 @@ class InboxTest(APITestCase):
     #     )
     #     self.assertEqual(response.status_code, 200)
     
-    def test_post_send_comment_to_inbox(self):  
-        request_body = {'item': {'type': 'comment', 'id': self.comment.id}}
-        response = self.client.post(
-                    self.url,
-                    request_body,
-                    format='json'
-        )
-        self.assertEqual(response.status_code, 200)
+    # def test_post_send_comment_to_inbox(self):  
+    #     request_body = {'item': {'type': 'comment', 'id': self.comment.id}}
+    #     response = self.client.post(
+    #                 self.url,
+    #                 request_body,
+    #                 format='json'
+    #     )
+    #     self.assertEqual(response.status_code, 200)
 
     # def test_post_create_send_like_to_inbox(self):  
     #     request_body = {'item': 
