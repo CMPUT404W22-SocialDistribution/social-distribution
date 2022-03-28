@@ -91,7 +91,7 @@ class Comment(models.Model):
     published = models.DateTimeField(auto_now_add=True)
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False, unique=True)
     post = models.ForeignKey(Post, on_delete=models.CASCADE, related_name="commentsSrc")
-
+    remote_author = models.JSONField(default=dict, null=True, blank=True)
 
 class Like(models.Model):
     summary = models.CharField(max_length=300)

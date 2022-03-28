@@ -106,7 +106,7 @@
                                     <div class= " input-group ">
                                         <textarea  placeholder="Type your comment here" rows="1" class="form-control comment-text-${post.id}" ></textarea>
 
-                                        <button type="submit" data-answer="${post.id}" class="btn-floating save-comment"><i class="bi bi-plus"></i> </button>
+                                        <button type="submit"  onClick="saveComment('${post.id}')" class="btn-floating save-comment"><i class="bi bi-plus"></i> </button>
                                     </div>
                             </div>
                             <div class=" card justify-content-center pb-2 comment-wrapper-${post.id}">
@@ -183,60 +183,55 @@
                     console.log(error);
                 }
             });
-            setTimeout(fetchPosts, 5000);
+            // setTimeout(fetchPosts, 5000);
 
-
-
-            
-            $(document).ready(function ClickOnComment(){
-            $(".save-comment").off('click').on('click', function(){
-                var _postid=$(this).data('answer')
-                var _comment=$(".comment-text-postID".replace("postID", _postid)).val();
-                
-                // AJX
-                $.ajax({
-                    url:"/authors/{{user.author.id}}/posts/postid/comments".replace("postid", _postid),
-                    type: "post",
-                    data:{
-                        comment:_comment,
-                        post:_postid,
-                        csrfmiddlewaretoken:"{{csrf_token}}"
-                    },
-                    dataType: 'json',
-                    
-                    success:function(res){
-                        if(res.bool==true){
-                            $(".comment-text-postID".replace("postID", _postid)).val('')
-
-                            // Added new comment
-                            var _url = "{% url 'author_manager:profile' user.author.id%}";
-                            var _html = `<div class=" justify-content-center py-2">
-                                                <div class="pb-2 px-2 mx-2"
-                                                     style="background-color: #00000008; box-shadow: 5px 5px 2px #cccccc;">
-                                                    <span class="card-text">${_comment}</span>
-                                                    <div class="d-flex justify-content-between py-1 pt-2" style="font-size: 13px";>
-                                                        <span ><a href='${_url}'>{{request.user.author}}</a></span>
-                                                        <span>${Timestamp(res.published)}</span>
-                                                        <div>
-                                                            <a href="javascript:void(0)" class="card-link text-muted"
-                                                               style="text-decoration: none;" onclick="postLike('${res.author}', '${_postid}', '${res.id}')">
-                                                               <i class="fa-solid fa-thumbs-up"></i>&nbsp;<span>Like</span></a>
-                                                        </div>
-                                                    </div>
-                                                </div>
-                                        </div> \
-                                        `;
-                            
-                            $(".comment-wrapper-postID".replace("postID", _postid)).prepend(_html);
-                        }
-                        $(".save-comment").removeClass('disabled');
-                    }
-                })
-            }) 
-        })
+           
         }
         fetchPosts();
+        async function saveComment(postID) {
+            var _comment=$(".comment-text-postID".replace("postID", postID)).val();
+            var url = `/authors/{{user.author.id}}/posts/${postID}/comments`;
+            await fetch(url, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRFToken': '{{ csrf_token }}'
+                },
+                body: JSON.stringify({
+                    'comment':_comment,                    
+                })
+            }).then
+            (response => {
+                if (response.status === 200) {
+                    return response.json();
+                }
+            }).then(res => {
+                if(res.bool==true){
+                    $(".comment-text-postID".replace("postID", postID)).val('')
+                    // Added new comment
+                    var _url = "{% url 'author_manager:profile' user.author.id%}";
+                    var _html= `<div class=" justify-content-center py-2">
+                                        <div class="pb-2 px-2 mx-2"
+                                            style="background-color: #00000008; box-shadow: 5px 5px 2px #cccccc;">
+                                            <span class="card-text">${res.comment}</span>
+                                            <div class="d-flex justify-content-between py-1 pt-2" style="font-size: 13px";>
+                                                <span ><a href='${_url}'>{{request.user.author}}</a></span>
+                                                <span>${Timestamp(res.published)}</span>
+                                                <div><a href="javascript:void(0)" class="card-link text-muted"
+                                                        style="text-decoration: none;"
+                                                        onclick="postLike('${res.author}', '${postID}', '${res.id}')">
+                                                    <i class="fa-solid fa-thumbs-up"></i>
+                                                    <span> ${getNumLikesText(res.num_likes)}</span>
+                                                </a></div>
+                                            </div>
+                                        </div>
+                                </div>
+                                `;
+                    $(".comment-wrapper-postID".replace("postID", postID)).prepend(_html);
+                }
+            });
 
+        }
         function getNumLikesText(numLikes) {
             let text = "Like";
             if (numLikes > 1) {
