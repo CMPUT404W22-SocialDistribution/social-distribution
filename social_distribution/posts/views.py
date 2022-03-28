@@ -364,6 +364,7 @@ def post_detail(request, author_id, post_id):
                 if post.visibility == "private":
                     if post.visibleTo == current_user.username:
                         comments = post.commentsSrc.all().order_by('-published')
+                       
                         context = {
                             "comments": comments,
                             "post": post,
@@ -384,8 +385,8 @@ def post_detail(request, author_id, post_id):
                         return render(request, 'posts/post_create.html', {'error': error}, status=404)
             if post.content_type == 'text/markdown':
                 post.content = commonmark.commonmark(post.content)
-            comments = CommentSerializer(post.commentsSrc.all().order_by('-published'), many=True).data
-
+            comments = post.commentsSrc.all().order_by('-published')
+            # comments = CommentSerializer(post.commentsSrc.all().order_by('-published'), many=True).data
             context = {
                 "comments": comments,
                 "post": post,
@@ -1089,11 +1090,6 @@ class PostDetailAPI(generics.GenericAPIView):
                     return Response(serializer.errors, 400)
 
 
-@login_required
-@api_view(['POST'])
-def create_remote_comment(request, url, author_id, post_id):
-    print(request.path)
-    print(request.url)
 
 
 @login_required
