@@ -352,7 +352,8 @@
                                 </div>
                             </div>
                             <div class=" card justify-content-center pb-2 comment-wrapper-${post.id}">
-                                ${post.commentsSrc.comments.map(comment =>{
+                                ${post.commentsSrc.comments.map(comment => {
+                                    const commentId = parseCommentId(comment.id);
                                     if ( post.visibility != "friends" ) {
                                                 return`<div class=" justify-content-center py-2">
                                         <div class="pb-2 px-2 mx-2" style="background-color: #00000008;
@@ -367,7 +368,7 @@
                                                         style="text-decoration: none;"
                                                         onclick="remotePostLike('${comment.id}')">
                                                     <i class="fa-solid fa-thumbs-up"></i>
-                                                    <span id="likes-${comment.id.split('/')[8]}">Like</span>
+                                                    <span id="likes-${commentId}">Like</span>
                                                 </a></div>
                                             </div>
                                         </div>
@@ -388,7 +389,7 @@
                                                                 style="text-decoration: none;"
                                                                 onclick="remotePostLike('${comment.id}')">
                                                             <i class="fa-solid fa-thumbs-up"></i>
-                                                            <span id="likes-${comment.id.split('/')[8]}">Like</span>
+                                                            <span id="likes-${commentId}">Like</span>
                                                         </a></div>
                                                     </div>
                                                 </div>
@@ -766,23 +767,36 @@
         }
 
         async function remoteSetNumLikesText(likedObjectSource) {
-            let  objectUrl = ''
+            // console.debug(`likedObjectSource=${likedObjectSource}`);
+            let objectUrl = ''
             try {
                 objectUrl = new URL(likedObjectSource);
             } catch (e) {
                 console.error(`${likedObjectSource} is an invalid URL`);
                 return;
             }
-            const objectUrlPath = objectUrl.pathname.split('/');
-            const authorId = objectUrlPath[2];
-            const postId = objectUrlPath[4];
-            const commentId = objectUrlPath[6];
-            const likedObjectType = typeof commentId === 'undefined' ? 'Post' : 'Comment';
-            let fetchUrl = `/api/node/authors/${authorId}/posts/${postId}`
+            const objectUrlPathParts = objectUrl.pathname.split('/');
+            const authorsIndex = objectUrlPathParts.findIndex(part => part === 'authors');
+            const postsIndex = objectUrlPathParts.findIndex(part => part === 'posts');
+            const commentsIndex = objectUrlPathParts.findIndex(part => part === 'comments');
+            if (authorsIndex === -1 || postsIndex === -1) {
+                throw Error(`Invalid likedObjectSource: ${likedObjectSource}`);
+            }
+            const authorId = objectUrlPathParts[authorsIndex + 1];
+            const postId = objectUrlPathParts[postsIndex + 1];
+            // console.debug(`authorId=${authorId}, postId=${postId}`);
+
+            const likedObjectType = commentsIndex === -1 ? 'Post' : 'Comment';
+
+            let fetchUrl = `/api/node/authors/${authorId}/posts/${postId}`;
+            let commentId = undefined;
             if (likedObjectType === 'Comment') {
+                commentId = objectUrlPathParts[commentsIndex + 1];
+                // console.debug(`commentId=${commentId}`);
                 fetchUrl += `/comments/${commentId}`;
             }
             fetchUrl += '/likes';
+            // console.debug(`fetchUrl=${fetchUrl}`);
             await fetch(fetchUrl, {
                     headers: {
                         'Content-Type': 'application/json',
@@ -792,8 +806,9 @@
                 }
             )
                 .then(response => {
-                    if (response.status === 200)
+                    if (200 >= response.status && response.status < 300) {
                         return response.json();
+                    }
                 })
                 .then(data => {
                     const numLikes = data?.items?.length || 0;
@@ -809,8 +824,7 @@
                     } else {
                         console.error(`Likes span with id="likes-${commentId || postId}" not found`);
                     }
-                })
-                .catch(reason => console.error(reason));
+                });
         }
 
         function remoteSetLikes(posts) {
@@ -826,11 +840,46 @@
                 }
                 remoteSetNumLikesText(post.source);
                 // Set likes count on each comment
+                // console.debug(post);
                 post.commentsSrc.comments.forEach(comment => {
-                    remoteSetNumLikesText(comment.id); // TODO: need comment URL
+                    // comment ID may be a URL or a UUID, depending on the node
+                    let commentSource = '';
+                    try {
+                        // console.debug(`comment.id=${comment.id}`);
+                        commentSource = new URL(comment.id);
+                    } catch {
+                        console.log.warn(`URL parse failed for comment.id=${comment.id}. Attempting to construct URL manually.`);
+                        commentSource = post.source;
+                        if (post.source.endsWith('/')) {
+                            commentSource += `comments/`;
+                        } else {
+                            commentSource += `/comments/`
+                            commentSource += comment.id;
+                            // console.debug(`post.source=${post.source}, comment.id=${comment.id}, commentSource=${commentSource}`);
+                        }
+                    }
+                    // console.debug(`commentSource=${commentSource}`);
+                    remoteSetNumLikesText(commentSource);
                 });
             });
         }
+
+    function parseCommentId(commentIdText) {
+        // comment id might be a URL
+        let commentIdUrl = undefined;
+        try {
+            commentIdUrl = new URL(commentIdText);
+        } catch {
+            // Assume commentIdText is id
+            return commentIdText;
+        }
+        const commentIdUrlParts = commentIdUrl.pathname.split('/');
+        const commentsIndex = commentIdUrlParts.findIndex(part => part === 'comments');
+        if (commentsIndex === -1) {
+            throw Error(`Invalid comment ID: ${commentIdText}`);
+        }
+        return commentIdUrlParts[commentsIndex + 1];
+    }
 
     </script>
 
