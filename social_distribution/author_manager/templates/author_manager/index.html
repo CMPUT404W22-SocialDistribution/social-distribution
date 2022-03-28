@@ -468,7 +468,6 @@
                         var remoteCardsHtml = '';
                         data.posts.map(post => {
                             postList.push(createRemotePostCard(post))
-                            // remoteCardsHtml += createRemotePostCard(post);
                         });
                        
                         var len = 5;
@@ -610,14 +609,23 @@
 
         }
 
+        var T08 = "https://project-socialdistribution.herokuapp.com/"
+        var T05 = "https://cmput404-w22-project-backend.herokuapp.com/"
+        var CLONE = "https://squawker-dev.herokuapp.com/"
         async function saveRemoteComment(postSource) {
-            
             var items = postSource.split('/');
-            const postID = items[items.length -2];
-            const authorID = items[items.length -4];
+            const service = items[0] + "//" + items[2] + "/"
+            if (service == T05){
+                var postID = items[items.length -1];
+                var authorID = items[items.length -3];
+            }
+            else {  //T08
+                var postID = items[items.length -2];
+                var authorID = items[items.length -4];
+            }
             var comment=$(".comment-text-postID".replace("postID", postID)).val();
             var url = `/api/node/authors/${authorID}/inbox`;
-            const service = items[0] + "//" + items[2] + "/"
+            
             await fetch(url, {
                 method: 'POST',
                 headers: {
@@ -629,14 +637,14 @@
                     item: {
                         type: 'comment',
                         comment: comment,
-                        author: {
-                            type: 'author',
-                            id: 'https://{{ request.get_host }}/api/authors/{{ request.user.author.id }}/',
-                            host: 'https://{{ request.get_host }}/',
-                            displayName: '{{request.user.author.displayName }}',
-                            url: 'https://{{ request.get_host }}/api/authors/{{ request.user.author.id }}/',
-                            profileImage: 'https://{{ request.get_host }}/static/img/{{ request.user.author.profileImage }}'
-                        },       
+                        // author: {
+                        //     type: 'author',
+                        //     id: 'https://{{ request.get_host }}/api/authors/{{ request.user.author.id }}/',
+                        //     host: 'https://{{ request.get_host }}/',
+                        //     displayName: '{{request.user.author.displayName }}',
+                        //     url: 'https://{{ request.get_host }}/api/authors/{{ request.user.author.id }}/',
+                        //     profileImage: 'https://{{ request.get_host }}/static/img/{{ request.user.author.profileImage }}'
+                        // },       
                     }             
                 })
             }).then (response => {
@@ -655,12 +663,7 @@
                                         <div class="d-flex justify-content-between py-1 pt-2" style="font-size: 13px";>
                                             <span ><a href='${_url}'>{{request.user.author.displayName}}</a></span>
                                             <span>${Timestamp(new Date())}</span>
-                                            <div><a href="javascript:void(0)" class="card-link text-muted"
-                                                    style="text-decoration: none;"
-                                                    onclick="postLike('${res.author}', '${postID}', '${res.id}')">
-                                                <i class="fa-solid fa-thumbs-up"></i>
-                                                <span> ${getNumLikesText(res.num_likes)}</span>
-                                            </a></div>
+                                            
                                         </div>
                                     </div>
                             </div>
