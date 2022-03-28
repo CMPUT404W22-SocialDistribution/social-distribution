@@ -182,11 +182,15 @@ def friends_view(request, author_id):
             # t05
             if node.url == 'https://cmput404-w22-project-backend.herokuapp.com/':
                 authors_url = node.url + 'service/server_api/authors/'
-            # t08 and clone
-            elif node.url == 'https://squawker-dev.herokuapp.com/':
-                authors_url = node.url + 'api/authors'
-            else:
+            # t08
+            elif node.url == 'https://project-socialdistribution.herokuapp.com/':
                 authors_url = node.url + 'api/authors/'
+            # t03
+            elif node.url == 'https://website404.herokuapp.com':
+                continue
+            # clone
+            else:
+                authors_url = node.url + 'api/authors'
 
 
             response = requests.get(authors_url, headers=HEADERS, auth=(node.outgoing_username, node.outgoing_password))
@@ -336,10 +340,10 @@ class SearchAuthorView(ListView):
                 #     authors_url = node.url + 'api/authors/'
                 if node.url == "https://cmput404-w22-project-backend.herokuapp.com/":
                     authors_url = node.url + 'service/server_api/authors/'
-                elif node.url == 'https://squawker-dev.herokuapp.com/':
-                    authors_url = node.url + 'api/authors'
-                else:
+                elif node.url == 'http://project-socialdistribution.herokuapp.com/':
                     authors_url = node.url + 'api/authors/'
+                else:
+                    authors_url = node.url + 'api/authors'
                 # print(authors_url)
                 response = requests.get(authors_url, headers=HEADERS, auth=(node.outgoing_username, node.outgoing_password))
                 # print(response)
@@ -363,8 +367,9 @@ class SearchAuthorView(ListView):
                 #T08
                 if 'project-socialdistribution' in requested_id:
                     service = 't08'
-                    requested_id = requested_id.split('/')[-2]
-                    author_url = 'http://project-socialdistribution.herokuapp.com/api/authors/' + requested_id + "/"
+                    # requested_id = requested_id.split('/')[-2]
+                    # author_url = 'http://project-socialdistribution.herokuapp.com/api/authors/' + requested_id + "/"
+                    author_url = requested_id.replace('authors', 'api/authors')
                     follow_url = author_url + 'followers/' + str(author_id) + '/'
                     inbox_url = author_url + 'inbox/'
                     outgoing_username = T08_USERNAME
@@ -373,8 +378,9 @@ class SearchAuthorView(ListView):
                 #T05
                 elif 'cmput404-w22-project-backend' in requested_id:
                     service = 't05' 
-                    requested_id = requested_id.split('/')[-1]
-                    author_url = 'https://cmput404-w22-project-backend.herokuapp.com/service/server_api/authors/' + requested_id
+                    # requested_id = requested_id.split('/')[-1]
+                    # author_url = 'https://cmput404-w22-project-backend.herokuapp.com/service/server_api/authors/' + requested_id
+                    author_url = requested_id.replace('authors', 'service/server_api/authors')
                     follow_url = author_url + '/followers/' + str(author_id)
                     inbox_url = author_url + '/inbox'
                     outgoing_username = T05_USERNAME
@@ -383,8 +389,9 @@ class SearchAuthorView(ListView):
                 #Clone
                 else:
                     service = 'clone'
-                    requested_id = requested_id.split('/')[-1]
-                    author_url = 'https://squawker-dev.herokuapp.com/api/authors/' + requested_id
+                    # requested_id = requested_id.split('/')[-1]
+                    # author_url = 'https://squawker-dev.herokuapp.com/api/authors/' + requested_id
+                    author_url = requested_id.replace('authors', 'api/authors')
                     follow_url = author_url + '/followers/' + str(author_id)
                     inbox_url = author_url + '/inbox'
                     outgoing_username = CLONE_USERNAME
