@@ -96,14 +96,15 @@ def post_create(request, author_id):
                                             'host': author.host,
                                             'displayName': author.displayName,
                                             'github': author.github,
-                                            'profileImage': author.profileImage,
+                                            'profileImage': '/static/img/' + author.profileImage,
                                             'url': author.url,
                                         }
                                     }
                                 }
+                                print(payload)
                                 response = requests.post(inbox_url, json=payload,
                                                          auth=(node.outgoing_username, node.outgoing_password))
-                    elif node.url == "https://project-socialdistribution.herokuapp.com/":
+                    '''elif node.url == "https://project-socialdistribution.herokuapp.com/":
                         authors = []
                         authors_url = f'{node.url}api/authors'
                         response = requests.get(authors_url, headers=HEADERS,
@@ -141,7 +142,7 @@ def post_create(request, author_id):
 
                                 print('hello')
                                 print(response.status_code)
-
+'''
             elif post.visibility == "friends":
                 friends = author.followers.all() & author.followings.all()
                 for friend in friends:
@@ -689,8 +690,11 @@ def RemotePostsAPI(request):
                                 post_id = str(post["id"]).split('/')[-2]
                                 comments_url = posts_url + post_id + '/comments/'
                                 res = requests.get(comments_url, auth=(node.outgoing_username, node.outgoing_password))
+                                print(res.status_code)
                                 if res.status_code == 200:
-                                    post_comments = res.json()['items']
+                                    print(res.json())
+                                    post_comments = res.json()['comments']
+                                    
                                     for comment in post_comments:
                                         comment_id = str(comment["id"]).split('/')[-2]
                                         comment_data = {
@@ -934,7 +938,7 @@ class MyPostsAPI(generics.GenericAPIView):
                     post["image"] = post["origin"] + post["image"]
                 for comment in post['commentsSrc']['comments']:
                     comment['author']['id'] = comment['author']['url']
-                    comment['id'] = post['comments'] + comment['id']
+                    comment['id'] = post['comments'].replace('api/', '') + '/' + comment['id']
             return Response({'posts': post_data}, 200)
 
     def post(self, request, author_id):
@@ -1013,7 +1017,7 @@ class PostDetailAPI(generics.GenericAPIView):
                 data['author']['id'] = author.url
                 for comment in data['commentsSrc']['comments']:
                     comment['author']['id'] = comment['author']['url']
-                    comment['id'] = data['comments'] + comment['id']
+                    comment['id'] = data['comments'].replace('api/', '') + '/'+ comment['id']
                 return Response(data, 200)
             return Response({'detail': 'Not Found!'}, 404)
 

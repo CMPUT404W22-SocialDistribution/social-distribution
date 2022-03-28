@@ -54,13 +54,14 @@ def sign_up(request):
         if form.is_valid():
             user = form.save(commit=True)
             if 'HTTP_POST' in request.META:
-                user.author.host = 'https' + '://' + request.META['HTTP_HOST'] + '/'
+                user.author.host = request.scheme + '://' + request.META['HTTP_HOST'] + '/'
                 user.author.url = user.author.host + 'authors/' + str(user.author.id)
                 user.author.save()
             else:
-                user.author.host = 'https' + '://' + request.get_host() + '/'
+                user.author.host = request.scheme + '://' + request.get_host() + '/'
                 user.author.url = user.author.host + 'authors/' + str(user.author.id)
                 user.author.save()
+                
             inbox = Inbox(author=user.author)  # create inbox object
             inbox.save()
             messages.success(request, 'Your account has been created.')
