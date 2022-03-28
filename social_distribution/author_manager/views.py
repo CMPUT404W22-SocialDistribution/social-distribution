@@ -1120,8 +1120,6 @@ class RemoteInboxAPI(generics.GenericAPIView):
             return HttpResponseBadRequest()
         
         node = get_object_or_404(Node, url=request.headers['node'])
-        print(node.url)
-        print(CLONE)
         post_url = node.url + self.AUTHOR_INBOX_ENDPOINT.format(author_id)
         try:
             item = request.data['item']
@@ -1146,7 +1144,6 @@ class RemoteInboxAPI(generics.GenericAPIView):
                     # item = json.dumps(new_item)
                     item['content'] = 'Hello T05, T01 wants to add comment' 
                 elif str(node.url) == CLONE:
-                    print("POST TO CLONE")
                     post_url = node.url + self.AUTHOR_INBOX_ENDPOINT_CLONE.format(author_id)
                     request.data['item']['author'] = {
                         'id': f'https://{request.get_host}/api/authors/{request.user.author.id}/',
