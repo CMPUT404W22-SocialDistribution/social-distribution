@@ -1143,6 +1143,16 @@ class RemoteInboxAPI(generics.GenericAPIView):
                     # new_item= {"content": 'Hello T05, T01 wants to add comment'}
                     # item = json.dumps(new_item)
                     item['content'] = 'Hello T05, T01 wants to add comment' 
+                elif str(node.url) == CLONE:
+                    item['author'] = {
+                        'id': 'https://{{ request.get_host }}/api/authors/{{ request.user.author.id }}/',
+                        'host': 'https://{{ request.get_host }}/',
+                        'displayName': '{{request.user.author.displayName }}',
+                        'github': '{{request.user.author.github }}',
+                        'profileImage': 'https://{{ request.get_host }}/static/img/{{ request.user.author.profileImage }}'
+                    }
+                    new_item = {'item': {item}}
+                    item = json.stringify(new_item)
                 with requests.post(post_url, json=item,
                                    auth=HTTPBasicAuth(node.outgoing_username, node.outgoing_password)) as response:
                     print(response.content)
