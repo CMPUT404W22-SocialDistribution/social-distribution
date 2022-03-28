@@ -135,7 +135,7 @@
                     break;
             }
             const postCardsHtmlParts = [`
-                <div class="row postCard" id="${post.id}">
+                <div class="row postCard" id="post-${post.id}">
                     <div class="col-md-1 mr-2">
                         <img class="rounded-circle border border-2 shadow-sm"
                             style="border-color: gray"
@@ -272,8 +272,9 @@
                     postVisibilityIcon = `<i class="card-link fa-solid text-primary fa-user-group"></i>`;
                     break;
             }
+
             const remoteCardsHtmlParts = [`
-                <div class="row remotePostcard" id="${post.id}">
+                <div class="row remotePostcard" id="post-${post.id}">
                     <div class="col-md-1 mr-2">
                         <img class="rounded-circle border border-2 shadow-sm"
                             style="border-color: gray"
@@ -386,7 +387,7 @@
                                                                 style="text-decoration: none;"
                                                                 onclick="remotePostLike('${comment.id}')">
                                                             <i class="fa-solid fa-thumbs-up"></i>
-                                                            <span> ${getNumLikesText(comment.id)}</span>
+                                                            <span id="likes-${comment.id.split('/')[8]}">Like</span>
                                                         </a></div>
                                                     </div>
                                                 </div>
@@ -408,6 +409,7 @@
 
         var pageNumb = 1;
         var postList = [];
+        var postDataList = [];
         var count = 0;
         function fetchPosts(){
 
@@ -455,6 +457,7 @@
                 url: "{% url 'posts:remote_posts_api' %}",
                 dataType: 'json',
                 success: (data, status) => {
+                    postDataList = data.posts;
                     // Remove the Fetching placeholder
                     document.getElementById("remote_fetching").remove();
                     // Get the latest post from the API
@@ -463,6 +466,7 @@
                     var rootFirstChild = document.getElementById("remote_node").firstChild;
                     var postLatestElement = rootFirstChild ? rootFirstChild.nextElementSibling : null;
                     var postLatestElementId = postLatestElement ? postLatestElement.id : "empty";
+                    var len = 5;
                     console.log(data)
                     if (postLatestElementId == "empty") {
                         var remoteCardsHtml = '';
@@ -470,7 +474,6 @@
                             postList.push(createRemotePostCard(post))
                         });
                        
-                        var len = 5;
                         count = postList.length;
                         if (postList.length < 5) {
                             len = postList.length 
@@ -492,11 +495,8 @@
                     document.querySelectorAll("#post-content img:not(.card-img-bottom)").forEach(postContentInlineImg =>
                         postContentInlineImg?.classList.add('card-img-bottom')
                     );
-                    // Set likes count on each post
-                    data.posts.forEach((post) => {
-                        remoteSetNumLikesText(post.source);
-                        post.commentsSrc.comments.forEach(comment => remoteSetNumLikesText(comment.id));
-                    });
+                    // Set likes count on each post currently on-screen
+                    remoteSetLikes(postDataList.splice(0, len));
                 },
                 error: (error) => {
                     console.log(error);
@@ -537,7 +537,7 @@
                 })
             });
 
-            $(document).ready(function OnClickLoadMore(){
+            $(document).ready(function RemoteOnClickLoadMore(){
                 $(".loadmoreBtn-remote").on('click', function(){
                     
                     var len = 5;
@@ -545,17 +545,19 @@
                     if (postList.length < 5) {
                         len = postList.length
                       
-                    };
+                    }
                     var remoteCardsHtml = '';
                     for (let i=0; i < len; i++) {
                         remoteCardsHtml += postList.shift();
-                    };
+                    }
                     
                     document.getElementById("remote_node").innerHTML += remoteCardsHtml;
                     var countPosts =  $(".remotePostcard").length;
                     if (countPosts == count) {
                         $(".loadmoreBtn-remote").remove();
                     }
+                    // Set likes count on each post currently on-screen
+                    remoteSetLikes(postDataList.splice(0, len));
                 })
             });
 
@@ -767,8 +769,14 @@
                 .catch(reason => console.log(reason));
         }
 
-        async function remoteSetNumLikesText(likedObject) {
-            const objectUrl = new URL(likedObject);
+        async function remoteSetNumLikesText(likedObjectSource) {
+            let  objectUrl = ''
+            try {
+                objectUrl = new URL(likedObjectSource);
+            } catch (e) {
+                console.error(`${likedObjectSource} is an invalid URL`);
+                return;
+            }
             const objectUrlPath = objectUrl.pathname.split('/');
             const authorId = objectUrlPath[2];
             const postId = objectUrlPath[4];
@@ -799,9 +807,33 @@
                     } else if (numLikes > 0) {
                        numLikesText = `${numLikes} Like`;
                     }
-                    document.querySelector(`span#likes-${commentId || postId}`).textContent = numLikesText;
+                    const likesSpan = document.querySelector(`span#likes-${commentId || postId}`);
+                    if (likesSpan) {
+                        likesSpan.textContent = numLikesText;
+                    } else {
+                        console.error(`Likes span with id="likes-${commentId || postId}" not found`);
+                    }
                 })
                 .catch(reason => console.error(reason));
+        }
+
+        function remoteSetLikes(posts) {
+            // Set likes count on each post
+            {#console.log('setting likes for the following posts:');#}
+            {#console.log(posts);#}
+            posts.forEach((post) => {
+                {#console.log(`looking for div matching query: ` + `div.remotePostcard#post-${post.id}`);#}
+                const postDiv = document.querySelector(`div.remotePostcard#post-${post.id}`);
+                if (!postDiv) {
+                    console.warn(`div with class='remotePostcard' and id='post-${post.id}' not found`);
+                    return;
+                }
+                remoteSetNumLikesText(post.source);
+                // Set likes count on each comment
+                post.commentsSrc.comments.forEach(comment => {
+                    remoteSetNumLikesText(comment.id); // TODO: need comment URL
+                });
+            });
         }
 
     </script>
