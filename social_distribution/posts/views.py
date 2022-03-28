@@ -1243,10 +1243,17 @@ class RemoteCommentLikesAPI(generics.GenericAPIView):
 
     def get(self, request, author_id, post_id, comment_id):
         if 'node' not in request.headers:
-            return HttpResponseBadRequest()
+            return HttpResponseBadRequest("Missing header 'node: node_url'")
 
-        node = get_object_or_404(Node, url=request.headers['node'])
+        # backwards compatibility
+        node_url = request.headers['node']
+        if node_url == 'http://squawker-dev.herokuapp.com/':
+            node_url = node_url.replace('http', 'https')
+
+        node = get_object_or_404(Node, url=node_url)
         comment_likes_url = node.url + self.COMMENT_LIKES_API_ENDPOINT.format(author_id, post_id, comment_id)
+        if node.url == 'https://squawker-dev.herokuapp.com/':
+            comment_likes_url = comment_likes_url.rstrip('/')
         with requests.get(comment_likes_url,
                           auth=HTTPBasicAuth(node.outgoing_username, node.outgoing_password)) as response:
             if response.ok:
