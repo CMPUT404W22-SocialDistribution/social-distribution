@@ -54,11 +54,11 @@ def sign_up(request):
         if form.is_valid():
             user = form.save(commit=True)
             if 'HTTP_POST' in request.META:
-                user.author.host = 'http' + '://' + request.META['HTTP_HOST'] + '/'
+                user.author.host = 'https' + '://' + request.META['HTTP_HOST'] + '/'
                 user.author.url = user.author.host + 'authors/' + str(user.author.id)
                 user.author.save()
             else:
-                user.author.host = 'http' + '://' + request.get_host() + '/'
+                user.author.host = 'https' + '://' + request.get_host() + '/'
                 user.author.url = user.author.host + 'authors/' + str(user.author.id)
                 user.author.save()
             inbox = Inbox(author=user.author)  # create inbox object
@@ -259,7 +259,7 @@ def friends_view(request, author_id):
 
             # if not found following author, then accept remove
             if response.status_code != 200:
-                current_author.remote_followers = current_author.remote_followers.replace(requested_id, '')
+                current_author.remote_followers = current_author.remote_followers.replace(f'{requested_id} ', '')
                 current_author.save()
                 messages.success(request, 'Your are now unfriend with the selected author !')
                 return redirect('author_manager:friends', author_id)
