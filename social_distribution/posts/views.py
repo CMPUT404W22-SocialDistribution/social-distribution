@@ -56,16 +56,13 @@ def post_create(request, author_id):
             {
                 'author': author,
                 'type': 'post',
-                'origin': author.host.strip('/')
+                'origin': author.host.strip('/').replace('http', 'https')
             }
         )
         form = PostForm(updated_request, request.FILES)
 
         if form.is_valid():
             post = form.save(commit=False)
-            # origin = request.build_absolute_uri()
-            # origin = origin.replace("create", str(post.id))
-            # post.origin = origin
             post.source = author.host + 'authors/' + str(author.id) + '/posts/' + str(post.id)
             post.save()
             if post.visibility == "public":
