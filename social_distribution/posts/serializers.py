@@ -2,7 +2,8 @@ from rest_framework import serializers
 
 from author_manager.models import Author
 from .models import Post, Comment, Like
-import json
+import commonmark
+
 
 class AuthorSerializer(serializers.ModelSerializer):
     class Meta:
@@ -70,7 +71,7 @@ class PostSerializer(serializers.ModelSerializer):
 class CommentSerializer(serializers.ModelSerializer):
     author_displayName = serializers.SerializerMethodField('get_author_displayName')
     num_likes = serializers.SerializerMethodField('get_num_likes')
-    
+  
     def get_author_displayName(self, obj):
         if obj.author is not None:
             return obj.author.displayName

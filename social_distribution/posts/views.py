@@ -363,8 +363,7 @@ def post_detail(request, author_id, post_id):
                 isAuthor = False
                 if post.visibility == "private":
                     if post.visibleTo == current_user.username:
-                        comments = post.commentsSrc.all().order_by('-published')
-                       
+                        comments = CommentSerializer(post.commentsSrc.all().order_by('-published'), many=True).data
                         context = {
                             "comments": comments,
                             "post": post,
@@ -385,8 +384,8 @@ def post_detail(request, author_id, post_id):
                         return render(request, 'posts/post_create.html', {'error': error}, status=404)
             if post.content_type == 'text/markdown':
                 post.content = commonmark.commonmark(post.content)
-            comments = post.commentsSrc.all().order_by('-published')
-            # comments = CommentSerializer(post.commentsSrc.all().order_by('-published'), many=True).data
+            
+            comments = CommentSerializer(post.commentsSrc.all().order_by('-published'), many=True).data
             context = {
                 "comments": comments,
                 "post": post,
