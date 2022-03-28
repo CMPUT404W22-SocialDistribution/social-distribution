@@ -51,11 +51,11 @@ def sign_up(request):
         if form.is_valid():
             user = form.save(commit=True)
             if 'HTTP_POST' in request.META:
-                user.author.host = 'http' + '://' + request.META['HTTP_HOST'] + '/'
+                user.author.host = 'https' + '://' + request.META['HTTP_HOST'] + '/'
                 user.author.url = user.author.host + 'authors/' + str(user.author.id)
                 user.author.save()
             else:
-                user.author.host = 'http' + '://' + request.get_host() + '/'
+                user.author.host = 'https' + '://' + request.get_host() + '/'
                 user.author.url = user.author.host + 'authors/' + str(user.author.id)
                 user.author.save()
             inbox = Inbox(author=user.author)  # create inbox object
