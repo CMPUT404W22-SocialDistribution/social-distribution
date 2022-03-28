@@ -341,10 +341,12 @@ def post_detail(request, author_id, post_id):
             # check if logged in user is author of post
             notSharePost = True
             current_source = str(request.build_absolute_uri())
-            current_source = current_source.replace("https://", "")
-            current_source = current_source.replace("http://", "")
+            # current_source = current_source.replace("https://", "")
+            current_source = current_source.replace("http://", "https://")
             post_source = post.source
-            post_source = post_source.replace("http://", "")
+            post_source = post_source.replace("http://", "https://")
+            # print(current_source)
+            # print(post_source)
             if current_source != post_source:
                 notSharePost = False
             if current_user.author == author:
