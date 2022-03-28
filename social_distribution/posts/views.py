@@ -864,7 +864,7 @@ class PostsAPI(APIView):
                 post['author']['id'] = post["author"]["url"]
                 for comment in post['commentsSrc']['comments']:
                     comment['author']['id'] = comment['author']['url']
-                    comment['id'] = post['comments'] + comment['id']
+                    comment['id'] = '/'.join((post['comments'].rstrip('/'), comment['id']))
             response = {
                 'posts': post_data
             }
