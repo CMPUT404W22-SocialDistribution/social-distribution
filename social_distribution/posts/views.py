@@ -101,10 +101,9 @@ def post_create(request, author_id):
                                         }
                                     }
                                 }
-                                print(payload)
                                 response = requests.post(inbox_url, json=payload,
                                                          auth=(node.outgoing_username, node.outgoing_password))
-                    '''elif node.url == "https://project-socialdistribution.herokuapp.com/":
+                    elif node.url == "https://project-socialdistribution.herokuapp.com/":
                         authors = []
                         authors_url = f'{node.url}api/authors'
                         response = requests.get(authors_url, headers=HEADERS,
@@ -133,16 +132,13 @@ def post_create(request, author_id):
                             post_serializer = PostSerializer(post)
                             for item in authors:
                                 inbox_url = f'{authors_url}{item}/inbox'
-                                print(inbox_url)
 
                                 payload = {
                                     'content': post_serializer.data
                                 }
                                 response = requests.post(inbox_url, json=payload)
 
-                                print('hello')
-                                print(response.status_code)
-'''
+
             elif post.visibility == "friends":
                 friends = author.followers.all() & author.followings.all()
                 for friend in friends:
@@ -155,7 +151,6 @@ def post_create(request, author_id):
             return redirect('posts:post_detail', author_id, post.id)
         else:
             # if form is invalid, return the same html page
-            print(form.errors)
             return redirect('posts:post_create', author_id)
 
 
@@ -275,7 +270,6 @@ def post_share(request, author_id, post_id):
             )
 
             form = PostForm(updated_request, request.FILES)
-            print(form.errors)
             if form.is_valid():
                 share_post = form.save(commit=False)
                 if post.image:
@@ -314,7 +308,6 @@ def post_share(request, author_id, post_id):
                 }
             )
             form = PostForm(updated_request, request.FILES)
-            print(form.errors)
             if form.is_valid():
                 share_post = form.save(commit=False)
                 if post.image:
@@ -411,7 +404,7 @@ def post_detail(request, author_id, post_id):
                     res = requests.get(comments_url, auth=("squawker", "sQu@k3r"))
                     if res.status_code == 200:
                         comments = []
-                        post_comments = res.json()['items']
+                        post_comments = res.json()['comments']
                         for comment in post_comments:
                             comment_id = str(comment["id"]).split('/')[-2]
                             comment_data = {
@@ -537,6 +530,12 @@ def post_detail(request, author_id, post_id):
                         "comments": data["commentsSrc"]["comments"]
                     }
 
+            try:
+                inbox = Inbox.objects.get(author=request.user.author)
+                post = Post.objects.get(id=post_id)
+                inbox.posts.remove(post)
+            except:
+                None
             return render(request, 'posts/post_detail_remote.html', context)
 
 
@@ -690,9 +689,7 @@ def RemotePostsAPI(request):
                                 post_id = str(post["id"]).split('/')[-2]
                                 comments_url = posts_url + post_id + '/comments/'
                                 res = requests.get(comments_url, auth=(node.outgoing_username, node.outgoing_password))
-                                print(res.status_code)
                                 if res.status_code == 200:
-                                    print(res.json())
                                     post_comments = res.json()['comments']
                                     
                                     for comment in post_comments:
@@ -716,6 +713,7 @@ def RemotePostsAPI(request):
                                     'author_displayName': post["author"]["displayName"],
                                     'title': post["title"],
                                     'id': post_id,
+                                    'description': post['description'],
                                     'source': post["source"],
                                     'origin': "https://project-socialdistribution.herokuapp.com/",
                                     'content_type': post["contentType"],
@@ -761,6 +759,7 @@ def RemotePostsAPI(request):
                                     'author_displayName': post["author"]["displayName"],
                                     'title': post["title"],
                                     'id': post_id,
+                                    'description': post['description'],
                                     'source': post["id"],
                                     'origin': "https://cmput404-w22-project-backend.herokuapp.com/",
                                     'content_type': post["contentType"],
@@ -1157,7 +1156,6 @@ class CommentsAPI(APIView):
             'post': post_id,
             'comments': data,
         }
-        print(response)
         return Response(response, status=status.HTTP_200_OK)
 
     def post(self, request, author_id, post_id):

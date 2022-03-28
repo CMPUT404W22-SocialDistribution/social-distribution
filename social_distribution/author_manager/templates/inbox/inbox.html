@@ -131,11 +131,13 @@
                                                     </div>
                                                 </a>
                                                 <div class="d-flex flex-row card-right flex-grow-1 justify-content-end mx-1">
-                                                    <button type="button">
-                                                        <a class="nav-link"
-                                                        href="{% url 'posts:post_detail' post.author.id post.id %}">View
-                                                            detail</a>
-                                                    </button>
+                                                    <form method="post">
+                                                        {% csrf_token %}
+                                                        <input type="hidden" name="type" value="post">
+                                                        <input type="hidden" name="author" value="{{post.author.id}}">
+                                                        <input type="hidden" name="post" value="{{post.id}}">
+                                                        <button  type="submit"> View </button>
+                                                    </form>
                                                 </div>
                                             </div>
                                         {% else %}

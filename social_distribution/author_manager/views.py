@@ -538,13 +538,24 @@ def inbox_view(request, id):
                 messages.success(request, 'Success to accept friend request.')
                 return redirect('author_manager:inbox', id)
 
-        if request.POST['type'] == 'comment':
+        elif request.POST['type'] == 'comment':
             comment = request.POST['comment']
             inbox_comment = Comment.objects.get(id=comment)
             current_author.inbox.comments.remove(inbox_comment)
             post_author = request.POST['post_author']
             post =  request.POST['post']
             return redirect('posts:post_detail', post_author, post)
+        
+        elif request.POST['type'] == 'post':
+            post_id = request.POST['post']
+            try:
+                post = Post.objects.get(id=post_id)
+                current_author.inbox.posts.remove(post)
+            except:
+                None
+            author_id = request.POST['author']
+            return redirect('posts:post_detail', author_id, post_id)
+            
 
 @login_required
 def profile_edit(request, id):
