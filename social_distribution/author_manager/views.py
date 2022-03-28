@@ -1,5 +1,7 @@
 import datetime
 import json
+from urllib.parse import urlparse
+
 import requests
 from django.contrib import messages
 from django.contrib.auth import authenticate, login, logout
@@ -984,7 +986,7 @@ class InboxAPI(generics.GenericAPIView):
         return self.paginator.get_paginated_response({'items': part_items, 'url': author.url})
 
     @staticmethod
-    def _get_already_liked(author_id, post_id, comment_id):
+    def _get_already_liked_by_local_author(author_id, post_id, comment_id):
         if comment_id:
             like_query_set = Like.objects.filter(author__id__exact=author_id,
                                                  post__id__exact=post_id,
@@ -998,6 +1000,87 @@ class InboxAPI(generics.GenericAPIView):
             return like_query_set[0]
         return None
 
+    @staticmethod
+    def _get_already_liked_by_remote_author(remote_author_id, post_id, comment_id):
+        if comment_id:
+            like_query_set = Like.objects.filter(remote_author=remote_author_id,
+                                                 post__id__exact=post_id,
+                                                 comment__id__exact=comment_id)
+        else:
+            like_query_set = Like.objects.filter(remote_author=remote_author_id,
+                                                 post__id__exact=post_id,
+                                                 comment__id__isnull=True)
+
+        if like_query_set:
+            return like_query_set[0]
+        return None
+
+    def _post_like_from_local_author(self, item, inbox):
+        if 'author' in item:
+            item['author'] = item['author']['id']
+
+        # Extract post ID and possibly comment ID from object
+        if 'object' in item:
+            object_url = urlparse(item['object'])
+            object_url_ids = object_url.path.split('/')[2::2]
+            if len(object_url_ids) == 2:
+                _, item['post'] = object_url_ids
+                item['comment'] = None
+            else:
+                _, item['post'], item['comment'] = object_url_ids
+
+        like_serializer = LikeSerializer(data=item)
+        if like_serializer.is_valid():
+            post = like_serializer.validated_data['post']
+
+            # Do not like the same object twice
+            comment = like_serializer.validated_data.get('comment', None)
+            like_author = like_serializer.validated_data['author']
+            if comment:
+                previous_like = self._get_already_liked_by_local_author(like_author.id, post.id, comment.id)
+            else:
+                previous_like = self._get_already_liked_by_local_author(like_author.id, post.id, None)
+            if previous_like:
+                return Response(data={'detail': 'The author has already liked this object.'}, status=status.HTTP_200_OK)
+
+            like_serializer.save()
+
+            # Except for self-likes, send like object to recipient's inbox
+            if id != like_author.id:
+                inbox.likes.add(like_serializer.instance.id)
+            return Response(posts.serializers.LikeSerializer().to_representation(like_serializer.instance),
+                            status=status.HTTP_201_CREATED)
+        return Response(like_serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+    def _post_like_from_remote_author(self, item, inbox):
+        # Move remote author information in item to remote_author field
+        item['remote_author'] = item['author']
+        item['author'] = {}
+
+        like_serializer = LikeSerializer(data=item)
+        if like_serializer.is_valid():
+            post = like_serializer.validated_data['post']
+
+            # Do not like the same object twice
+            comment = like_serializer.validated_data.get('comment', None)
+            like_author = like_serializer.validated_data['remote_author']
+            if comment:
+                previous_like = self._get_already_liked_by_remote_author(like_author, post.id, comment.id)
+            else:
+                previous_like = self._get_already_liked_by_local_author(like_author, post.id, None)
+            if previous_like:
+                return Response(LikeSerializer().to_representation(previous_like),
+                                status=status.HTTP_200_OK)
+
+            like_serializer.save()
+
+            # Except for self-likes, send like object to recipient's inbox
+            if id != like_author.id:
+                inbox.likes.add(like_serializer.instance.id)
+            return Response(posts.serializers.LikeSerializer().to_representation(like_serializer.instance),
+                            status=status.HTTP_201_CREATED)
+        return Response(like_serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
     def post(self, request, id):
         local, remote = basic_authentication(request)
         if not local and not remote:
@@ -1010,29 +1093,10 @@ class InboxAPI(generics.GenericAPIView):
             item_type = item['type']
 
             if item_type == 'like':
-                like_serializer = LikeSerializer(data=item)
-                if like_serializer.is_valid():
-                    post = like_serializer.validated_data['post']
-
-                    # Do not like the same object twice
-                    comment = like_serializer.validated_data.get('comment', None)
-                    like_author = like_serializer.validated_data['author']
-                    if comment:
-                        previous_like = self._get_already_liked(like_author.id, post.id, comment.id)
-                    else:
-                        previous_like = self._get_already_liked(like_author.id, post.id, None)
-                    if previous_like:
-                        return Response(LikeSerializer().to_representation(previous_like),
-                                        status=status.HTTP_204_NO_CONTENT)
-
-                    like_serializer.save()
-
-                    # Except for self-likes, send like object to recipient's inbox
-                    if id != like_author.id:
-                        inbox.likes.add(like_serializer.instance.id)
-                    return Response(posts.serializers.LikeSerializer().to_representation(like_serializer.instance),
-                                    status=status.HTTP_200_OK)
-                return Response(like_serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+                if local:
+                    return self._post_like_from_local_author(item, inbox)
+                else:
+                    return self._post_like_from_remote_author(item, inbox)
 
             elif item_type == 'follow':
                 if author.url != item['object']['url'] or author.url == item['actor']['url']:
