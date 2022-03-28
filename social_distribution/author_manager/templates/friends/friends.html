@@ -1,4 +1,5 @@
 {% extends 'author_manager/base.html' %}
+{% load static %}
 
 {% block content %}
 <div class="container" style="padding-top: 35px; font-family: roboto; width: 600px;">
@@ -16,43 +17,39 @@
         <h2 class="card-header mb-2 bg-secondary text-white">Followings</h2>
         <div class="card-body">
             <div class="card-text">
-                {% if followings %}
-                    <ol class="list-group">
-                        {% for following in followings %}
-                            <div class="card flex-row flex-grow-1 p-2 my-2 align-items-center shadow-sm">
-                                <a href="{{following.url}}">
-                                    <div class="d-flex justify-content-between align-items-center">
-                                        <div class="mr-2">
-                                            <img class="rounded-circle" width="60px" src="/static/img/{{following.profileImage}}" alt="profile picture">
-                                        </div>
+                <ol class="list-group">
+                    {% for following in followings %}
+                        <div id="local_following" class="card flex-row flex-grow-1 p-2 my-2 align-items-center shadow-sm">
+                            <a href="{{following.url}}">
+                                <div class="d-flex justify-content-between align-items-center">
+                                    <div class="mr-2">
+                                        <img class="rounded-circle" width="60px" src="/static/img/{{following.profileImage}}" alt="profile picture">
                                     </div>
-                                </a>
-                                <a href="{{following.url}}" style="color:black; text-decoration: none;">
-                                    <div class="d-flex justify-content-between align-items-center">
-                                        <div class="ml-2">
-                                            {% if following.username %}
-                                                <h5>@{{following.username}}</h5>
-                                                <h6 class="text-muted pl-2">{{following.displayName}}</h6>
-                                            {% else %}
-                                                <h5>@{{following.displayName}}</h5>
-                                                <h6 class="text-muted pl-2">remote author</h6>
-                                            {% endif %}
-                                        </div>
-                                    </div>
-                                </a>
-                                <div class="d-flex flex-row card-right flex-grow-1 justify-content-end mx-1">
-                                    <form method="post">
-                                        {% csrf_token %}
-                                        <input type="hidden" name="object_id" value="{{following.id}}">
-                                        <button type="submit" class="btn btn-outline-danger">Unfollow</button>
-                                    </form>
                                 </div>
+                            </a>
+                            <a href="{{following.url}}" style="color:black; text-decoration: none;">
+                                <div class="d-flex justify-content-between align-items-center">
+                                    <div class="ml-2">
+                                        <h5>@{{following.user.username}}</h5>
+                                        <h6 class="text-muted pl-2">{{following.displayName}}</h6>
+                                    </div>
+                                </div>
+                            </a>
+                            <div class="d-flex flex-row card-right flex-grow-1 justify-content-end mx-1">
+                                <form method="post">
+                                    {% csrf_token %}
+                                    <input type="hidden" name="object_id" value="{{following.id}}">
+                                    <button type="submit" class="btn btn-outline-danger">Unfollow</button>
+                                </form>
                             </div>
-                        {% endfor %}
+                        </div>
+                    {% endfor %}
+                    <div id="remote_followings">
+                        <div id="remote_fetching" class="d-flex align-items-center">
+                            <div class="spinner-border m-auto" role="status" aria-hidden="true"></div>
+                        </div>
+                    </div>
                   </ol>
-                {% else %}
-                    <h5 class="form-text" style="font-size: 16px">Haven't had any followings yet !</h5>
-                {% endif %}   
             </div>
         </div>
     </div>
@@ -61,36 +58,32 @@
         <h2 class="card-header mb-2 bg-secondary text-white">Followers</h2>
         <div class="card-body">
             <div class="card-text">
-                {% if followers %}
-                    <ol class="list-group">
-                        {% for follower in followers %}
-                            <div class="card flex-row flex-grow-1 p-2 my-2 align-items-center shadow-sm">
-                                <a href="{{follower.url}}">
-                                    <div class="d-flex justify-content-between align-items-center">
-                                        <div class="mr-2">
-                                            <img class="rounded-circle" width="60px" src="/static/img/{{follower.profileImage}}" alt="profile picture">
-                                        </div>
+                <ol class="list-group">
+                    {% for follower in followers %}
+                        <div id="local_follower" class="card flex-row flex-grow-1 p-2 my-2 align-items-center shadow-sm">
+                            <a href="{{follower.url}}">
+                                <div class="d-flex justify-content-between align-items-center">
+                                    <div class="mr-2">
+                                        <img class="rounded-circle" width="60px" src="/static/img/{{follower.profileImage}}" alt="profile picture">
                                     </div>
-                                </a>
-                                <a href="{{follower.url}}" style="color:black; text-decoration: none;">
-                                    <div class="d-flex justify-content-between align-items-center">
-                                        <div class="ml-2">
-                                            {% if follower.username %}
-                                                <h5>@{{follower.username}}</h5>
-                                                <h6 class="text-muted pl-2">{{follower.displayName}}</h6>
-                                            {% else %}
-                                                <h5>@{{follower.displayName}}</h5>
-                                                <h6 class="text-muted pl-2">remote author</h6>
-                                            {% endif %}
-                                        </div>
+                                </div>
+                            </a>
+                            <a href="{{follower.url}}" style="color:black; text-decoration: none;">
+                                <div class="d-flex justify-content-between align-items-center">
+                                    <div class="ml-2">
+                                        <h5>@{{follower.user.username}}</h5>
+                                        <h6 class="text-muted pl-2">{{follower.displayName}}</h6>
                                     </div>
-                                </a>
-                            </div>
-                        {% endfor %}
-                  </ol>
-                {% else %}
-                    <h5 class="form-text" style="font-size: 16px">Haven't had any followers yet !</h5>
-                {% endif %}   
+                                </div>
+                            </a>
+                        </div>
+                    {% endfor %}
+                    <div id="remote_followers">
+                        <div id="remote_fetching" class="d-flex align-items-center">
+                            <div class="spinner-border m-auto" role="status" aria-hidden="true"></div>
+                        </div> 
+                    </div>
+                </ol>
             </div>
         </div>
     </div>
@@ -99,36 +92,32 @@
         <h2 class="card-header mb-2 bg-secondary text-white">Friends</h2>
         <div class="card-body">
             <div class="card-text">
-                {% if friends %}
-                    <ol class="list-group">
-                        {% for friend in friends %}
-                            <div class="card flex-row flex-grow-1 p-2 my-2 align-items-center shadow-sm">
-                                <a href="{{friend.url}}">
-                                    <div class="d-flex justify-content-between align-items-center">
-                                        <div class="mr-2">
-                                            <img class="rounded-circle" width="60px" src="/static/img/{{friend.profileImage}}" alt="profile picture">
-                                        </div>
+                <ol class="list-group">
+                    {% for friend in friends %}
+                        <div id="local_friend" class="card flex-row flex-grow-1 p-2 my-2 align-items-center shadow-sm">
+                            <a href="{{friend.url}}">
+                                <div class="d-flex justify-content-between align-items-center">
+                                    <div class="mr-2">
+                                        <img class="rounded-circle" width="60px" src="/static/img/{{friend.profileImage}}" alt="profile picture">
                                     </div>
-                                </a>
-                                <a href="{{friend.url}}" style="color:black; text-decoration: none;">
-                                    <div class="d-flex justify-content-between align-items-center">
-                                        <div class="ml-2">
-                                            {% if friend.username %}
-                                                <h5>@{{friend.username}}</h5>
-                                                <h6 class="text-muted pl-2">{{friend.displayName}}</h6>
-                                            {% else %}
-                                                <h5>@{{friend.displayName}}</h5>
-                                                <h6 class="text-muted pl-2">remote author</h6>
-                                            {% endif %}
-                                        </div>
+                                </div>
+                            </a>
+                            <a href="{{friend.url}}" style="color:black; text-decoration: none;">
+                                <div class="d-flex justify-content-between align-items-center">
+                                    <div class="ml-2">
+                                        <h5>@{{friend.user.username}}</h5>
+                                        <h6 class="text-muted pl-2">{{friend.displayName}}</h6>
                                     </div>
-                                </a>
-                            </div>
-                        {% endfor %}
-                  </ol>
-                {% else %}
-                    <h5 class="form-text" style="font-size: 16px">Haven't had any friends yet !</h5>
-                {% endif %}   
+                                </div>
+                            </a>
+                        </div>
+                    {% endfor %}
+                    <div id="remote_friends">
+                        <div id="remote_fetching" class="d-flex align-items-center">
+                            <div class="spinner-border m-auto" role="status" aria-hidden="true"></div>
+                        </div> 
+                    </div>
+                </ol>
             </div>
         </div>
     </div>
@@ -210,6 +199,122 @@
             </div>
         </div>
     </div> -->
-
 </div>
+
+<script>
+
+    function createFollowingCard(author) {
+        const cardHtml = `
+            <div class="card flex-row flex-grow-1 p-2 my-2 align-items-center shadow-sm">
+                <a href="#">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <div class="mr-2">
+                            <img class="rounded-circle" width="60px" src="/static/img/profile_picture.png" alt="profile picture">
+                        </div>
+                    </div>
+                </a>
+                <a href="#" style="color:black; text-decoration: none;">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <div class="ml-2">
+                            <h5>@${author.displayName}</h5>
+                            <h6 class="text-muted pl-2">remote author</h6>
+                        </div>
+                    </div>
+                </a>
+                <div class="d-flex flex-row card-right flex-grow-1 justify-content-end mx-1">
+                    <form method="post">
+                        {% csrf_token %}
+                        <input type="hidden" name="object_id" value="${author.id}">
+                        <button type="submit" class="btn btn-outline-danger">Unfollow</button>
+                    </form>
+                </div>
+            </div>
+        `;
+        return cardHtml;
+    }
+
+    function createFollowerFriendCard(author) {
+        const cardHtml = `
+        <div class="card flex-row flex-grow-1 p-2 my-2 align-items-center shadow-sm">
+            <a href="#">
+                <div class="d-flex justify-content-between align-items-center">
+                    <div class="mr-2">
+                        <img class="rounded-circle" width="60px" src="/static/img/profile_picture.png" alt="profile picture">
+                    </div>
+                </div>
+            </a>
+            <a href="#" style="color:black; text-decoration: none;">
+                <div class="d-flex justify-content-between align-items-center">
+                    <div class="ml-2">
+                        <h5>@${author.displayName}</h5>
+                        <h6 class="text-muted pl-2">remote author</h6>
+                    </div>
+                </div>
+            </a>
+        </div>
+        `;
+        return cardHtml;
+    }
+
+    function fetchRemoteFriends(){
+        $.ajax({
+            type: 'GET',
+            url: "{% url 'author_manager:remotefriends_api' user.author.id %}",
+            dataType: 'json',
+            success: (data, status) => {
+                const no_following = `<h5 class="form-text" style="font-size: 16px">Haven't had any followings yet !</h5>`
+                const no_follower = `<h5 class="form-text" style="font-size: 16px">Haven't had any followers yet !</h5>`
+                const no_friend = `<h5 class="form-text" style="font-size: 16px">Haven't had any friends yet !</h5>`
+                
+                //remote followings:
+                followingsHtml = document.getElementById("remote_followings");
+                document.getElementById("remote_fetching").remove();
+                if (document.getElementById("local_following") == null && data.followings.length == 0){
+                    followingsHtml.innerHTML += no_following
+                }
+                else {
+                    let remoteFollowingCardsHtml = '';
+                    data.followings.map(following => {
+                        remoteFollowingCardsHtml += createFollowingCard(following);
+                    });
+                    followingsHtml.innerHTML += remoteFollowingCardsHtml;
+                }
+
+                //remote followers:
+                followersHtml = document.getElementById("remote_followers");
+                document.getElementById("remote_fetching").remove();
+                if (document.getElementById("local_follower") == null && data.followers.length == 0){
+                    followersHtml.innerHTML += no_follower
+                }
+                else{
+                    let remoteFollowerCardsHtml = '';
+                    data.followers.map(follower => {
+                        remoteFollowerCardsHtml += createFollowerFriendCard(follower);
+                    });
+                    followersHtml.innerHTML += remoteFollowerCardsHtml;
+                }
+
+                //remote friends:
+                friendsHtml = document.getElementById("remote_friends");
+                document.getElementById("remote_fetching").remove();
+                if (document.getElementById("local_friend") == null && data.friends.length == 0){
+                    friendsHtml.innerHTML += no_friend
+                }
+                else{
+                    let remoteFriendCardsHtml = '';
+                    data.friends.map(friend => {
+                        remoteFriendCardsHtml += createFollowerFriendCard(friend);
+                    });
+                    friendsHtml.innerHTML += remoteFriendCardsHtml;   
+                }
+            },
+            error: (error) => {
+                console.log(error);
+            }
+        });
+    }
+    
+    fetchRemoteFriends();
+
+</script>
 {% endblock content %}

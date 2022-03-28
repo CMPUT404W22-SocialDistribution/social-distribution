@@ -119,30 +119,21 @@ def sign_out(request):
         logout(request)
         return redirect('author_manager:login')
 
+class RemoteFriendsAPI(APIView):
+    """
+    """
+    authentication_classes = [authentication.SessionAuthentication]
+    permission_classes = []
 
-@login_required
-def friends_view(request, author_id):
-    '''
-    The functions define a view that allow the author_id to view their followers, followings and true (bidirection) friends.
-    The view also allows the author_id to access searching authors and unfriend (unfolllow) with other authors.
-    Require authorization.
-
-    Method:
-        GET:    - the view of friends page that display the author_id's followings, followers and friends
-        POST:   - unfriend with the requested_author
-
-    '''
-    current_author = Author.objects.get(id=author_id)
-    if request.method == "GET":
-        followers = json.loads( json.dumps(
-                        ProfileSerializer(current_author.followers.all(), remove_fields=['user'], many=True)
-                        .data))
+    def get(self, request, id):
         
-        followings = json.loads( json.dumps(
-                        ProfileSerializer(current_author.followings.all(), remove_fields=['user'], many=True)
-                        .data))
-
+        try:
+            current_author = Author.objects.get(id=id)
+        except:
+            return Response({'detail': 'Not Found!'}, status=status.HTTP_404_NOT_FOUND)
+        
         # get remote followers
+        followers = []
         if current_author.remote_followers: 
             remote_followers = current_author.remote_followers.split(' ')
             remote_followers.pop()
@@ -166,10 +157,10 @@ def friends_view(request, author_id):
 
                 if response.status_code == 200:
                     follower = response.json()
-                    follower['profileImage'] = 'profile_picture.png'
                     followers.append(follower)
 
         # get remote followings
+        followings = []
         for node in Node.objects.all():
             # t05
             if node.url == 'https://cmput404-w22-project-backend.herokuapp.com/':
@@ -184,7 +175,6 @@ def friends_view(request, author_id):
             else:
                 authors_url = node.url + 'api/authors'
 
-
             response = requests.get(authors_url, headers=HEADERS, auth=(node.outgoing_username, node.outgoing_password))
       
             if response.status_code == 200:
@@ -193,13 +183,13 @@ def friends_view(request, author_id):
                 for author in authors:
                     # t08
                     if node.url == 'https://project-socialdistribution.herokuapp.com/':
-                        following_url = author['url'].replace('authors', 'api/authors') + 'followers/' + str(author_id) + '/'
+                        following_url = author['url'].replace('authors', 'api/authors') + 'followers/' + str(id) + '/'
                     # t05:
                     elif node.url =='https://cmput404-w22-project-backend.herokuapp.com/':
-                        following_url = author['url'].replace('authors', 'service/server_api/authors') + '/followers/' + str(author_id)
+                        following_url = author['url'].replace('authors', 'service/server_api/authors') + '/followers/' + str(id)
                     # clone
                     else:
-                        following_url = author['url'].replace('authors', 'api/authors') + '/followers/' + str(author_id)
+                        following_url = author['url'].replace('authors', 'api/authors') + '/followers/' + str(id)
                     
                     response = requests.get(following_url, headers=HEADERS, auth=(node.outgoing_username, node.outgoing_password))
                     
@@ -209,16 +199,115 @@ def friends_view(request, author_id):
                         followings.append(author)           
 
         # get friends
-        # local_authors = Author.objects.all()
-        # current_user = request.user
         friends = []
         for follower in followers:
             if follower in followings:
                 friends.append(follower)
+       
+        return Response({'followings': followings, 'followers': followers,'friends': friends}, status=status.HTTP_200_OK)
+
+@login_required
+def friends_view(request, author_id):
+    '''
+    The functions define a view that allow the author_id to view their followers, followings and true (bidirection) friends.
+    The view also allows the author_id to access searching authors and unfriend (unfolllow) with other authors.
+    Require authorization.
+
+    Method:
+        GET:    - the view of friends page that display the author_id's followings, followers and friends
+        POST:   - unfriend with the requested_author
+
+    '''
+    current_author = Author.objects.get(id=author_id)
+    if request.method == "GET":
+        followers = current_author.followers.all()
+        followings = current_author.followings.all()
+        friends = followings & followers
+        return render(request, 'friends/friends.html', {'followings': followings, 'followers': followers, 'friends': friends})
+        # followers = json.loads( json.dumps(
+        #                 ProfileSerializer(current_author.followers.all(), remove_fields=['user'], many=True)
+        #                 .data))
+        
+        # followings = json.loads( json.dumps(
+        #                 ProfileSerializer(current_author.followings.all(), remove_fields=['user'], many=True)
+        #                 .data))
+
+        # # get remote followers
+        # if current_author.remote_followers: 
+        #     remote_followers = current_author.remote_followers.split(' ')
+        #     remote_followers.pop()
+        #     for follower in remote_followers:
+        #         # print(follower)
+        #         # t08
+        #         if 'project-socialdistribution' in follower:
+        #             node = Node.objects.get(url='https://project-socialdistribution.herokuapp.com/')
+        #             follower_url = follower.replace('authors', 'api/authors')
+        #         # t05
+        #         elif 'cmput404-w22-project-backend' in follower:
+        #             node = Node.objects.get(url='https://cmput404-w22-project-backend.herokuapp.com/')
+        #             follower_url = follower.replace('authors', 'service/server_api/authors')
+        #         # t03
+        #         # clone
+        #         else:
+        #             node = Node.objects.get(url='https://squawker-dev.herokuapp.com/')
+        #             follower_url = follower.replace('authors', 'api/authors')
+
+        #         response = requests.get(follower_url, headers=HEADERS, auth=(node.outgoing_username, node.outgoing_password))
+
+        #         if response.status_code == 200:
+        #             follower = response.json()
+        #             follower['profileImage'] = 'profile_picture.png'
+        #             followers.append(follower)
+
+        # # get remote followings
+        # for node in Node.objects.all():
+        #     # t05
+        #     if node.url == 'https://cmput404-w22-project-backend.herokuapp.com/':
+        #         authors_url = node.url + 'service/server_api/authors/'
+        #     # t08
+        #     elif node.url == 'https://project-socialdistribution.herokuapp.com/':
+        #         authors_url = node.url + 'api/authors/'
+        #     # t03
+        #     elif node.url == 'https://website404.herokuapp.com':
+        #         continue
+        #     # clone
+        #     else:
+        #         authors_url = node.url + 'api/authors'
+
+
+        #     response = requests.get(authors_url, headers=HEADERS, auth=(node.outgoing_username, node.outgoing_password))
+      
+        #     if response.status_code == 200:
+        #         authors = response.json()['items']
+
+        #         for author in authors:
+        #             # t08
+        #             if node.url == 'https://project-socialdistribution.herokuapp.com/':
+        #                 following_url = author['url'].replace('authors', 'api/authors') + 'followers/' + str(author_id) + '/'
+        #             # t05:
+        #             elif node.url =='https://cmput404-w22-project-backend.herokuapp.com/':
+        #                 following_url = author['url'].replace('authors', 'service/server_api/authors') + '/followers/' + str(author_id)
+        #             # clone
+        #             else:
+        #                 following_url = author['url'].replace('authors', 'api/authors') + '/followers/' + str(author_id)
+                    
+        #             response = requests.get(following_url, headers=HEADERS, auth=(node.outgoing_username, node.outgoing_password))
+                    
+        #             # if current author following them
+        #             if response.status_code == 200:
+        #                 author['profileImage'] = 'profile_picture.png'
+        #                 followings.append(author)           
+
+        # # get friends
+        # # local_authors = Author.objects.all()
+        # # current_user = request.user
+        # friends = []
+        # for follower in followers:
+        #     if follower in followings:
+        #         friends.append(follower)
         # print(followers)
         # print(friends)
         # return render(request, 'friends/friends.html', {'followings': followings, 'followers': followers, 'friends': friends, "local_authors": local_authors, "current_user": current_user,})
-        return render(request, 'friends/friends.html', {'followings': followings, 'followers': followers, 'friends': friends})
 
     # unfriend
     if request.method == "POST":
