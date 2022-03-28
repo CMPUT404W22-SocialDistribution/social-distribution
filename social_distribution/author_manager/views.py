@@ -256,7 +256,7 @@ def friends_view(request, author_id):
 
             # if not found following author, then accept remove
             if response.status_code != 200:
-                current_author.remote_followers = current_author.remote_followers.replace(requested_id, '')
+                current_author.remote_followers = current_author.remote_followers.replace(f'{requested_id} ', '')
                 current_author.save()
                 messages.success(request, 'Your are now unfriend with the selected author !')
                 return redirect('author_manager:friends', author_id)
