@@ -217,15 +217,16 @@ def friends_view(request, author_id):
                         followings.append(author)           
 
         # get friends
-        local_authors = Author.objects.all()
-        current_user = request.user
+        # local_authors = Author.objects.all()
+        # current_user = request.user
         friends = []
         for follower in followers:
             if follower in followings:
                 friends.append(follower)
         # print(followers)
         # print(friends)
-        return render(request, 'friends/friends.html', {'followings': followings, 'followers': followers, 'friends': friends, "local_authors": local_authors, "current_user": current_user,})
+        # return render(request, 'friends/friends.html', {'followings': followings, 'followers': followers, 'friends': friends, "local_authors": local_authors, "current_user": current_user,})
+        return render(request, 'friends/friends.html', {'followings': followings, 'followers': followers, 'friends': friends})
 
     # unfriend
     if request.method == "POST":
@@ -321,7 +322,30 @@ class SearchAuthorView(ListView):
     def get_queryset(self):
         query = self.request.GET.get('q')
         if query == '':
-            queryset = []
+            # get remote authors
+            remote_authors = []
+            for node in Node.objects.all():
+                # t05
+                if node.url == "https://cmput404-w22-project-backend.herokuapp.com/":
+                    authors_url = node.url + 'service/server_api/authors/'
+                # t08
+                elif node.url == 'http://project-socialdistribution.herokuapp.com/':
+                    authors_url = node.url + 'api/authors/'
+                # t03
+                elif node.url == 'https://website404.herokuapp.com':
+                    continue
+                # clone
+                else:
+                    authors_url = node.url + 'api/authors'
+               
+                response = requests.get(authors_url, headers=HEADERS, auth=(node.outgoing_username, node.outgoing_password))
+              
+                if response.status_code == 200:
+                    authors = response.json()['items']
+                    remote_authors += authors 
+
+            return ['all', Author.objects.all(), remote_authors]
+
         else:
             queryset = []
             query_local_authors = Author.objects.filter(
@@ -342,6 +366,9 @@ class SearchAuthorView(ListView):
                     authors_url = node.url + 'service/server_api/authors/'
                 elif node.url == 'http://project-socialdistribution.herokuapp.com/':
                     authors_url = node.url + 'api/authors/'
+                 # t03
+                elif node.url == 'https://website404.herokuapp.com':
+                    continue
                 else:
                     authors_url = node.url + 'api/authors'
                 # print(authors_url)
@@ -355,7 +382,7 @@ class SearchAuthorView(ListView):
                                 {'id': author['id'], 'username': 'remote author',
                                     'profileImage': 'profile_picture.png', 'displayName': author['displayName'], 'url': author['url']})
 
-        return queryset
+            return ['query', queryset]
 
     def post(self, request, *args, **kwargs):
         author_id = request.user.author.id
@@ -443,11 +470,16 @@ class SearchAuthorView(ListView):
                     if response.status_code == 200 or response.status_code == 201:
                         messages.success(request, 'Your friend request has been sent.')
                     elif response.status_code == 204:
-                        messages.success(request, 'You already followed this author.')
+                        messages.info(request, 'You already sent the follow request to this author.')
                     else:
                         messages.warning(request, 'Could not send the friend request to this author !')
 
                     return redirect('author_manager:friends', author_id)
+
+                else:
+                    messages.info(request, 'You already followed this author.')
+                    return redirect('author_manager:friends', author_id)
+
 
             else:
                 requested_author = get_object_or_404(Author, id=requested_id)
@@ -510,7 +542,7 @@ def inbox_view(request, id):
                 # delete the friend request in inbox:
                 for follow in inbox.follows:
                     if follow["actor"]["url"] == str(requesting_id) and follow["object"]["url"] == current_author.url:
-                        print("access 2")
+                        # print("access 2")
                         inbox.follows.remove(follow)
                         inbox.save()
                         # print(inbox.follows)
@@ -1019,12 +1051,14 @@ class InboxAPI(generics.GenericAPIView):
                                     status=status.HTTP_200_OK)
                 return Response(like_serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
-            elif item_type == 'follow':
+            elif item_type.lower() == 'follow':
                 if author.url != item['object']['url'] or author.url == item['actor']['url']:
                     return Response({'detail': 'Fail to send the item!'}, status=status.HTTP_400_BAD_REQUEST)
 
-                if item in inbox.follows:
-                    return Response({'message': 'Already sent follow/friend request'}, status=status.HTTP_204_NO_CONTENT)
+                # already sent follow
+                for follow in inbox.follows:
+                    if item['actor']['url'] == follow['actor']['url'] and item['object']['url'] == follow['object']['url']:
+                        return Response({'message': 'Already sent follow/friend request'}, status=status.HTTP_204_NO_CONTENT)
 
                 inbox.follows.append(item)
                 inbox.save()
