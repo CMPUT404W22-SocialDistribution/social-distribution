@@ -56,7 +56,7 @@ def post_create(request, author_id):
             {
                 'author': author,
                 'type': 'post',
-                'origin': author.host.strip('/')
+                'origin': author.host.strip('/').replace('http', 'https')
             }
         )
         form = PostForm(updated_request, request.FILES)
