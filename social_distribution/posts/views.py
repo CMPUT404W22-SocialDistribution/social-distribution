@@ -101,7 +101,6 @@ def post_create(request, author_id):
                                     }
                                 }
                                 response = requests.post(inbox_url, json=payload, auth=(node.outgoing_username, node.outgoing_password))
-                                print(response.status_code)
                     elif node.url ==  "https://project-socialdistribution.herokuapp.com/":
                         authors = []
                         authors_url = f'{node.url}api/authors'
@@ -118,6 +117,27 @@ def post_create(request, author_id):
                                     'id': post.source
                                 } 
                                 response = requests.post(inbox_url, json=payload, auth=(node.outgoing_username, node.outgoing_password))               
+                    elif node.url == "https://cmput404-w22-project-backend.herokuapp.com/":
+                        authors = []
+                        authors_url = f'{node.url}service/server_api/authors/'
+                        response = requests.get(authors_url)
+                        if response.status_code == 200: 
+                            team5_authors = response.json()['items']  
+                            for item in team5_authors:
+                                authors.append(item["id"].split('/')[-1])
+                            post_serializer = PostSerializer(post)
+                            for item in authors:
+                                inbox_url = f'{authors_url}{item}/inbox'
+                                print(inbox_url)
+                               
+                                payload = {
+                                    'content': post_serializer.data
+                                } 
+                                response = requests.post(inbox_url, json=payload)      
+                                
+                                print('hello')
+                                print(response.status_code)   
+
             elif post.visibility == "friends":
                 friends = author.followers.all() & author.followings.all()
                 for friend in friends:
@@ -340,6 +360,7 @@ def post_detail(request, author_id, post_id):
                 if post.visibility == "private":
                     if post.visibleTo == current_user.username:
                         comments = post.commentsSrc.all().order_by('-published')
+                       
                         context = {
                             "comments": comments,
                             "post": post,
@@ -360,8 +381,8 @@ def post_detail(request, author_id, post_id):
                         return render(request, 'posts/post_create.html', {'error': error}, status=404)
             if post.content_type == 'text/markdown':
                 post.content = commonmark.commonmark(post.content)
-            comments = CommentSerializer(post.commentsSrc.all().order_by('-published'), many=True).data
-
+            comments = post.commentsSrc.all().order_by('-published')
+            # comments = CommentSerializer(post.commentsSrc.all().order_by('-published'), many=True).data
             context = {
                 "comments": comments,
                 "post": post,
@@ -482,7 +503,34 @@ def post_detail(request, author_id, post_id):
                         "post": post,
                         "comments": data["commentsSrc"]["comments"]
                     }
-                
+            elif node_url == 'http://squawker-cmput404.herokuapp.com/':
+                posts_url = f"{node_url}api/authors/{author_id}/posts/{post_id}"
+                response = requests.get(posts_url, headers=HEADERS, auth=("squawker", "cmput404"))
+                if response.status_code == 200:
+                    data = response.json()
+                    if data["content_type"] == 'text/markdown':
+                        data["content"] = commonmark.commonmark(str(data["content"]))
+                    image = data["image"] if data["image"] else ''
+                    post = {
+                        "title": data["title"],
+                        "description": data["description"],
+                        "source": data["source"],
+                        "origin": data["origin"],
+                        "published": data["published"],
+                        "visibility": data["visibility"],
+                        "content": data["content"],
+                        "image": image,
+                        "author" : {
+                            "displayName": data["author_username"],
+                            "host": data["author"]["host"],
+                            "profileImage": data["author"]["host"] + "static/img/" + data["author"]["profileImage"],
+                        }
+                    }
+                    context = {
+                        "post": post,
+                        "comments": data["commentsSrc"]["comments"]
+                    }
+
             return render(request, 'posts/post_detail_remote.html', context)
             
 
@@ -702,7 +750,7 @@ def RemotePostsAPI(request):
                                     'author_displayName' : post["author"]["displayName"],
                                     'title' : post["title"],
                                     'id' : post_id,
-                                    'source' : '',
+                                    'source' : post["id"],
                                     'origin' : "https://cmput404-w22-project-backend.herokuapp.com/",
                                     'content_type' : post["contentType"],
                                     'content' : post["content"],
@@ -1031,11 +1079,6 @@ class PostDetailAPI(generics.GenericAPIView):
                     return Response(serializer.errors, 400)
 
 
-@login_required
-@api_view(['POST'])
-def create_remote_comment(request, url, author_id, post_id):
-    print(request.path)
-    print(request.url)
 
 
 @login_required
@@ -1097,6 +1140,7 @@ class CommentsAPI(APIView):
             'post': post_id,
             'comments': data,
         }
+        print(response)
         return Response(response, status=status.HTTP_200_OK)
 
     def post(self, request, author_id, post_id):

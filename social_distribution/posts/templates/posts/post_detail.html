@@ -108,8 +108,8 @@ aria-controls="collapseExample">
         <div class="collapse show" id="collapseComments">
             <div class="card" >
                     <div class= " input-group ">
-                        <textarea  placeholder="Type your comment here" rows="1" class="form-control comment-text" id="comment-text-{{post.id}}" ></textarea>
-                        <button type="submit" data-answer="{{post.id}}" class="btn-floating save-comment"><i class="bi bi-plus"></i> </button>
+                        <textarea  placeholder="Type your comment here" rows="1" class="form-control comment-text"  ></textarea>
+                        <button type="submit" onClick="saveComment('{{post.id}}')" class="btn-floating save-comment"><i class="bi bi-plus"></i> </button>
                     </div>
             </div>
             <div class=" card justify-content-center pb-2 comment-wrapper">
@@ -119,7 +119,7 @@ aria-controls="collapseExample">
                 <div class=" justify-content-center py-2">
                     <div class="pb-2 px-2 mx-2"
                         style="background-color: #00000008; box-shadow: 5px 5px 2px #cccccc;">
-                        <p class="card-text"> {{comment.comment}}</p>
+                        <p class="card-text">{{comment.comment}}</p>
                         <div class=" d-flex justify-content-between py-1 pt-2" style="font-size: 13px";>
                             <span ><a href="{% url 'author_manager:profile' comment.author.id %}">
                                 {{comment.author.displayName}}</a></span>
@@ -194,54 +194,52 @@ aria-controls="collapseExample">
     // console.log(Timestamp(datePublished));
     // content.innerHTML = Timestamp(datePublished).toString();
 
-    $(document).ready(function ClickOnComment(){
-            $(".save-comment").off('click').on('click', function(){
-                var _postid=$(this).data('answer')
-                var _comment=$(".comment-text").val();
-
-                // AJX
-                $.ajax({
-                    url:"/authors/{{user.author.id}}/posts/postid/comments".replace("postid", _postid),
-                    type: "post",
-                    data:{
-                        comment:_comment,
-                        post:_postid,
-                        csrfmiddlewaretoken:"{{csrf_token}}"
-                    },
-                    dataType: 'json',
-
-                    success:function(res){
-                        if(res.bool==true){
-                            $(".comment-text").val('')
-
-                            // Added new comment
-                            var _url = "{% url 'author_manager:profile' user.author.id%}";
-                            var _html = `<div class=" justify-content-center py-2">
-                                                <div class="pb-2 px-2 mx-2"
-                                                     style="background-color: #00000008; box-shadow: 5px 5px 2px #cccccc;">
-                                                    <span class="card-text">${_comment}</span>
-                                                    <div class="d-flex justify-content-between py-1 pt-2" style="font-size: 13px";>
-                                                        <span ><a href='${_url}'>{{request.user.author}}</a></span>
-                                                        <span>${Timestamp(res.published)}</span>
-                                                        <div><a href="javascript:void(0)" class="card-link text-muted"
-                                                                style="text-decoration: none;"
-                                                                onclick="postLike('${res.author}', '${_postid}', '${res.id}')">
-                                                            <i class="fa-solid fa-thumbs-up"></i>
-                                                            <span> ${getNumLikesText(res.num_likes)}</span>
-                                                        </a></div>
-                                                    </div>
-                                                </div>
-                                        </div> 
-                                        `;
-
-                            $(".comment-wrapper").prepend(_html);
-                        }
-                        $(".save-comment").removeClass('disabled');
-                    }
-                })
+    
+    function saveComment(postID) {
+        var _comment=$(".comment-text").val();
+        var url = `/authors/{{user.author.id}}/posts/${postID}/comments`;
+        fetch(url, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRFToken': '{{ csrf_token }}'
+            },
+            body: JSON.stringify({
+                'comment':_comment,                    
             })
-        })
+        }).then
+        (response => {
+            if (response.status === 200) {
+                return response.json();
+            }
+        }).then(res => {
+            if(res.bool==true){
+                $(".comment-text").val('')
+                // Added new comment
+                var _url = "{% url 'author_manager:profile' user.author.id%}";
+                var _html= `<div class=" justify-content-center py-2">
+                                    <div class="pb-2 px-2 mx-2"
+                                        style="background-color: #00000008; box-shadow: 5px 5px 2px #cccccc;">
+                                        <span class="card-text">${res.comment}</span>
+                                        <div class="d-flex justify-content-between py-1 pt-2" style="font-size: 13px";>
+                                            <span ><a href='${_url}'>{{request.user.author}}</a></span>
+                                            <span>${Timestamp(res.published)}</span>
+                                            <div><a href="javascript:void(0)" class="card-link text-muted"
+                                                    style="text-decoration: none;"
+                                                    onclick="postLike('${res.author}', '${postID}', '${res.id}')">
+                                                <i class="fa-solid fa-thumbs-up"></i>
+                                                <span> ${getNumLikesText(res.num_likes)}</span>
+                                            </a></div>
+                                        </div>
+                                    </div>
+                            </div>
+                            `;
+            
+                $(".comment-wrapper").prepend(_html);
+            }
+        });
 
+    }
     function getNumLikesText(numLikes) {
         let text = "Like";
         if (numLikes > 1) {

@@ -2,7 +2,7 @@ from rest_framework import serializers
 
 from author_manager.models import Author
 from .models import Post, Comment, Like
-
+import json
 
 class AuthorSerializer(serializers.ModelSerializer):
     class Meta:
@@ -70,9 +70,12 @@ class PostSerializer(serializers.ModelSerializer):
 class CommentSerializer(serializers.ModelSerializer):
     author_displayName = serializers.SerializerMethodField('get_author_displayName')
     num_likes = serializers.SerializerMethodField('get_num_likes')
-
+    
     def get_author_displayName(self, obj):
-        return obj.author.displayName
+        if obj.author is not None:
+            return obj.author.displayName
+        else:
+            return obj.remote_author["displayName"]
 
     def get_num_likes(self, obj):
         return Like.objects.filter(comment__id__exact=obj.id).count()
@@ -89,14 +92,24 @@ class CommentSerializer(serializers.ModelSerializer):
             for field in remove_fields:
                 self.fields.pop(field)
 
+   
     def to_representation(self, instance):
+        
         response = super().to_representation(instance)
         if "author" in response:
-            comment_author = response["author"]
-            author = Author.objects.get(id=comment_author)
-        response["author"] = AuthorSerializer(author).data
+            try:
+                comment_author = response["author"]
+                author = Author.objects.get(id=comment_author)
+                response["author"] = AuthorSerializer(author).data
+            except:
+                response["author"] = instance.remote_author
+                response["author"]["type"] = "author"
+                response["author"]["url"] = instance.remote_author["id"]
+                response["author"]["id"] = instance.remote_author["id"].split('/')[-1]
+                response["author"]["remote"] = "true"
+        
         return response
-
+    
 
 class LikeSerializer(serializers.ModelSerializer):
     object = serializers.SerializerMethodField('get_object')

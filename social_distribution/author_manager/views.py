@@ -36,6 +36,9 @@ T05_PASS = 'proxy123!'
 CLONE_USERNAME = 'squawker-dev'
 CLONE_PASS = 'cmput404'
 
+T08 = "http://project-socialdistribution.herokuapp.com/"
+T05 = "https://cmput404-w22-project-backend.herokuapp.com/"
+CLONE = "https://squawker-dev.herokuapp.com/"
 def sign_up(request):
     '''
     The function defines a view that allows account creation
@@ -153,21 +156,24 @@ def friends_view(request, author_id):
             remote_followers = current_author.remote_followers.split(' ')
             remote_followers.pop()
             for follower in remote_followers:
-                print(follower)
+                # print(follower)
                 #T08
                 if 'project-socialdistribution' in follower:
+                    follower_url = follower.replace('authors', 'api/authors')
                     outgoing_username = T08_USERNAME
                     outgoing_password = T08_PASS
                 #T05
-                elif 'cmput404-w22-project-backend' in follower: 
+                elif 'cmput404-w22-project-backend' in follower:
+                    follower_url = follower.replace('authors', 'service/server_api/authors')
                     outgoing_username = T05_USERNAME
                     outgoing_password = T05_PASS
                 #Clone
                 else:
+                    follower_url = follower.replace('authors', 'api/authors')
                     outgoing_username = CLONE_USERNAME
                     outgoing_password = CLONE_PASS
 
-                response = requests.get(follower, headers=HEADERS, auth=(outgoing_username, outgoing_password))
+                response = requests.get(follower_url, headers=HEADERS, auth=(outgoing_username, outgoing_password))
 
                 if response.status_code == 200:
                     follower = response.json()
@@ -179,9 +185,16 @@ def friends_view(request, author_id):
             # t05
             if node.url == 'https://cmput404-w22-project-backend.herokuapp.com/':
                 authors_url = node.url + 'service/server_api/authors/'
-            # t08 and clone
-            else:
+            # t08
+            elif node.url == 'https://project-socialdistribution.herokuapp.com/':
                 authors_url = node.url + 'api/authors/'
+            # t03
+            elif node.url == 'https://website404.herokuapp.com':
+                continue
+            # clone
+            else:
+                authors_url = node.url + 'api/authors'
+
 
             response = requests.get(authors_url, headers=HEADERS, auth=(node.outgoing_username, node.outgoing_password))
       
@@ -191,15 +204,15 @@ def friends_view(request, author_id):
                 for author in authors:
                     # t08
                     if node.url == 'https://project-socialdistribution.herokuapp.com/':
-                        follower_url = author['url'].replace('authors', 'api/authors') + 'followers/' + str(author_id) + '/'
+                        following_url = author['url'].replace('authors', 'api/authors') + 'followers/' + str(author_id) + '/'
                     # t05:
                     elif node.url =='https://cmput404-w22-project-backend.herokuapp.com/':
-                        follower_url = author['url'].replace('authors', 'service/server_api/authors') + '/followers/' + str(author_id)
+                        following_url = author['url'].replace('authors', 'service/server_api/authors') + '/followers/' + str(author_id)
                     # clone
                     else:
-                        follower_url = author['url'].replace('authors', 'api/authors') + '/followers/' + str(author_id)
+                        following_url = author['url'].replace('authors', 'api/authors') + '/followers/' + str(author_id)
                     
-                    response = requests.get(follower_url, headers=HEADERS, auth=(node.outgoing_username, node.outgoing_password))
+                    response = requests.get(following_url, headers=HEADERS, auth=(node.outgoing_username, node.outgoing_password))
                     
                     # if current author following them
                     if response.status_code == 200:
@@ -330,10 +343,13 @@ class SearchAuthorView(ListView):
                 #     authors_url = node.url + 'api/authors/'
                 if node.url == "https://cmput404-w22-project-backend.herokuapp.com/":
                     authors_url = node.url + 'service/server_api/authors/'
-                else:
+                elif node.url == 'http://project-socialdistribution.herokuapp.com/':
                     authors_url = node.url + 'api/authors/'
+                else:
+                    authors_url = node.url + 'api/authors'
+                # print(authors_url)
                 response = requests.get(authors_url, headers=HEADERS, auth=(node.outgoing_username, node.outgoing_password))
-                print(response)
+                # print(response)
                 if response.status_code == 200:
                     authors = response.json()['items']
                     for author in authors:
@@ -354,8 +370,9 @@ class SearchAuthorView(ListView):
                 #T08
                 if 'project-socialdistribution' in requested_id:
                     service = 't08'
-                    requested_id = requested_id.split('/')[-2]
-                    author_url = 'http://project-socialdistribution.herokuapp.com/api/authors/' + requested_id + "/"
+                    # requested_id = requested_id.split('/')[-2]
+                    # author_url = 'http://project-socialdistribution.herokuapp.com/api/authors/' + requested_id + "/"
+                    author_url = requested_id.replace('authors', 'api/authors')
                     follow_url = author_url + 'followers/' + str(author_id) + '/'
                     inbox_url = author_url + 'inbox/'
                     outgoing_username = T08_USERNAME
@@ -364,8 +381,9 @@ class SearchAuthorView(ListView):
                 #T05
                 elif 'cmput404-w22-project-backend' in requested_id:
                     service = 't05' 
-                    requested_id = requested_id.split('/')[-1]
-                    author_url = 'https://cmput404-w22-project-backend.herokuapp.com/service/server_api/authors/' + requested_id
+                    # requested_id = requested_id.split('/')[-1]
+                    # author_url = 'https://cmput404-w22-project-backend.herokuapp.com/service/server_api/authors/' + requested_id
+                    author_url = requested_id.replace('authors', 'service/server_api/authors')
                     follow_url = author_url + '/followers/' + str(author_id)
                     inbox_url = author_url + '/inbox'
                     outgoing_username = T05_USERNAME
@@ -374,8 +392,9 @@ class SearchAuthorView(ListView):
                 #Clone
                 else:
                     service = 'clone'
-                    requested_id = requested_id.split('/')[-1]
-                    author_url = 'https://squawker-dev.herokuapp.com/api/authors/' + requested_id
+                    # requested_id = requested_id.split('/')[-1]
+                    # author_url = 'https://squawker-dev.herokuapp.com/api/authors/' + requested_id
+                    author_url = requested_id.replace('authors', 'api/authors')
                     follow_url = author_url + '/followers/' + str(author_id)
                     inbox_url = author_url + '/inbox'
                     outgoing_username = CLONE_USERNAME
@@ -493,7 +512,8 @@ def inbox_view(request, id):
                 current_author.save()
                 # delete the friend request in inbox:
                 for follow in inbox.follows:
-                    if follow["actor"]["id"] == str(requesting_id) and follow["object"]["id"] == str(id):
+                    if follow["actor"]["url"] == str(requesting_id) and follow["object"]["url"] == current_author.url:
+                        print("access 2")
                         inbox.follows.remove(follow)
                         inbox.save()
                         # print(inbox.follows)
@@ -1003,7 +1023,7 @@ class InboxAPI(generics.GenericAPIView):
                 return Response(like_serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
             elif item_type == 'follow':
-                if author.url != item['object']['id'] or author.url == item['actor']['id']:
+                if author.url != item['object']['url'] or author.url == item['actor']['url']:
                     return Response({'detail': 'Fail to send the item!'}, status=status.HTTP_400_BAD_REQUEST)
 
                 if item in inbox.follows:
@@ -1013,12 +1033,13 @@ class InboxAPI(generics.GenericAPIView):
                 inbox.save()
                 return Response({'message': 'Success to send follow/friend request'}, status=status.HTTP_200_OK)
 
-            item_id = item['id']
-
+            
             if item_type.lower() == 'post':
+                item_id = item['id']
                 try:
                     author_name = item["author"]["displayName"]
                     host = item["author"]["host"]
+                
                     post = Post.objects.get_or_create(
                         id=item["id"].split('/')[-1],
                         title=f"Remote post from {author_name} of {host}",
@@ -1030,7 +1051,7 @@ class InboxAPI(generics.GenericAPIView):
                             "host": item["author"]["host"],
                             "author_id":item["author"]["id"].split('/')[-1] 
                         }
-                    )
+                    )[0]
                     
                     inbox.posts.add(post)
                     return Response({'message': 'Success to send post'}, status=status.HTTP_200_OK)
@@ -1039,9 +1060,30 @@ class InboxAPI(generics.GenericAPIView):
                     return Response({'message': e}, status_code=400)
 
             elif item_type == 'comment':
-                comment = Comment.objects.get(id=item_id)
-                inbox.comments.add(comment)
-                return Response({'message': 'Success to send comment'}, status=status.HTTP_200_OK)
+                try:
+                    post_id = item["post"].split('/')[-1]   #post is url
+                    post = get_object_or_404(Post, id=post_id)
+                    if remote:
+                        comment = Comment.objects.create(
+                            remote_author={
+                                "id": item["author"]["id"],
+                                "host": item["author"]["host"],
+                                "displayName": item["author"]["displayName"],
+                                "github": item["author"]["github"],
+                                "profileImage": item["author"]["profileImage"]
+                            },
+                            post= post,
+                            comment = item["comment"]
+                        )
+                    else: #local
+                        author_id = item["author"]["id"].split('/')[-1]
+                        author = get_object_or_404(Author, id=author_id)
+                        comment = Comment.objects.create(author=author, post=post, comment=item["comment"])
+                    inbox.comments.add(comment)
+                    return Response({'message': 'Success to send comment'}, status=status.HTTP_200_OK)
+                except Exception as e:
+                    print(e)
+                    return Response({'message': e}, status_code=400)
 
             return Response({'detail': 'Fail to send the item!'}, status=status.HTTP_400_BAD_REQUEST)
 
@@ -1071,7 +1113,7 @@ class InboxAPI(generics.GenericAPIView):
 
 class RemoteInboxAPI(generics.GenericAPIView):
     AUTHOR_INBOX_ENDPOINT = 'api/authors/{}/inbox/'
-
+    AUTHOR_INBOX_ENDPOINT_T05 = 'authors/{}/inbox'
     def post(self, request, author_id):
         if 'node' not in request.headers:
             return HttpResponseBadRequest()
@@ -1087,9 +1129,33 @@ class RemoteInboxAPI(generics.GenericAPIView):
                                    auth=HTTPBasicAuth(node.outgoing_username, node.outgoing_password)) as response:
                     return Response(status=response.status_code)
             elif item_type == 'comment':
+                if str(node.url) == T08:
+                    item['author'] = {
+                        'type': 'author',
+                        'id': 'https://{{ request.get_host }}/api/authors/{{ request.user.author.id }}/',
+                        'host': 'https://{{ request.get_host }}/',
+                        'displayName': '{{request.user.author.displayName }}',
+                        'url': 'https://{{ request.get_host }}/api/authors/{{ request.user.author.id }}/',
+                        'profileImage': 'https://{{ request.get_host }}/static/img/{{ request.user.author.profileImage }}'
+                    }
+                elif str(node.url) == T05:
+                    post_url = node.url + "service/" + "server_api/" + self.AUTHOR_INBOX_ENDPOINT_T05.format(author_id)
+                    # new_item= {"content": 'Hello T05, T01 wants to add comment'}
+                    # item = json.dumps(new_item)
+                    item['content'] = 'Hello T05, T01 wants to add comment' 
+                elif str(node.url) == CLONE:
+                    item['author'] = {
+                        'id': 'https://{{ request.get_host }}/api/authors/{{ request.user.author.id }}/',
+                        'host': 'https://{{ request.get_host }}/',
+                        'displayName': '{{request.user.author.displayName }}',
+                        'github': '{{request.user.author.github }}',
+                        'profileImage': 'https://{{ request.get_host }}/static/img/{{ request.user.author.profileImage }}'
+                    }
+                    new_item = {'item': {item}}
+                    item = json.stringify(new_item)
                 with requests.post(post_url, json=item,
                                    auth=HTTPBasicAuth(node.outgoing_username, node.outgoing_password)) as response:
-                    # print(response.content)
+                    print(response.content)
                     # print(response.url)
                     return Response(status=response.status_code)
             return Response({'detail': 'Remote Inbox POST of Like object failed'}, status=status.HTTP_400_BAD_REQUEST)
