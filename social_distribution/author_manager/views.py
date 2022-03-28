@@ -1114,12 +1114,14 @@ class InboxAPI(generics.GenericAPIView):
 class RemoteInboxAPI(generics.GenericAPIView):
     AUTHOR_INBOX_ENDPOINT = 'api/authors/{}/inbox/'
     AUTHOR_INBOX_ENDPOINT_T05 = 'authors/{}/inbox'
+    AUTHOR_INBOX_ENDPOINT_CLONE = 'api/authors/{}/inbox'
     def post(self, request, author_id):
         if 'node' not in request.headers:
             return HttpResponseBadRequest()
         
         node = get_object_or_404(Node, url=request.headers['node'])
-        
+        print(node.url)
+        print(CLONE)
         post_url = node.url + self.AUTHOR_INBOX_ENDPOINT.format(author_id)
         try:
             item = request.data['item']
@@ -1132,11 +1134,11 @@ class RemoteInboxAPI(generics.GenericAPIView):
                 if str(node.url) == T08:
                     item['author'] = {
                         'type': 'author',
-                        'id': 'https://{{ request.get_host }}/api/authors/{{ request.user.author.id }}/',
-                        'host': 'https://{{ request.get_host }}/',
-                        'displayName': '{{request.user.author.displayName }}',
-                        'url': 'https://{{ request.get_host }}/api/authors/{{ request.user.author.id }}/',
-                        'profileImage': 'https://{{ request.get_host }}/static/img/{{ request.user.author.profileImage }}'
+                        'id': f'https://{request.get_host}/api/authors/{request.user.author.id}/',
+                        'host': f'https://{request.get_host}/',
+                        'displayName': f'{request.user.author.displayName}',
+                        'url': f'https://{request.get_host}/api/authors/{request.user.author.id}/',
+                        'profileImage': f'https://{request.get_host}/static/img/{request.user.author.profileImage}'
                     }
                 elif str(node.url) == T05:
                     post_url = node.url + "service/" + "server_api/" + self.AUTHOR_INBOX_ENDPOINT_T05.format(author_id)
@@ -1144,15 +1146,18 @@ class RemoteInboxAPI(generics.GenericAPIView):
                     # item = json.dumps(new_item)
                     item['content'] = 'Hello T05, T01 wants to add comment' 
                 elif str(node.url) == CLONE:
-                    item['author'] = {
-                        'id': 'https://{{ request.get_host }}/api/authors/{{ request.user.author.id }}/',
-                        'host': 'https://{{ request.get_host }}/',
-                        'displayName': '{{request.user.author.displayName }}',
-                        'github': '{{request.user.author.github }}',
-                        'profileImage': 'https://{{ request.get_host }}/static/img/{{ request.user.author.profileImage }}'
+                    print("POST TO CLONE")
+                    post_url = node.url + self.AUTHOR_INBOX_ENDPOINT_CLONE.format(author_id)
+                    request.data['item']['author'] = {
+                        'id': f'https://{request.get_host}/api/authors/{request.user.author.id}/',
+                        'host': f'https://{request.get_host}/',
+                        'displayName': f'{request.user.author.displayName}',
+                        'github': f'{request.user.author.github}',
+                        'profileImage': f'https://{request.get_host}/static/img/{request.user.author.profileImage}'
                     }
-                    new_item = {'item': {item}}
-                    item = json.stringify(new_item)
+                    item = request.data
+                    # new_item = {'item': {item}}
+                    # item = json.dumps(new_item)
                 with requests.post(post_url, json=item,
                                    auth=HTTPBasicAuth(node.outgoing_username, node.outgoing_password)) as response:
                     print(response.content)

@@ -611,15 +611,21 @@
 
         }
 
-        var T08 = "https://project-socialdistribution.herokuapp.com/"
+        var T08 = "http://project-socialdistribution.herokuapp.com/"
         var T05 = "https://cmput404-w22-project-backend.herokuapp.com/"
-        var CLONE = "https://squawker-dev.herokuapp.com/"
+        var CLONE = "http://squawker-dev.herokuapp.com/"
         async function saveRemoteComment(postSource) {
             var items = postSource.split('/');
-            const service = items[0] + "//" + items[2] + "/"
-            if (service == T05){
+            var service = items[0] + "//" + items[2] + "/"
+            
+            if (service == T05 ){
                 var postID = items[items.length -1];
                 var authorID = items[items.length -3];
+            }
+            else if (service == CLONE) {
+                var postID = items[items.length -1];
+                var authorID = items[items.length -3];
+                service = "https://" + items[2] + "/"
             }
             else {  //T08
                 var postID = items[items.length -2];
@@ -628,7 +634,11 @@
             var post = service + "authors/" + authorID + "/posts/" + postID
             var comment=$(".comment-text-postID".replace("postID", postID)).val();
             var url = `/api/node/authors/${authorID}/inbox`;
-            
+            console.log(post)
+            console.log(comment)
+            console.log(url)
+            console.log(service)
+            console.log(CLONE)
             await fetch(url, {
                 method: 'POST',
                 headers: {

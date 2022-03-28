@@ -626,7 +626,8 @@ def RemotePostsAPI(request):
                 clone_posts = response.json()['posts']
                 for post in clone_posts:
                     if not post['unlisted']:
-                        post['id'] = str(post["id"]).split('/')[-1]
+                        post['source'] = post['id']
+                        post['id'] = str(post["id"]).split('/')[-1]          
                         post['author_id'] = post["author"]["id"].split('/')[-1]
                         if post["content_type"] == 'text/markdown':
                             post["content"] = commonmark.commonmark(str(post["content"]))
@@ -757,7 +758,7 @@ def RemotePostsAPI(request):
                                     'author_displayName': post["author"]["displayName"],
                                     'title': post["title"],
                                     'id': post_id,
-                                    'source': '',
+                                    'source': post["id"],
                                     'origin': "https://cmput404-w22-project-backend.herokuapp.com/",
                                     'content_type': post["contentType"],
                                     'content': post["content"],
