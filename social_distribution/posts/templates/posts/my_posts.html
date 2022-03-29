@@ -126,8 +126,8 @@
                                                 <div><a href="javascript:void(0)" class="card-link text-muted"
                                                         style="text-decoration: none;"
                                                         onclick="postLike('${comment.author.id}', '${post.id}', '${comment.id}')">
-                                                     <i class="fa-solid fa-thumbs-up"></i>
-                                                     <span> ${getNumLikesText(comment.num_likes)}</span>
+                                                    <i class="fa-solid fa-thumbs-up"></i>
+                                                    <span> ${getNumLikesText(comment.num_likes)}</span>
                                                 </a></div>
                                             </div>
                                         </div>
@@ -232,6 +232,7 @@
             });
 
         }
+
         function getNumLikesText(numLikes) {
             let text = "Like";
             if (numLikes > 1) {
@@ -251,25 +252,36 @@
                 },
                 body: JSON.stringify({
                     item: {
-                        type: 'like',
+                        "@context": "https://www.w3.org/ns/activitystreams",
                         summary: '{{ request.user.author }} Liked your '.concat(commentId ? 'comment' : 'post'),
-                        author: '{{ request.user.author.id }}',
-                        post: postId,
-                        comment: commentId ?? null
+                        type: 'like',
+                        author: {
+                            id: '{{ request.user.author.id }}',
+                            host: '{{ request.user.author.host }}',
+                            displayName: '{{ request.user.author.displayName }}',
+                            url: '{{ request.user.author.url }}',
+                            github: '{{ request.user.author.github }}',
+                            profileImage: '{{ request.user.author.profileImage }}'
+                        },
+                        object: `{{ request.user.author.host }}authors/${authorId}/posts/${postId}`
+                            .concat(commentId ? `/comments/${commentId}` : '')
                     }
                 })
             })
                 .then(response => {
-                    if (response.status === 200) {
+                    if (response.status == 201) {
                         return response.json();
+                    } else {
+                        return response.json().then(res => Promise.reject(res));
                     }
                 })
+                .catch(reason => console.error(reason))
                 .then(data => {
                     if (!data) {
                         return;
                     }
                     const numLikesRegex = /\d+/;
-                    if (data.comment) {
+                    if (commentId) {
                         const commentLikeSpan = document.querySelector(
                             `a[onclick="postLike('${authorId}', '${postId}', '${commentId}')"]>span`);
                         const numLikes = parseInt(commentLikeSpan.innerText.match(numLikesRegex)) || 0;
@@ -280,7 +292,7 @@
                         const numLikes = parseInt(postLikeSpan.innerText.match(numLikesRegex)) || 0;
                         postLikeSpan.innerText = getNumLikesText(numLikes + 1);
                     }
-                });
+                })
         }
 
     </script>
