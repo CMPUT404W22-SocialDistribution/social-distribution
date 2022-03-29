@@ -1054,8 +1054,19 @@ class InboxAPI(generics.GenericAPIView):
 
     def _post_like_from_remote_author(self, item, inbox, inbox_owner_id):
         # Move remote author information in item to remote_author field
-        item['remote_author'] = item['author']
-        item['author'] = {}
+        if 'author' in item:
+            item['remote_author'] = item['author']
+            item['author'] = None
+
+        # Extract post ID and possibly comment ID from object
+        if 'object' in item:
+            object_url = urlparse(item['object'])
+            object_url_ids = object_url.path.split('/')[2::2]
+            if len(object_url_ids) == 2:
+                _, item['post'] = object_url_ids
+                item['comment'] = None
+            else:
+                _, item['post'], item['comment'] = object_url_ids
 
         like_serializer = LikeSerializer(data=item)
         if like_serializer.is_valid():
@@ -1069,13 +1080,13 @@ class InboxAPI(generics.GenericAPIView):
             else:
                 previous_like = self._get_already_liked_by_remote_author(like_author, post.id, None)
             if previous_like:
-                return Response(LikeSerializer().to_representation(previous_like),
+                return Response(data={'detail': 'The author has already liked this object.'},
                                 status=status.HTTP_200_OK)
 
             like_serializer.save()
 
             # Except for self-likes, send like object to recipient's inbox
-            if inbox_owner_id != like_author.id:
+            if inbox_owner_id != like_author['id']:
                 inbox.likes.add(like_serializer.instance.id)
             return Response(posts.serializers.LikeSerializer().to_representation(like_serializer.instance),
                             status=status.HTTP_201_CREATED)
@@ -1090,7 +1101,7 @@ class InboxAPI(generics.GenericAPIView):
             author = Author.objects.get(id=id)
             inbox = Inbox.objects.get(author=author)
             item = request.data['item']
-            item_type = item['type']
+            item_type = item['type'].lower()
 
             if item_type == 'like':
                 if local:
@@ -1164,7 +1175,7 @@ class InboxAPI(generics.GenericAPIView):
             return Response({'detail': 'Fail to send the item!'}, status=status.HTTP_400_BAD_REQUEST)
 
         except Exception as e:
-            print(e)
+            print(f'{e=}')
             return Response({'detail': 'Fail to send the item!'}, status=status.HTTP_400_BAD_REQUEST)
 
     def delete(self, request, id):

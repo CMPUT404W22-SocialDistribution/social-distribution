@@ -100,3 +100,4 @@ class Like(models.Model):
     remote_author = models.JSONField(default=dict, null=True, blank=True)
     post = models.ForeignKey(Post, on_delete=models.CASCADE, related_name="likes")
     comment = models.ForeignKey(Comment, on_delete=models.CASCADE, related_name="likes", null=True, blank=True)
+    object = models.CharField(default=str, max_length=2048)

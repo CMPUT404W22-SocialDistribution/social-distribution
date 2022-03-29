@@ -734,7 +734,7 @@
                         return;
                     }
                     const numLikesRegex = /\d+/;
-                    if (data.comment) {
+                    if (commentId) {
                         const commentLikeSpan = document.querySelector(
                             `a[onclick="postLike('${authorId}', '${postId}', '${commentId}')"]>span`);
                         const numLikes = parseInt(commentLikeSpan.innerText.match(numLikesRegex)) || 0;
