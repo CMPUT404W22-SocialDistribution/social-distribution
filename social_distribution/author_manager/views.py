@@ -1061,12 +1061,15 @@ class InboxAPI(generics.GenericAPIView):
         # Extract post ID and possibly comment ID from object
         if 'object' in item:
             object_url = urlparse(item['object'])
-            object_url_ids = object_url.path.split('/')[2::2]
-            if len(object_url_ids) == 2:
-                _, item['post'] = object_url_ids
-                item['comment'] = None
-            else:
-                _, item['post'], item['comment'] = object_url_ids
+            object_url_path_parts = object_url.path.split('/')
+            try:
+                posts_index = object_url_path_parts.index('posts')
+                item['post'] = object_url_path_parts[posts_index + 1]
+                if 'comments' in object_url_path_parts:
+                    comments_index = object_url_path_parts.index('comments')
+                    item['comment'] = object_url_path_parts[comments_index + 1]
+            except Exception as e:
+                return Response(data={'detail': e}, status=status.HTTP_400_BAD_REQUEST)
 
         like_serializer = LikeSerializer(data=item)
         if like_serializer.is_valid():
@@ -1199,22 +1202,32 @@ class InboxAPI(generics.GenericAPIView):
 
 
 class RemoteInboxAPI(generics.GenericAPIView):
-    AUTHOR_INBOX_ENDPOINT = 'api/authors/{}/inbox/'
     AUTHOR_INBOX_ENDPOINT_T05 = 'authors/{}/inbox'
-    AUTHOR_INBOX_ENDPOINT_CLONE = 'api/authors/{}/inbox'
+    AUTHOR_INBOX_ENDPOINT_T08 = 'api/authors/{}/inbox'
+    AUTHOR_INBOX_ENDPOINT_SQUAWKER_DEV = 'api/authors/{}/inbox'
     def post(self, request, author_id):
         if 'node' not in request.headers:
-            return HttpResponseBadRequest()
-        
+            return HttpResponseBadRequest('Missing header node:node_url')
         node = get_object_or_404(Node, url=request.headers['node'])
-        post_url = node.url + self.AUTHOR_INBOX_ENDPOINT.format(author_id)
+        # Handle team endpoint special cases (default: assume squawker-dev)
+        post_url = node.url + self.AUTHOR_INBOX_ENDPOINT_SQUAWKER_DEV.format(author_id)
+        if node.url == T05:
+            post_url = node.url + self.AUTHOR_INBOX_ENDPOINT_T05.format(author_id)
+        elif node.url == T08:
+            post_url = node.url + self.AUTHOR_INBOX_ENDPOINT_T08.format(author_id)
+
+        # print(f'{request.data=}')
+        # print(f'{post_url=}')
         try:
             item = request.data['item']
             item_type = item['type']
             if item_type == 'like':
-                with requests.post(post_url, json=item,
+                with requests.post(post_url, json=request.data,
                                    auth=HTTPBasicAuth(node.outgoing_username, node.outgoing_password)) as response:
-                    return Response(status=response.status_code)
+                    print(f'{response.reason=}, {response.content=}')
+                    if response.ok:
+                        return Response(data=response.json(), status=response.status_code)
+                return Response(data={'detail': response.reason}, status=response.status_code)
             elif item_type == 'comment':
                 if str(node.url) == T08:
                     item['author'] = {
@@ -1231,7 +1244,7 @@ class RemoteInboxAPI(generics.GenericAPIView):
                     # item = json.dumps(new_item)
                     item['content'] = 'Hello T05, T01 wants to add comment' 
                 elif str(node.url) == CLONE:
-                    post_url = node.url + self.AUTHOR_INBOX_ENDPOINT_CLONE.format(author_id)
+                    post_url = node.url + self.AUTHOR_INBOX_ENDPOINT_SQUAWKER_DEV.format(author_id)
                     request.data['item']['author'] = {
                         'id': f'https://{request.get_host}/api/authors/{request.user.author.id}/',
                         'host': f'https://{request.get_host}/',
