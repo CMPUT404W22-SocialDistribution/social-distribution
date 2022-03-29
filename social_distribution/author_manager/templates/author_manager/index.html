@@ -45,18 +45,18 @@
                         </div>
                     </div>
                 </div>
-                
+
             </div>
             <div class="col-md-10 mt-3">
                 <div class="row " id="post-stream">
-                    
+
                     <div class="col-md-5 ml-5 border-right border-2">
                         <div  id="my_node"></div>
                         <div class=" text-center" >
                             <button class="bi bi-three-dots loadmoreBtn" style="visibility: hidden" ></button>
                         </div>
                     </div>
-                    
+
                     <div class="col-md-5 ml-5">
                         <div  id="remote_node">
                             <div id="remote_fetching">
@@ -81,17 +81,17 @@
                                     </div>
                                 </div>
                             </div>
-                        
+
                         </div>
                         <div class="text-center " >
                             <button class="bi bi-three-dots loadmoreBtn-remote" style="visibility: hidden"  ></button>
                         </div>
                     </div>
-                    
+
                     <br>
 
                     </div>
-                    
+
 
                 </div>
             </div>
@@ -353,6 +353,12 @@
                             <div class=" card justify-content-center pb-2 comment-wrapper-${post.id}">
                                 ${post.commentsSrc.comments.map(comment => {
                                     const commentId = parseCommentId(comment.id);
+                                    let commentSource = post.source;
+                                    if (post.source.endsWith('/')) {
+                                        commentSource += `comments/${commentId}`;
+                                    } else {
+                                        commentSource += `/comments/${commentId}`;
+                                    }
                                     if ( post.visibility != "friends" ) {
                                                 return`<div class=" justify-content-center py-2">
                                         <div class="pb-2 px-2 mx-2" style="background-color: #00000008;
@@ -365,7 +371,7 @@
                                                 <span>${Timestamp(comment.published)} </span>
                                                 <div><a href="javascript:void(0)" class="card-link text-muted"
                                                         style="text-decoration: none;"
-                                                        onclick="remotePostLike('${comment.id}')">
+                                                        onclick="remotePostLike('${commentSource}')">
                                                     <i class="fa-solid fa-thumbs-up"></i>
                                                     <span id="likes-${commentId}">Like</span>
                                                 </a></div>
@@ -386,7 +392,7 @@
                                                         <span>${Timestamp(comment.published)} </span>
                                                         <div><a href="javascript:void(0)" class="card-link text-muted"
                                                                 style="text-decoration: none;"
-                                                                onclick="remotePostLike('${comment.id}')">
+                                                                onclick="remotePostLike('${commentSource}')">
                                                             <i class="fa-solid fa-thumbs-up"></i>
                                                             <span id="likes-${commentId}">Like</span>
                                                         </a></div>
@@ -452,7 +458,7 @@
                 }
             });
 
-            
+
             $.ajax({
                 type: 'GET',
                 url: "{% url 'posts:remote_posts_api' %}",
@@ -474,10 +480,10 @@
                         data.posts.map(post => {
                             postList.push(createRemotePostCard(post))
                         });
-                       
+
                         count = postList.length;
                         if (postList.length < 5) {
-                            len = postList.length 
+                            len = postList.length
                         }
                         for (let i=0; i < len; i++) {
                             remoteCardsHtml += postList.shift();
@@ -487,7 +493,7 @@
                         var rootElement = document.getElementById("remote_node")
                         rootElement.innerHTML = createRemotePostCard(postLatestFromApi) + rootElement.innerHTML
                     }
-                   
+
                     var countPosts =  $(".remotePostcard").length;
                     if (countPosts == 5) {
                         document.getElementsByClassName("loadmoreBtn-remote")[0].style.visibility = 'visible';
@@ -540,18 +546,18 @@
 
             $(document).ready(function RemoteOnClickLoadMore(){
                 $(".loadmoreBtn-remote").on('click', function(){
-                    
+
                     var len = 5;
 
                     if (postList.length < 5) {
                         len = postList.length
-                      
+
                     }
                     var remoteCardsHtml = '';
                     for (let i=0; i < len; i++) {
                         remoteCardsHtml += postList.shift();
                     }
-                    
+
                     document.getElementById("remote_node").innerHTML += remoteCardsHtml;
                     var countPosts =  $(".remotePostcard").length;
                     if (countPosts == count) {
@@ -577,7 +583,7 @@
                     'X-CSRFToken': '{{ csrf_token }}'
                 },
                 body: JSON.stringify({
-                    'comment':_comment,                    
+                    'comment':_comment,
                 })
             }).then
             (response => {
@@ -618,7 +624,7 @@
         async function saveRemoteComment(postSource) {
             var items = postSource.split('/');
             var service = items[0] + "//" + items[2] + "/"
-            
+
             if (service == T05 ){
                 var postID = items[items.length -1];
                 var authorID = items[items.length -3];
@@ -660,13 +666,13 @@
                         //     url: 'https://{{ request.get_host }}/api/authors/{{ request.user.author.id }}/',
                         //     profileImage: 'https://{{ request.get_host }}/static/img/{{ request.user.author.profileImage }}'
                         // },       
-                    }             
+                    }
                 })
             }).then (response => {
                 if (response.status === 200) {
                     return response;
                 }
-               
+
             }).then(res => {
                 $(".comment-text-postID".replace("postID", postID)).val('')
                 // Added new comment
@@ -750,7 +756,7 @@
 
         async function remotePostLike(likedObjectSource) {
             // console.debug(`likedObjectSource=${likedObjectSource}`);
-            let objectUrl = ''
+            let objectUrl = {};
             try {
                 objectUrl = new URL(likedObjectSource);
             } catch (e) {
@@ -797,10 +803,29 @@
                 })
             })
                 .then(response => {
-                    if (response.status === 201) {
-                        return response.json();
-                    } else {
-                        return response.json().then(res => Promise.reject(res));
+                    // Handle different team response behaviors
+                    const hostUrl = objectUrl.origin + '/';
+                    if (hostUrl === CLONE) {
+                        if (response.status === 201) {
+                            return response.json();
+                        } else {
+                            return response.json().then(res => Promise.reject(res));
+                        }
+                    }
+                    else if (hostUrl === T08) {
+                        // TODO: figure out what T08's use of 201 and 200 are
+                        if (response.status === 200 || response.status === 201) {
+                            return response.json();
+                        } else {
+                            return response.json().then(res => Promise.reject(res));
+                        }
+                    } else if (hostUrl === T05) {
+                        // TODO: verify
+                        if (response.status === 200 || response.status === 201) {
+                            return response.json();
+                        } else {
+                            return response.json().then(res => Promise.reject(res));
+                        }
                     }
                 })
                 .then((data) => {
@@ -837,8 +862,11 @@
             let fetchUrl = `/api/node/authors/${authorId}/posts/${postId}`;
             let commentId = undefined;
             if (likedObjectType === 'Comment') {
+                // console.debug(`commentIndex=${commentsIndex}, commentId=${commentId}`);
                 commentId = objectUrlPathParts[commentsIndex + 1];
-                // console.debug(`commentId=${commentId}`);
+                if (commentsIndex === -1 || typeof commentId === 'undefined') {
+                    throw Error(`Invalid likedObjectSource: ${likedObjectSource}`);
+                }
                 fetchUrl += `/comments/${commentId}`;
             }
             fetchUrl += '/likes';
@@ -896,15 +924,15 @@
                         // console.debug(`comment.id=${comment.id}`);
                         commentSource = new URL(comment.id);
                     } catch {
-                        console.log.warn(`URL parse failed for comment.id=${comment.id}. Attempting to construct URL manually.`);
+                        console.warn(`URL parse failed for comment.id=${comment.id}. Attempting to construct URL manually.`);
                         commentSource = post.source;
                         if (post.source.endsWith('/')) {
                             commentSource += `comments/`;
                         } else {
                             commentSource += `/comments/`
-                            commentSource += comment.id;
                             // console.debug(`post.source=${post.source}, comment.id=${comment.id}, commentSource=${commentSource}`);
                         }
+                        commentSource += comment.id;
                     }
                     // console.debug(`commentSource=${commentSource}`);
                     remoteSetNumLikesText(commentSource);

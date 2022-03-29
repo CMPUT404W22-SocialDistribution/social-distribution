@@ -1327,9 +1327,17 @@ class RemoteInboxAPI(generics.GenericAPIView):
             item = request.data['item']
             item_type = item['type']
             if item_type == 'like':
-                with requests.post(post_url, json=request.data,
+                # Handle differences in inbox POST spec interpretation
+                post_data = item
+                if node.url == CLONE:
+                    post_data = request.data
+                elif node.url == T08:
+                    post_url += '/'
+                    post_data = item
+                # print(json.dumps(post_data, indent=4))
+                with requests.post(post_url, json=post_data,
                                    auth=HTTPBasicAuth(node.outgoing_username, node.outgoing_password)) as response:
-                    print(f'{response.reason=}, {response.content=}')
+                    # print(f'{response.reason=}, {response.content=}')
                     if response.ok:
                         return Response(data=response.json(), status=response.status_code)
                 return Response(data={'detail': response.reason}, status=response.status_code)
