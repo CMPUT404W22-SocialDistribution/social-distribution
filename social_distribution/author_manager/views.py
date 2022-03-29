@@ -201,7 +201,6 @@ class RemoteFriendsAPI(APIView):
                     
                     # if current author following them
                     if response.status_code == 200:
-                        author['profileImage'] = 'profile_picture.png'
                         followings.append(author)           
 
         # get friends
@@ -964,7 +963,7 @@ class FriendDetailAPI(APIView):
             
             for follower in remote_followers:
                 if str(follower_id) in follower:
-                    author.remote_followers = author.remote_followers.replace(follower, '')
+                    author.remote_followers = author.remote_followers.replace(f'{follower} ', '')
                     author.save()
                     break
             return Response({'message': 'Success to unfriend/unfollow'}, status=status.HTTP_200_OK)
