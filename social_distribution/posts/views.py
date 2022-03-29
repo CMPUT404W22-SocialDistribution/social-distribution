@@ -1227,6 +1227,7 @@ class RemotePostLikesAPI(generics.GenericAPIView):
 
         with requests.get(post_likes_url,
                           auth=HTTPBasicAuth(node.outgoing_username, node.outgoing_password)) as response:
+            # print(f'{response.reason=}, {response.content=}')
             if response.ok:
                 return Response(data=response.json(), status=response.status_code)
         return Response({'detail': response.reason}, status=response.status_code)
