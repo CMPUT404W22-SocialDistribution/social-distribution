@@ -748,13 +748,27 @@
                 })
         }
 
-        async function remotePostLike(likedObject) {
-            const objectUrl = new URL(likedObject);
-            const objectUrlPath = objectUrl.pathname.split('/');
-            const authorId = objectUrlPath[2];
-            const postId = objectUrlPath[4];
-            const likedObjectType = typeof objectUrlPath[6] === 'undefined' ? 'Post' : 'Comment';
-            await fetch(`/api/node/authors/${authorId}/inbox`, {
+        async function remotePostLike(likedObjectSource) {
+            // console.debug(`likedObjectSource=${likedObjectSource}`);
+            let objectUrl = ''
+            try {
+                objectUrl = new URL(likedObjectSource);
+            } catch (e) {
+                throw Error(`${likedObjectSource} is an invalid URL`);
+            }
+            const objectUrlPathParts = objectUrl.pathname.split('/');
+            const authorsIndex = objectUrlPathParts.findIndex(part => part === 'authors');
+            const postsIndex = objectUrlPathParts.findIndex(part => part === 'posts');
+            const commentsIndex = objectUrlPathParts.findIndex(part => part === 'comments');
+            if (authorsIndex === -1 || postsIndex === -1) {
+                throw Error(`Invalid likedObjectSource: ${likedObjectSource}`);
+            }
+            const authorId = objectUrlPathParts[authorsIndex + 1];
+            const likedObjectType = commentsIndex === -1 ? 'Post' : 'Comment';
+
+            let fetchUrl = `/api/node/authors/${authorId}/inbox`;
+            // console.debug(`fetchUrl=${fetchUrl}`);
+            await fetch(fetchUrl, {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
@@ -767,28 +781,35 @@
                         summary: `{{ request.user.author }} Liked your ${likedObjectType}`,
                         author: {
                             type: 'author',
-                            id: 'https://{{ request.get_host }}/api/authors/{{ request.user.author.id }}/',
-                            host: 'https://{{ request.get_host }}/',
+                            id: 'https://{{ request.get_host }}/api/authors/{{ request.user.author.id }}',
+                            host: 'https://{{ request.get_host }}',
                             displayName: '{{ request.user.author.displayName }}',
-                            url: 'https://{{ request.get_host }}/api/authors/{{ request.user.author.id }}/',
+                            url: 'https://{{ request.get_host }}/api/authors/{{ request.user.author.id }}',
                             github: {% if request.user.author.github %}
-                                        'http://github.com/{{ request.user.author.github }}/',
+                                        'http://github.com/{{ request.user.author.github }}',
                                     {% else %}
                                         '',
                                     {% endif %}
                             profileImage: 'https://{{ request.get_host }}/static/img/{{ request.user.author.profileImage }}'
                         },
-                        object: likedObject,
+                        object: likedObjectSource
                     }
                 })
             })
-                .then(() => {
+                .then(response => {
+                    if (response.status === 201) {
+                        return response.json();
+                    } else {
+                        return response.json().then(res => Promise.reject(res));
+                    }
+                })
+                .then((data) => {
                     const numLikesRegex = /\d+/;
-                    const commentLikeSpan = document.querySelector(`a[onclick="remotePostLike('${likedObject}')"]>span`);
+                    const commentLikeSpan = document.querySelector(`a[onclick="remotePostLike('${likedObjectSource}')"]>span`);
                     const numLikes = parseInt(commentLikeSpan.innerText.match(numLikesRegex)) || 0;
                     commentLikeSpan.innerText = getNumLikesText(numLikes + 1);
                     })
-                .catch(reason => console.log(reason));
+                .catch(reason => console.error(reason));
         }
 
         async function remoteSetNumLikesText(likedObjectSource) {
@@ -838,7 +859,7 @@
                 })
                 .catch(reason => console.error(reason))
                 .then(data => {
-                    const numLikes = data?.items?.length || 0;
+                    const numLikes = data?.likes?.length || 0;
                     let numLikesText = "Like";
                     if (numLikes > 1) {
                        numLikesText = `${numLikes} Likes`;
