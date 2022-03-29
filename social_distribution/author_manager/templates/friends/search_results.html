@@ -11,47 +11,120 @@
             </form>
         </div>
 
-        {% if object_list %}
-            <h1 class="text-center" style="padding-top: 20px; font-family: roboto">{{object_list|length}} result(s) found</h1>
-        {% else %}
-            <h1 class="text-center" style="padding-top: 20px; font-family: roboto">No results found</h1>
-        {% endif %}
+        {% if object_list.0 == 'query' %}
+            {% if object_list.1 %}
+                <h1 class="text-center" style="padding-top: 20px; font-family: roboto">{{object_list.1|length}} result(s) found</h1>
+            {% else %}
+                <h1 class="text-center" style="padding-top: 20px; font-family: roboto">No results found</h1>
+            {% endif %}
 
-        {% for author in object_list %}
-            <div>
-                <div class="card flex-row flex-grow-1 p-2 my-2 align-items-center shadow-sm w-100">
-                    <a href="{{author.url}}">
-                        <div class="d-flex justify-content-between align-items-center">
-                            <div class="mr-2">
-                                <img class="rounded-circle" width="60px" src="/static/img/{{author.profileImage}}" alt="profile picture">
+            {% for author in object_list.1 %}
+                <div>
+                    <div class="card flex-row flex-grow-1 p-2 my-2 align-items-center shadow-sm w-100">
+                        <a href="{{author.url}}">
+                            <div class="d-flex justify-content-between align-items-center">
+                                <div class="mr-2">
+                                    <img class="rounded-circle" width="60px" src="/static/img/{{author.profileImage}}" alt="profile picture">
+                                </div>
                             </div>
-                        </div>
-                    </a>
-                    <a href="{{author.url}}" style="color:black; text-decoration: none;">
-                        <div class="d-flex justify-content-between align-items-center">
-                            <div class="ml-2">
-                                {% if author.username == 'remote author' %}
-                                    <h5>@{{author.displayName}}</h5>
-                                    <h6 class="text-muted pl-2">{{author.username}}</h6>
-                                {% else %}
-                                    <h5>@{{author.username}}</h5>
-                                    <h6 class="text-muted pl-2">{{author.displayName}}</h6>
+                        </a>
+                        <a href="{{author.url}}" style="color:black; text-decoration: none;">
+                            <div class="d-flex justify-content-between align-items-center">
+                                <div class="ml-2">
+                                    {% if author.username == 'remote author' %}
+                                        <h5>@{{author.displayName}}</h5>
+                                        <h6 class="text-muted pl-2">{{author.username}}</h6>
+                                    {% else %}
+                                        <h5>@{{author.username}}</h5>
+                                        <h6 class="text-muted pl-2">{{author.displayName}}</h6>
+                                    {% endif %}
+                                </div>
+                            </div>
+                        </a>
+                        {% if user.username != author.username %}
+                            <div class="d-flex flex-row card-right flex-grow-1 justify-content-end mx-1">
+                                <form method="post">
+                                    {% csrf_token %}
+                                    <input type="hidden" name="object_id" value="{{author.id}}">
+                                    <button type="submit" class="btn btn-outline-primary">Follow</button>
+                                </form>
+                            </div>
+                        {% endif %}
+                    </div>
+                </div>
+            {% endfor %}
+
+        {% else %}
+
+            <div class="card local-authors shadow mt-5 mb-5">
+                <h2 class="card-header mb-2 bg-secondary text-white">Local Authors</h2>
+                <div class="card-body">
+                    <div class="card-text">
+                        {% for author in object_list.1 %}
+                            <div class="card flex-row flex-grow-1 p-2 my-2 align-items-center shadow-sm">
+                                <a href="{{author.url}}">
+                                    <div class="d-flex justify-content-between align-items-center">
+                                        <div class="mr-2">
+                                            <img class="rounded-circle" width="60px" src="/static/img/{{author.profileImage}}" alt="profile picture">
+                                        </div>
+                                    </div>
+                                </a>
+                                <a href="{{author.url}}" style="color:black; text-decoration: none;">
+                                    <div class="d-flex justify-content-between align-items-center">
+                                        <div class="ml-2">
+                                            <h5>@{{author.user.username}}</h5>
+                                            <h6 class="text-muted pl-2">{{author.displayName}}</h6>
+                                        </div>
+                                    </div>
+                                </a>
+                                {% if user.username != author.user.username %}
+                                    <div class="d-flex flex-row card-right flex-grow-1 justify-content-end mx-1">
+                                        <form method="post">
+                                            {% csrf_token %}
+                                            <input type="hidden" name="object_id" value="{{author.id}}">
+                                            <button type="submit" class="btn btn-outline-primary">Follow</button>
+                                        </form>
+                                    </div>
                                 {% endif %}
                             </div>
-                        </div>
-                    </a>
-                    {% if user.username != author.username %}
-                        <div class="d-flex flex-row card-right flex-grow-1 justify-content-end mx-1">
-                            <form method="post">
-                                {% csrf_token %}
-                                <input type="hidden" name="object_id" value="{{author.id}}">
-                                <button type="submit" class="btn btn-outline-primary">Follow</button>
-                            </form>
-                        </div>
-                    {% endif %}
+                        {% endfor %}
+                    </div>
                 </div>
             </div>
-        {% endfor %}
 
+            <div class="card local-authors shadow mb-5">
+                <h2 class="card-header mb-2 bg-secondary text-white">Remote Authors</h2>
+                <div class="card-body">
+                    <div class="card-text">
+                        {% for author in object_list.2 %}
+                            <div class="card flex-row flex-grow-1 p-2 my-2 align-items-center shadow-sm">
+                                <a href="{{author.url}}">
+                                    <div class="d-flex justify-content-between align-items-center">
+                                        <div class="mr-2">
+                                            <img class="rounded-circle" width="60px" src="/static/img/profile_picture.png" alt="profile picture">
+                                        </div>
+                                    </div>
+                                </a>
+                                <a href="{{author.url}}" style="color:black; text-decoration: none;">
+                                    <div class="d-flex justify-content-between align-items-center">
+                                        <div class="ml-2">
+                                            <h5>@{{author.displayName}}</h5>
+                                            <h6 class="text-muted pl-2">remote author</h6>
+                                        </div>
+                                    </div>
+                                </a>
+                                <div class="d-flex flex-row card-right flex-grow-1 justify-content-end mx-1">
+                                    <form method="post">
+                                        {% csrf_token %}
+                                        <input type="hidden" name="object_id" value="{{author.id}}">
+                                        <button type="submit" class="btn btn-outline-primary">Follow</button>
+                                    </form>
+                                </div>
+                            </div>
+                        {% endfor %}
+                    </div>
+                </div>
+            </div>
+        {% endif %}
     </div>
 {% endblock %}
