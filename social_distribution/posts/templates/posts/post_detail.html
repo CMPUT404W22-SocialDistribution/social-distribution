@@ -258,25 +258,36 @@ aria-controls="collapseExample">
             },
             body: JSON.stringify({
                 item: {
-                    type: 'like',
+                    "@context": "https://www.w3.org/ns/activitystreams",
                     summary: '{{ request.user.author }} Liked your '.concat(commentId ? 'comment' : 'post'),
-                    author: '{{ request.user.author.id }}',
-                    post: postId,
-                    comment: commentId ?? null
+                    type: 'like',
+                    author: {
+                        id: '{{ request.user.author.id }}',
+                        host: '{{ request.user.author.host }}',
+                        displayName: '{{ request.user.author.displayName }}',
+                        url: '{{ request.user.author.url }}',
+                        github: '{{ request.user.author.github }}',
+                        profileImage: '{{ request.user.author.profileImage }}'
+                    },
+                    object: `{{ request.user.author.host }}authors/${authorId}/posts/${postId}`
+                        .concat(commentId ? `/comments/${commentId}` : '')
                 }
             })
         })
             .then(response => {
-                if (response.status === 200) {
+                if (response.status == 201) {
                     return response.json();
+                } else {
+                    return response.json().then(res => Promise.reject(res));
                 }
             })
+            .catch(reason => console.error(reason))
             .then(data => {
                 if (!data) {
                     return;
                 }
                 const numLikesRegex = /\d+/;
-                if (data.comment) {
+                if (commentId) {
                     const commentLikeSpan = document.querySelector(
                         `a[onclick="postLike('${authorId}', '${postId}', '${commentId}')"]>span`);
                     const numLikes = parseInt(commentLikeSpan.innerText.match(numLikesRegex)) || 0;
@@ -287,7 +298,7 @@ aria-controls="collapseExample">
                     const numLikes = parseInt(postLikeSpan.innerText.match(numLikesRegex)) || 0;
                     postLikeSpan.innerText = getNumLikesText(numLikes + 1);
                 }
-            });
+            })
     }
 </script>
 {% endblock %}
