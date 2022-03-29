@@ -201,7 +201,6 @@ class RemoteFriendsAPI(APIView):
                     
                     # if current author following them
                     if response.status_code == 200:
-                        author['profileImage'] = 'profile_picture.png'
                         followings.append(author)           
 
         # get friends
