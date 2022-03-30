@@ -71,12 +71,12 @@ aria-controls="collapseExample">
             {% endif %}
         </div>
         <div class="card-footer">
-            <a href="#" class="card-link text-muted" style="text-decoration: none;" onclick="postLike('{{ post.author.id }}', '{{ post.id }}')"><i class="fa-solid fa-thumbs-up"></i>
-                <span>
-                {% if numLikes > 1 %}
-                    {{ numLikes }}&nbsp;Likes
-                {% elif numLikes > 0 %}
-                    {{ numLikes }}&nbsp;Like
+            <a href="#" class="card-link text-muted" style="text-decoration: none;" onclick="remotePostLike('{{ post.source }}')"><i class="fa-solid fa-thumbs-up"></i>
+                <span id="likes-{{post.id}}">
+                {% if post.num_likes > 1 %}
+                    {{ post.num_likes }}&nbsp;Likes
+                {% elif post.num_likes > 0 %}
+                    {{ post.num_likes }}&nbsp;Like
                 {% else %}
                     Like
                 {% endif %}
@@ -114,9 +114,13 @@ aria-controls="collapseExample">
                             <span>{{comment.published}} </span>
                             <div><a href="javascript:void(0)" class="card-link text-muted"
                                     style="text-decoration: none;"
-                                    onclick="postLike('{{ comment.author.id }}', '{{ post.id }}', '{{ comment.id }}')">
+                                    onclick={% if post.source|slice:"-1" == '/' %}
+                                            "remotePostLike('{{ post.source }}{{ comment.id }}')">
+                                            {% else %}
+                                            "remotePostLike('{{ post.source }}/{{ comment.id }}')">
+                                            {% endif %}
                                  <i class="fa-solid fa-thumbs-up"></i>
-                                 <span>
+                                 <span id="likes-{{ comment.id }}">
                                  {% if comment.num_likes > 1 %}
                                     {{ comment.num_likes }} Likes
                                  {% elif comment.num_likes > 0 %}
@@ -140,9 +144,13 @@ aria-controls="collapseExample">
                             <span id="datePublished" data-answer="{{comment.published}}">{{comment.published}} </span>
                             <div><a href="javascript:void(0)" class="card-link text-muted"
                                 style="text-decoration: none;"
-                                onclick="postLike('{{comment.author.id}}', '{{post.id}}', '{{comment.id}}')">
+                                onclick={% if post.source|slice:"-1" == '/' %}
+                                        "remotePostLike('{{ post.source }}{{ comment.id }}')">
+                                        {% else %}
+                                        "remotePostLike('{{ post.source }}/{{ comment.id }}')">
+                                        {% endif %}
                             <i class="fa-solid fa-thumbs-up"></i>
-                            <span> {{comment.num_likes}} Like</span>
+                            <span id="likes-{{ comment.id }}"> {{comment.num_likes}} Like</span>
                             </a></div>
                         </div>
                     </div>
@@ -159,6 +167,9 @@ aria-controls="collapseExample">
     </div>
 </div>
 <script>
+    var T08 = "http://project-socialdistribution.herokuapp.com/";
+    var T05 = "https://cmput404-w22-project-backend.herokuapp.com/";
+    var CLONE = "http://squawker-dev.herokuapp.com/";
 
     window.addEventListener('DOMContentLoaded', (event) => {
         // Inject bootstrap class card-img-bottom to constrain inline image size
@@ -181,6 +192,97 @@ aria-controls="collapseExample">
     var content = document.getElementById("datePublished");
     console.log(Timestamp(datePublished));
     content.innerHTML = Timestamp(datePublished).toString();
+
+    function getNumLikesText(numLikes) {
+        let text = "Like";
+        if (numLikes > 1) {
+            text = `${numLikes} Likes`;
+        } else if (numLikes > 0) {
+            text = `${numLikes} Like`;
+        }
+        return text;
+    }
+
+    async function remotePostLike(likedObjectSource) {
+            // console.debug(`likedObjectSource=${likedObjectSource}`);
+            let objectUrl = {};
+            try {
+                objectUrl = new URL(likedObjectSource);
+            } catch (e) {
+                throw Error(`${likedObjectSource} is an invalid URL`);
+            }
+            const objectUrlPathParts = objectUrl.pathname.split('/');
+            const authorsIndex = objectUrlPathParts.findIndex(part => part === 'authors');
+            const postsIndex = objectUrlPathParts.findIndex(part => part === 'posts');
+            const commentsIndex = objectUrlPathParts.findIndex(part => part === 'comments');
+            if (authorsIndex === -1 || postsIndex === -1) {
+                throw Error(`Invalid likedObjectSource: ${likedObjectSource}`);
+            }
+            const authorId = objectUrlPathParts[authorsIndex + 1];
+            const likedObjectType = commentsIndex === -1 ? 'Post' : 'Comment';
+
+            let fetchUrl = `/api/node/authors/${authorId}/inbox`;
+            // console.debug(`fetchUrl=${fetchUrl}`);
+            await fetch(fetchUrl, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRFToken': '{{ csrf_token }}',
+                    'node': objectUrl.origin + '/'
+                },
+                body: JSON.stringify({
+                    type: 'like',
+                    summary: `{{ request.user.author }} Liked your ${likedObjectType}`,
+                    author: {
+                        type: 'author',
+                        id: 'https://{{ request.get_host }}/api/authors/{{ request.user.author.id }}',
+                        host: 'https://{{ request.get_host }}',
+                        displayName: '{{ request.user.author.displayName }}',
+                        url: 'https://{{ request.get_host }}/api/authors/{{ request.user.author.id }}',
+                        github: {% if request.user.author.github %}
+                                    'http://github.com/{{ request.user.author.github }}',
+                                {% else %}
+                                    '',
+                                {% endif %}
+                        profileImage: 'https://{{ request.get_host }}/static/img/{{ request.user.author.profileImage }}'
+                    },
+                    object: likedObjectSource
+                })
+            })
+                .then(response => {
+                    // Handle different team response behaviors
+                    const hostUrl = objectUrl.origin + '/';
+                    if (hostUrl === CLONE) {
+                        if (response.status === 201) {
+                            return response.json();
+                        } else {
+                            return response.json().then(res => Promise.reject(res));
+                        }
+                    }
+                    else if (hostUrl === T08) {
+                        // TODO: figure out what T08's use of 201 and 200 are
+                        if (response.status === 200 || response.status === 201) {
+                            return response.json();
+                        } else {
+                            return response.json().then(res => Promise.reject(res));
+                        }
+                    } else if (hostUrl === T05) {
+                        // TODO: verify
+                        if (response.status === 200 || response.status === 201) {
+                            return response.json();
+                        } else {
+                            return response.json().then(res => Promise.reject(res));
+                        }
+                    }
+                })
+                .then((data) => {
+                    const numLikesRegex = /\d+/;
+                    const commentLikeSpan = document.querySelector(`a[onclick="remotePostLike('${likedObjectSource}')"]>span`);
+                    const numLikes = parseInt(commentLikeSpan.innerText.match(numLikesRegex)) || 0;
+                    commentLikeSpan.innerText = getNumLikesText(numLikes + 1);
+                    })
+                .catch(reason => console.error(reason));
+        }
 
     {% comment %} $(document).ready(function ClickOnComment(){
             $(".save-comment").off('click').on('click', function(){
@@ -213,9 +315,9 @@ aria-controls="collapseExample">
                                                         <span>${Timestamp(res.published)}</span>
                                                         <div><a href="javascript:void(0)" class="card-link text-muted"
                                                                 style="text-decoration: none;"
-                                                                onclick="postLike('${res.author}', '${_postid}', '${res.id}')">
+                                                                onclick="remotePostLike('${res.source}')">
                                                             <i class="fa-solid fa-thumbs-up"></i>
-                                                            <span> ${getNumLikesText(res.num_likes)}</span>
+                                                            <span id="likes-${res.id}"> ${getNumLikesText(res.num_likes ?? 0)}</span>
                                                         </a></div>
                                                     </div>
                                                 </div>
@@ -230,55 +332,6 @@ aria-controls="collapseExample">
             })
         })
 
-    function getNumLikesText(numLikes) {
-        let text = "Like";
-        if (numLikes > 1) {
-            text = `${numLikes} Likes`;
-        } else if (numLikes > 0) {
-            text = `${numLikes} Like`;
-        }
-        return text;
-    }
-
-    async function postLike(authorId, postId, commentId) {
-        await fetch(`/api/authors/${authorId}/inbox`, {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-                'X-CSRFToken': '{{ csrf_token }}'
-            },
-            body: JSON.stringify({
-                item: {
-                    type: 'like',
-                    summary: '{{ request.user.author }} Liked your '.concat(commentId ? 'comment' : 'post'),
-                    author: '{{ request.user.author.id }}',
-                    post: postId,
-                    comment: commentId ?? null
-                }
-            })
-        })
-            .then(response => {
-                if (response.status === 200) {
-                    return response.json();
-                }
-            })
-            .then(data => {
-                if (!data) {
-                    return;
-                }
-                const numLikesRegex = /\d+/;
-                if (data.comment) {
-                    const commentLikeSpan = document.querySelector(
-                        `a[onclick="postLike('${authorId}', '${postId}', '${commentId}')"]>span`);
-                    const numLikes = parseInt(commentLikeSpan.innerText.match(numLikesRegex)) || 0;
-                    commentLikeSpan.innerText = getNumLikesText(numLikes + 1);
-                } else {
-                    const postLikeSpan = document.querySelector(
-                        `a[onclick="postLike('${authorId}', '${postId}')"]>span`);
-                    const numLikes = parseInt(postLikeSpan.innerText.match(numLikesRegex)) || 0;
-                    postLikeSpan.innerText = getNumLikesText(numLikes + 1);
-                }
-            });
-    } {% endcomment %}
+     {% endcomment %}
 </script>
 {% endblock %}

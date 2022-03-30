@@ -251,21 +251,19 @@
                     'X-CSRFToken': '{{ csrf_token }}'
                 },
                 body: JSON.stringify({
-                    item: {
-                        "@context": "https://www.w3.org/ns/activitystreams",
-                        summary: '{{ request.user.author }} Liked your '.concat(commentId ? 'comment' : 'post'),
-                        type: 'like',
-                        author: {
-                            id: '{{ request.user.author.id }}',
-                            host: '{{ request.user.author.host }}',
-                            displayName: '{{ request.user.author.displayName }}',
-                            url: '{{ request.user.author.url }}',
-                            github: '{{ request.user.author.github }}',
-                            profileImage: '{{ request.user.author.profileImage }}'
-                        },
-                        object: `{{ request.user.author.host }}authors/${authorId}/posts/${postId}`
-                            .concat(commentId ? `/comments/${commentId}` : '')
-                    }
+                    "@context": "https://www.w3.org/ns/activitystreams",
+                    summary: '{{ request.user.author }} Liked your '.concat(commentId ? 'comment' : 'post'),
+                    type: 'like',
+                    author: {
+                        id: '{{ request.user.author.id }}',
+                        host: '{{ request.user.author.host }}',
+                        displayName: '{{ request.user.author.displayName }}',
+                        url: '{{ request.user.author.url }}',
+                        github: '{{ request.user.author.github }}',
+                        profileImage: '{{ request.user.author.profileImage }}'
+                    },
+                    object: `{{ request.user.author.host }}authors/${authorId}/posts/${postId}`
+                        .concat(commentId ? `/comments/${commentId}` : '')
                 })
             })
                 .then(response => {
