@@ -695,7 +695,8 @@ def RemotePostsAPI(request):
                                             'comment': comment["comment"],
                                             'contentType': comment["contentType"],
                                             'published': comment["published"],
-                                            'id': comment_id
+                                            'id': comment_id,
+                                            'num_likes': comment['likeCount']
                                         }
                                         comments.append(comment_data)
                                 comments = sorted(comments, key=lambda k: k['published'], reverse=True)
@@ -725,7 +726,8 @@ def RemotePostsAPI(request):
                                     'commentsSrc': {
                                         'size': len(comments),
                                         'comments': comments
-                                    }
+                                    },
+                                    'num_likes': post['likeCount']
 
                                 }
                                 remote_posts.append(post_data)
