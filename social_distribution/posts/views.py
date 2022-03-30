@@ -625,7 +625,6 @@ def get_post(remote_nodes, remote_posts, author):
                         # friend_url = node.url + '/authors/' + author_id +'/'
                         # for each post, get my comments and the friend's comments only
                         # comments_url = str(post["comments"]) commented out since T08 hasn't have this field set yet
-                        print("POST",post['likeCount'])
                         comments = []
                         post_id = str(post["id"]).split('/')[-2]
                         comments_url = posts_url + post_id + '/comments/'
