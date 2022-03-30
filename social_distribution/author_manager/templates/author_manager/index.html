@@ -434,7 +434,7 @@
 
                     if (postLatestElementId == "empty") {
                         var postCardsHtml = '';
-                        data.posts.map(post => {
+                        data.posts.forEach(post => {
                             postCardsHtml += createPostCard(post);
 
                         });
@@ -477,7 +477,7 @@
                     console.log(data)
                     if (postLatestElementId == "empty") {
                         var remoteCardsHtml = '';
-                        data.posts.map(post => {
+                        data.posts.forEach(post => {
                             postList.push(createRemotePostCard(post))
                         });
 
