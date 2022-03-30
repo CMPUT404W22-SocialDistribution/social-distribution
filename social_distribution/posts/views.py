@@ -411,7 +411,8 @@ def post_detail(request, author_id, post_id):
                                 'comment': comment["comment"],
                                 'contentType': comment["contentType"],
                                 'published': comment["published"],
-                                'id': comment_id
+                                'id': comment_id,
+                                'num_likes': comment.get('likeCount', 0)
                             }
                             comments.append(comment_data)
                     comments = sorted(comments, key=lambda k: k['published'], reverse=True)
@@ -435,7 +436,8 @@ def post_detail(request, author_id, post_id):
                             "displayName": data["author"]["displayName"],
                             "host": data["author"]["host"],
                             "profileImage": author_image,
-                        }
+                        },
+                        "num_likes": data.get('likeCount', 0)
                     }
                     context = {
                         "post": post,
@@ -465,7 +467,8 @@ def post_detail(request, author_id, post_id):
                             "displayName": data["author"]["displayName"],
                             "host": data["author"]["host"],
                             "profileImage": author_image,
-                        }
+                        },
+                        'num_likes': data.get('likeCount', 0)
                     }
                     context = {
                         "post": post,
@@ -493,7 +496,8 @@ def post_detail(request, author_id, post_id):
                             "displayName": data["author_username"],
                             "host": data["author"]["host"],
                             "profileImage": data["author"]["host"] + "static/img/" + data["author"]["profileImage"],
-                        }
+                        },
+                        'num_likes': data.get('likeCount', 0)
                     }
                     context = {
                         "post": post,
@@ -520,7 +524,8 @@ def post_detail(request, author_id, post_id):
                             "displayName": data["author_username"],
                             "host": data["author"]["host"],
                             "profileImage": data["author"]["host"] + "static/img/" + data["author"]["profileImage"],
-                        }
+                        },
+                        'num_likes': data.get('likeCount', 0)
                     }
                     context = {
                         "post": post,
