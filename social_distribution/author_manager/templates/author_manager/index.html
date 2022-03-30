@@ -563,7 +563,6 @@
             var post = service + "authors/" + authorID + "/posts/" + postID
             var comment=$(".comment-text-postID".replace("postID", postID)).val();
             var url = `/api/node/authors/${authorID}/inbox`;
-
             await fetch(url, {
                 method: 'POST',
                 headers: {
