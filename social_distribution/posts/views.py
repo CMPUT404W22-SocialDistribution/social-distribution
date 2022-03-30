@@ -616,18 +616,7 @@ def get_post(remote_nodes, remote_posts, author):
             team8_posts = data["items"]
             for post in team8_posts:
                 if not post['unlisted']:
-                    if post['visibility'] == 'PUBLIC' or post['visibility'] == 'FRIENDS':
-                        # Need Comment API to create comment objects
-                        # need to convert categories, comments to arr
-
-                        # for each post, get all comments
-                        # comments_url = str(post["comments"]) commented out since T08 hasn't have this field set yet
-
-                        # FRIENDS ONLY
-                        # friend_url = node.url + '/authors/' + author_id +'/'
-                        # for each post, get my comments and the friend's comments only
-                        # comments_url = str(post["comments"]) commented out since T08 hasn't have this field set yet
-
+                    if post['visibility'] == 'PUBLIC':
                         comments = []
                         post_id = str(post["id"]).split('/')[-2]
                         comments_url = posts_url + post_id + '/comments/'
@@ -643,7 +632,8 @@ def get_post(remote_nodes, remote_posts, author):
                                     'comment': comment["comment"],
                                     'contentType': comment["contentType"],
                                     'published': comment["published"],
-                                    'id': comment_id
+                                    'id': comment_id,
+                                    'num_likes': comment['likeCount']
                                 }
                                 comments.append(comment_data)
                         comments = comments[::-1]
@@ -673,7 +663,8 @@ def get_post(remote_nodes, remote_posts, author):
                             'commentsSrc': {
                                 'size': len(comments),
                                 'comments': comments
-                            }
+                            },
+                            'num_likes': post['likeCount']
 
                         }
                         remote_posts.append(post_data)
@@ -688,7 +679,7 @@ def get_post(remote_nodes, remote_posts, author):
             for post in team5_posts:
                 if not post['unlisted']:
 
-                    if post['visibility'].upper() == 'PUBLIC' or post['visibility'].upper() == 'FRIENDS':
+                    if post['visibility'].upper() == 'PUBLIC':
                         post_id = str(post["id"]).split('/')[-1]
 
                         # post with comments
@@ -696,6 +687,8 @@ def get_post(remote_nodes, remote_posts, author):
                             post["content"] = commonmark.commonmark(str(post["content"]))
                         author_image = post['author']['profileImage'] if post['author'][
                             'profileImage'] else '/static/img/profile_picture.png'
+                        for comment in post['commentsSrc']:
+                            comment['num_likes'] = comment['likeCount']
                         post_data = {
                             'author_username': post["author"]["displayName"],
                             'author_displayName': post["author"]["displayName"],
@@ -716,7 +709,8 @@ def get_post(remote_nodes, remote_posts, author):
                             'commentsSrc': {
                                 'size': len(post['commentsSrc']),
                                 'comments': post['commentsSrc']
-                            }
+                            },
+                            'num_likes': post['likeCount']
 
                         }
                         remote_posts.append(post_data)
