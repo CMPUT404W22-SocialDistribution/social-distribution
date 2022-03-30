@@ -582,7 +582,7 @@
                     'node': service
                 },
                 body: JSON.stringify({
-                    item: {
+                    // item: {
                         type: 'comment',
                         comment: comment,
                         post: post
@@ -594,7 +594,7 @@
                         //     url: 'https://{{ request.get_host }}/api/authors/{{ request.user.author.id }}/',
                         //     profileImage: 'https://{{ request.get_host }}/static/img/{{ request.user.author.profileImage }}'
                         // },       
-                    }
+                    // }
                 })
             }).then (response => {
                 if (response.status === 200) {

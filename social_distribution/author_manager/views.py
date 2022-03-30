@@ -1356,14 +1356,14 @@ class RemoteInboxAPI(generics.GenericAPIView):
                     item['content'] = 'Hello T05, T01 wants to add comment' 
                 elif str(node.url) == CLONE:
                     post_url = node.url + self.AUTHOR_INBOX_ENDPOINT_SQUAWKER_DEV.format(author_id)
-                    request.data['item']['author'] = {
+                    item['author'] = {
                         'id': f'https://{request.get_host}/api/authors/{request.user.author.id}/',
                         'host': f'https://{request.get_host}/',
                         'displayName': f'{request.user.author.displayName}',
                         'github': f'{request.user.author.github}',
                         'profileImage': f'https://{request.get_host}/static/img/{request.user.author.profileImage}'
                     }
-                    item = request.data
+                    
                     # new_item = {'item': {item}}
                     # item = json.dumps(new_item)
                 with requests.post(post_url, json=item,
