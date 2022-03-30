@@ -1322,7 +1322,7 @@ class RemoteInboxAPI(generics.GenericAPIView):
         # print(f'{request.data=}')
         # print(f'{post_url=}')
         try:
-            item = request.data['item']
+            item = request.data
             item_type = item['type']
             if item_type == 'like':
                 # Handle differences in inbox POST spec interpretation
