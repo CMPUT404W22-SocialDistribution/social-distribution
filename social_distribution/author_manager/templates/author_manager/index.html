@@ -3,7 +3,7 @@
 
 {% block content %}
 
-    <div class="justify-content-left container-fluid">
+    <div class="justify-content-center container-fluid">
         <div class="row text-center mt-5">
             <div class="col-md-4"></div>
             <div class="col-md-4">
@@ -15,8 +15,8 @@
                 </form>
             </div>
         </div>
-        <div class="row gutters-sm" style="margin-top: 20px; margin-left:20px" >
-            <div class="col-md-2 mb-3">
+        <div class="row gutters-sm" style="margin-top: 20px; margin-left:20px;" >
+            <div class="col-md-2 mb-3" style="position: fixed">
                 <div class="card shadow-sm">
                     <div class="card-body">
                         <div class="d-flex flex-column align-items-center text-center">
@@ -47,6 +47,7 @@
                 </div>
 
             </div>
+            <div class="col-md-2"></div>
             <div class="col-md-10 mt-3">
                 <div class="row " id="post-stream">
 
@@ -114,55 +115,6 @@
         }
 
         function createPostCard(post) {
-            postCardHTML = `
-                <div class="row postCard" id="post-${post.id}">
-                    <div class="col-md-1 mr-2">
-                        <img class="rounded-circle border border-2 shadow-sm"
-                            style="border-color: gray"
-                            width="50"
-                            src="/static/img/${post.author_image}"
-                            alt="profile picture">
-                            <p class="text-end"><i class="fa-solid fa-turn-up fa-rotate-90 text-muted mt-2"></i></p>
-
-                    </div>
-                    <div class="col-md-9 mb-3 ml-1">
-                        <div class="card shadow-sm">
-                            <div class="card-header" style="background-color: #e5e5e5">
-                                <div class="d-flex justify-content-between align-items-center">
-                                    <a href="authors/${post.author.id}"
-                                        style="color:black;
-                                                text-decoration: none;">
-                                        <div class="d-flex justify-content-between align-items-center">
-                                            <div class="h6 m-0 text-muted">@${post.author_username}</div>
-                                        </div>
-                                    </a>
-                                    <div class="d-flex justify-content-between align-items-center">${postVisibilityIcon}</div>
-                                </div>
-                            </div>
-                            <div class="card-body">
-                                <h3 class="card-title"><a href="authors/${post.author.id}/posts/${post.id}" style="text-decoration: none;color: black">${post.title}</a></h3>
-                                <div class="card-text fs-6 text-muted">
-                                    <i class="fa-solid fa-calendar-day"> </i><i>&nbsp;&nbsp;${postTimestamp}</i>
-                                </div>
-                                <p>
-                                    <p class="card-text fs-5 fw-light">
-                                        ${post.description} <a class="fs-6 text-muted" data-bs-toggle="collapse" href="#collapseLocal-${post.id}" role="button" aria-expanded="false" aria-controls="collapseLocal-${post.id}">
-                                        <i class="fa-solid fa-angle-down"></i>
-                                    </a>
-                                </p>
-                                </p>
-                                <div class="collapse" id="collapseLocal-${post.id}">
-                                    <div class="card card-body">
-                                        <p>
-                                            Source: <a href="${post.source}" target="_blank">${post.source}</a>
-                                        </p>
-                                        <p>
-                                            Origin: <a href="${post.origin}" target="_blank">${post.origin}</a>
-                                        </p>
-                                    </div>
-                                </div>
-                                <div class="card-text" id="post-content">${post.content}</div>
-                            `
             var postTimestamp = new Date(post.published).toLocaleString('en-US', {
                 weekday: 'short', // long, short, narrow
                 day: 'numeric', // numeric, 2-digit
