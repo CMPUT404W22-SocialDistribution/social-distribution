@@ -529,9 +529,11 @@ class SearchAuthorView(ListView):
                         "object": object
                     }
 
-                    if service == "clone":
-                        friend_request = {"item" : friend_request}
-                    elif service == "t05":
+                    # if service == "clone":
+                    #     friend_request = {"item" : friend_request}
+                    # elif service == "t05":
+                    #     friend_request = {"content" : friend_request}
+                    if service == "t05":
                         friend_request = {"content" : friend_request}
 
                     headers = HEADERS
@@ -1202,7 +1204,7 @@ class InboxAPI(generics.GenericAPIView):
         try:
             author = Author.objects.get(id=id)
             inbox = Inbox.objects.get(author=author)
-            item = request.data['item']
+            item = request.data
             item_type = item['type'].lower()
 
             if item_type == 'like':
@@ -1211,7 +1213,7 @@ class InboxAPI(generics.GenericAPIView):
                 else:
                     return self._post_like_from_remote_author(item, inbox, id)
 
-            elif item_type.lower() == 'follow':
+            elif item_type == 'follow':
                 if author.url != item['object']['url'] or author.url == item['actor']['url']:
                     return Response({'detail': 'Fail to send the item!'}, status=status.HTTP_400_BAD_REQUEST)
 
@@ -1225,8 +1227,8 @@ class InboxAPI(generics.GenericAPIView):
                 return Response({'message': 'Success to send follow/friend request'}, status=status.HTTP_200_OK)
 
             
-            if item_type.lower() == 'post':
-                item_id = item['id']
+            if item_type == 'post':
+                # item_id = item['id']
                 try:
                     author_name = item["author"]["displayName"]
                     host = item["author"]["host"]
@@ -1304,7 +1306,7 @@ class InboxAPI(generics.GenericAPIView):
 
 class RemoteInboxAPI(generics.GenericAPIView):
     AUTHOR_INBOX_ENDPOINT_T05 = 'authors/{}/inbox'
-    AUTHOR_INBOX_ENDPOINT_T08 = 'api/authors/{}/inbox'
+    AUTHOR_INBOX_ENDPOINT_T08 = 'api/authors/{}/inbox/'
     AUTHOR_INBOX_ENDPOINT_SQUAWKER_DEV = 'api/authors/{}/inbox'
     def post(self, request, author_id):
         if 'node' not in request.headers:
@@ -1313,14 +1315,14 @@ class RemoteInboxAPI(generics.GenericAPIView):
         # Handle team endpoint special cases (default: assume squawker-dev)
         post_url = node.url + self.AUTHOR_INBOX_ENDPOINT_SQUAWKER_DEV.format(author_id)
         if node.url == T05:
-            post_url = node.url + self.AUTHOR_INBOX_ENDPOINT_T05.format(author_id)
+            post_url = node.url + "service/" + "server_api/" + self.AUTHOR_INBOX_ENDPOINT_T05.format(author_id)
         elif node.url == T08:
             post_url = node.url + self.AUTHOR_INBOX_ENDPOINT_T08.format(author_id)
 
         # print(f'{request.data=}')
         # print(f'{post_url=}')
         try:
-            item = request.data['item']
+            item = request.data
             item_type = item['type']
             if item_type == 'like':
                 # Handle differences in inbox POST spec interpretation
@@ -1328,7 +1330,7 @@ class RemoteInboxAPI(generics.GenericAPIView):
                 if node.url == CLONE:
                     post_data = request.data
                 elif node.url == T08:
-                    post_url += '/'
+                    # post_url += '/'
                     post_data = item
                 # print(json.dumps(post_data, indent=4))
                 with requests.post(post_url, json=post_data,
@@ -1338,32 +1340,20 @@ class RemoteInboxAPI(generics.GenericAPIView):
                         return Response(data=response.json(), status=response.status_code)
                 return Response(data={'detail': response.reason}, status=response.status_code)
             elif item_type == 'comment':
-                if str(node.url) == T08:
-                    item['author'] = {
-                        'type': 'author',
-                        'id': f'https://{request.get_host}/api/authors/{request.user.author.id}/',
-                        'host': f'https://{request.get_host}/',
-                        'displayName': f'{request.user.author.displayName}',
-                        'url': f'https://{request.get_host}/api/authors/{request.user.author.id}/',
-                        'profileImage': f'https://{request.get_host}/static/img/{request.user.author.profileImage}'
-                    }
-                elif str(node.url) == T05:
-                    post_url = node.url + "service/" + "server_api/" + self.AUTHOR_INBOX_ENDPOINT_T05.format(author_id)
-                    # new_item= {"content": 'Hello T05, T01 wants to add comment'}
-                    # item = json.dumps(new_item)
-                    item['content'] = 'Hello T05, T01 wants to add comment' 
-                elif str(node.url) == CLONE:
-                    post_url = node.url + self.AUTHOR_INBOX_ENDPOINT_SQUAWKER_DEV.format(author_id)
-                    request.data['item']['author'] = {
+                author = {
                         'id': f'https://{request.get_host}/api/authors/{request.user.author.id}/',
                         'host': f'https://{request.get_host}/',
                         'displayName': f'{request.user.author.displayName}',
                         'github': f'{request.user.author.github}',
-                        'profileImage': f'https://{request.get_host}/static/img/{request.user.author.profileImage}'
-                    }
-                    item = request.data
-                    # new_item = {'item': {item}}
-                    # item = json.dumps(new_item)
+                        'profileImage': f'https://{request.get_host}/static/img/{request.user.author.profileImage}',
+                        'url': f'https://{request.get_host}/api/authors/{request.user.author.id}/'
+                }
+                if str(node.url) == T08 or str(node.url) == CLONE:
+                    item['author'] = author
+                elif str(node.url) == T05:
+                    item['content'] = 'Hello T05, T01 wants to add comment' 
+                # elif str(node.url) == CLONE:
+                #     item['author'] = author
                 with requests.post(post_url, json=item,
                                    auth=HTTPBasicAuth(node.outgoing_username, node.outgoing_password)) as response:
                     print(response.content)

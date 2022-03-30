@@ -67,6 +67,6 @@ class LikeSerializer(serializers.ModelSerializer):
 class InboxSerializer(serializers.ModelSerializer):
     class Meta:
         model = Inbox
-        fields = ['item']  
+        fields = []
 
         

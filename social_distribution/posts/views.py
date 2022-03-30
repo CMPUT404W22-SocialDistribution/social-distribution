@@ -87,18 +87,16 @@ def post_create(request, author_id):
                             for item in authors:
                                 inbox_url = f'{authors_url}/{item}/inbox'
                                 payload = {
-                                    'item': {
-                                        'type': 'post',
-                                        'id': post.source,
-                                        'author': {
-                                            'id': author.url,
-                                            'type': 'author',
-                                            'host': author.host,
-                                            'displayName': author.displayName,
-                                            'github': author.github,
-                                            'profileImage': '/static/img/' + author.profileImage,
-                                            'url': author.url,
-                                        }
+                                    'type': 'post',
+                                    'id': post.source,
+                                    'author': {
+                                        'id': author.url,
+                                        'type': 'author',
+                                        'host': author.host,
+                                        'displayName': author.displayName,
+                                        'github': author.github,
+                                        'profileImage': '/static/img/' + author.profileImage,
+                                        'url': author.url  
                                     }
                                 }
                                 response = requests.post(inbox_url, json=payload,
@@ -647,6 +645,7 @@ def get_post(remote_nodes, remote_posts, author):
                             'author_displayName': post["author"]["displayName"],
                             'title': post["title"],
                             'id': post_id,
+                            'remote': "true",
                             'description': post['description'],
                             'source': post["source"],
                             'origin': "https://project-socialdistribution.herokuapp.com/",
@@ -694,6 +693,7 @@ def get_post(remote_nodes, remote_posts, author):
                             'author_displayName': post["author"]["displayName"],
                             'title': post["title"],
                             'id': post_id,
+                            'remote': "true",
                             'description': post['description'],
                             'source': post["id"],
                             'origin': "https://cmput404-w22-project-backend.herokuapp.com/",
@@ -738,6 +738,7 @@ def RemotePostsAPI(request):
                 for post in clone_posts:
                     if not post['unlisted']:
                         post['source'] = post['id']
+                        post['remote'] = "true"
                         post['id'] = str(post["id"]).split('/')[-1]          
                         post['author_id'] = post["author"]["id"].split('/')[-1]
                         if post["content_type"] == 'text/markdown':
@@ -825,9 +826,10 @@ class PostsAPI(APIView):
                 if post.content_type == 'text/markdown':
                     post.content = commonmark.commonmark(post.content)  # parse and render content of type markdown
 
-            paginator = PageNumberPagination()
-            result_page = paginator.paginate_queryset(local_posts, request)
-            serializer = PostSerializer(result_page, many=True)
+            # paginator = PageNumberPagination()
+            # result_page = paginator.paginate_queryset(local_posts, request)
+            # serializer = PostSerializer(result_page, many=True)
+            serializer = PostSerializer(local_posts, many=True)
             response = {
                 'count': len(local_posts),
                 'posts': serializer.data
