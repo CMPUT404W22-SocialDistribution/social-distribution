@@ -477,7 +477,7 @@ def post_detail(request, author_id, post_id):
             # Dev
             elif node_url == "http://squawker-dev.herokuapp.com/" or node_url == "https://squawker-dev.herokuapp.com/":
                 posts_url = f"{node_url}api/authors/{author_id}/posts/{post_id}"
-                response = requests.get(posts_url, headers=HEADERS, auth=("squawker-dev", "cmput404"))
+                response = requests.get(posts_url, headers=HEADERS, auth=("squawker", "cmput404"))
                 if response.status_code == 200:
                     data = response.json()
                     if data["content_type"] == 'text/markdown':
@@ -503,7 +503,7 @@ def post_detail(request, author_id, post_id):
                         "post": post,
                         "comments": data["commentsSrc"]["comments"]
                     }
-            elif node_url == 'http://squawker-cmput404.herokuapp.com/':
+            elif node_url == 'http://squawker-cmput404.herokuapp.com/' or node_url == 'https://squawker-cmput404.herokuapp.com/':
                 posts_url = f"{node_url}api/authors/{author_id}/posts/{post_id}"
                 response = requests.get(posts_url, headers=HEADERS, auth=("squawker", "cmput404"))
                 if response.status_code == 200:
