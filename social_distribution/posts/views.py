@@ -669,7 +669,7 @@ def RemotePostsAPI(request):
                     team8_posts = data["items"]
                     for post in team8_posts:
                         if not post['unlisted']:
-                            if post['visibility'] == 'PUBLIC' or post['visibility'] == 'FRIENDS':
+                            if post['visibility'] == 'PUBLIC':
                                 # Need Comment API to create comment objects
                                 # need to convert categories, comments to arr
 
@@ -744,7 +744,7 @@ def RemotePostsAPI(request):
                     for post in team5_posts:
                         if not post['unlisted']:
 
-                            if post['visibility'].upper() == 'PUBLIC' or post['visibility'].upper() == 'FRIENDS':
+                            if post['visibility'].upper() == 'PUBLIC':
                                 post_id = str(post["id"]).split('/')[-1]
 
                                 # post with comments
