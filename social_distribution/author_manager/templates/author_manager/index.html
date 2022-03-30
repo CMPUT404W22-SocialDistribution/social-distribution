@@ -431,10 +431,6 @@
                     //     var rootElement = document.getElementById("remote_node")
                     //     rootElement.innerHTML = createRemotePostCard(postLatestFromApi) + rootElement.innerHTML
                     // }
-                    // Inject bootstrap class card-img-bottom to constrain inline image sizes
-                    document.querySelectorAll("#post-content img:not(.card-img-bottom)").forEach(postContentInlineImg =>
-                        postContentInlineImg?.classList.add('card-img-bottom')
-                    );
                     // Set likes count on each post currently on-screen
                     // remoteSetLikes(postDataList.splice(0, len));
                 },
@@ -473,10 +469,7 @@
                     if (countPosts == 5) {
                         document.getElementsByClassName("loadmoreBtn")[0].style.visibility = 'visible';
                     }
-                    // Inject bootstrap class card-img-bottom to constrain inline image sizes
-                    document.querySelectorAll("#post-content img:not(.card-img-bottom)").forEach(postContentInlineImg =>
-                        postContentInlineImg?.classList.add('card-img-bottom')
-                    );
+                    
                 },
                 error: (error) => {
                     console.log(error);
@@ -503,6 +496,10 @@
                 document.getElementById("my_node").innerHTML += postCardsHtml;
             }
             remoteSetLikes(postDataList);
+            // Inject bootstrap class card-img-bottom to constrain inline image sizes
+            document.querySelectorAll("#post-content img:not(.card-img-bottom)").forEach(postContentInlineImg =>
+            postContentInlineImg?.classList.add('card-img-bottom')
+        );
         });
        
         async function saveComment(postID) {
