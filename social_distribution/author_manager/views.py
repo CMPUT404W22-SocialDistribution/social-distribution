@@ -1228,7 +1228,7 @@ class InboxAPI(generics.GenericAPIView):
 
             
             if item_type == 'post':
-                item_id = item['id']
+                # item_id = item['id']
                 try:
                     author_name = item["author"]["displayName"]
                     host = item["author"]["host"]
