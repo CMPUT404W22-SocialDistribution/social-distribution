@@ -1306,7 +1306,7 @@ class InboxAPI(generics.GenericAPIView):
 
 class RemoteInboxAPI(generics.GenericAPIView):
     AUTHOR_INBOX_ENDPOINT_T05 = 'authors/{}/inbox'
-    AUTHOR_INBOX_ENDPOINT_T08 = 'api/authors/{}/inbox/'
+    AUTHOR_INBOX_ENDPOINT_T08 = 'api/authors/{}/inbox'
     AUTHOR_INBOX_ENDPOINT_SQUAWKER_DEV = 'api/authors/{}/inbox'
     def post(self, request, author_id):
         if 'node' not in request.headers:
