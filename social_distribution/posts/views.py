@@ -1230,7 +1230,7 @@ class RemotePostLikesAPI(generics.GenericAPIView):
             # print(f'{response.reason=}, {response.content=}')
             if response.ok:
                 return Response(data=response.json(), status=response.status_code)
-        return Response({'detail': response.reason}, status=response.status_code)
+        return Response({'detail': f'Unable to get Likes for Post object {post_likes_url}'}, status=response.status_code)
 
 
 class RemoteCommentLikesAPI(generics.GenericAPIView):

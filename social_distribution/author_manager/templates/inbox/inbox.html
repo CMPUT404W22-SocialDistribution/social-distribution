@@ -187,11 +187,15 @@
                                 <ol class="list-group">
                                     {% for like in likes %}
                                         <div class="card flex-row flex-grow-1 p-2 mx-2 my-2 align-items-center shadow-sm">
-                                            <a href="{{ like.author.url }}">
+                                            <a href="{% firstof like.author.url like.remote_author.url %}">
                                                 <div class="d-flex justify-content-between align-items-center">
                                                     <div class="mr-2">
                                                         <img class="rounded-circle" width="60px"
-                                                             src="/static/img/{{ like.author.profileImage }}"
+                                                             src={% if like.author %}
+                                                                 "/static/img/{{ like.author.profileImage }}"
+                                                                 {% else %}
+                                                                 {{ like.remote_author.profileImage }}
+                                                                 {% endif %}
                                                              alt="profile picture">
                                                     </div>
                                                 </div>
