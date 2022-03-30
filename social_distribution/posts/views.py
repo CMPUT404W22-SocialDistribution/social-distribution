@@ -741,7 +741,7 @@ def RemotePostsAPI(request):
 
             if response.status_code == 200:
                 clone_posts = response.json()['posts']
-                def clone_dev(post):
+                for post in clone_posts:
                     if not post['unlisted']:
                         post['source'] = post['id']
                         post['id'] = str(post["id"]).split('/')[-1]          
@@ -750,8 +750,6 @@ def RemotePostsAPI(request):
                             post["content"] = commonmark.commonmark(str(post["content"]))
                         post['author_image'] = '/static/img/' + post['author_image']
                         remote_posts.append(post)
-                with concurrent.futures.ThreadPoolExecutor() as executor:
-                    executor.map(clone_dev, clone_posts)
 
         # Team 8
         elif node.url == 'http://project-socialdistribution.herokuapp.com/':
