@@ -585,15 +585,7 @@
                     // item: {
                         type: 'comment',
                         comment: comment,
-                        post: post
-                        // author: {
-                        //     type: 'author',
-                        //     id: 'https://{{ request.get_host }}/api/authors/{{ request.user.author.id }}/',
-                        //     host: 'https://{{ request.get_host }}/',
-                        //     displayName: '{{request.user.author.displayName }}',
-                        //     url: 'https://{{ request.get_host }}/api/authors/{{ request.user.author.id }}/',
-                        //     profileImage: 'https://{{ request.get_host }}/static/img/{{ request.user.author.profileImage }}'
-                        // },       
+                        post: post     
                     // }
                 })
             }).then (response => {
@@ -602,6 +594,7 @@
                 }
 
             }).then(res => {
+                
                 $(".comment-text-postID".replace("postID", postID)).val('')
                 // Added new comment
                 var _url = "{% url 'author_manager:profile' user.author.id%}";
