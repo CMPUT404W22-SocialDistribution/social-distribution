@@ -17,6 +17,8 @@ class PostSerializer(serializers.ModelSerializer):
     author_image = serializers.SerializerMethodField('get_author_image')
     comments = serializers.SerializerMethodField('get_comments_url')
     num_likes = serializers.SerializerMethodField('get_num_likes')
+    
+
 
     def get_author_image(self, obj):
         return obj.author.profileImage
@@ -36,7 +38,7 @@ class PostSerializer(serializers.ModelSerializer):
     # add comments, like,...
     class Meta:
         model = Post
-        fields = ['type', 'author_username', 'author_displayName', 'title', 'id', 'source', 'origin', 'description',
+        fields = ['type', 'remote', 'author_username', 'author_displayName', 'title', 'id', 'source', 'origin', 'description',
                   'content_type', 'visibleTo', 'unlisted',
                   'content', 'author', 'categories', 'published', 'visibility', 'unlisted', 'author_image', 'image',
                   'comments', 'commentsSrc', 'num_likes']
@@ -65,6 +67,7 @@ class PostSerializer(serializers.ModelSerializer):
                 "comments": comments[::-1],
             }
             response["commentsSrc"] = data
+       
         return response
 
 

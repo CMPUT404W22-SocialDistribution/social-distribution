@@ -50,16 +50,16 @@
             <div class="col-md-10 mt-3">
                 <div class="row " id="post-stream">
 
-                    <div class="col-md-5 ml-5 border-right border-2">
+                    <!-- <div class="col-md-5 ml-5 border-right border-2"> -->
                         <div  id="my_node"></div>
-                        <div class=" text-center" >
+                        <!-- <div class=" text-center" >
                             <button class="bi bi-three-dots loadmoreBtn" style="visibility: hidden" ></button>
-                        </div>
-                    </div>
+                        </div> -->
+                    <!-- </div> -->
 
-                    <div class="col-md-5 ml-5">
+                    <!-- <div class="col-md-5 ml-5"> -->
                         <div  id="remote_node">
-                            <div id="remote_fetching">
+                            <div  id="remote_fetching">
                                 <div class="d-flex align-items-center">
                                     <h4>Fetching Remote Posts...</h4>
                                     <div class="spinner-border ms-auto" role="status" aria-hidden="true"></div>
@@ -84,9 +84,10 @@
 
                         </div>
                         <div class="text-center " >
-                            <button class="bi bi-three-dots loadmoreBtn-remote" style="visibility: hidden"  ></button>
+                            <button class="bi bi-three-dots loadmoreBtn" style="visibility: hidden"  ></button>
+                            <!-- <button class="bi bi-three-dots loadmoreBtn-remote" style="visibility: hidden"  ></button> -->
                         </div>
-                    </div>
+                    <!-- </div> -->
 
                     <br>
 
@@ -101,6 +102,7 @@
     </div>
 
     <script>
+
         function Timestamp(time) {
             return new Date(time).toLocaleString('en-US', {
                 day: 'numeric', // numeric, 2-digit
@@ -112,6 +114,55 @@
         }
 
         function createPostCard(post) {
+            postCardHTML = `
+                <div class="row postCard" id="post-${post.id}">
+                    <div class="col-md-1 mr-2">
+                        <img class="rounded-circle border border-2 shadow-sm"
+                            style="border-color: gray"
+                            width="50"
+                            src="/static/img/${post.author_image}"
+                            alt="profile picture">
+                            <p class="text-end"><i class="fa-solid fa-turn-up fa-rotate-90 text-muted mt-2"></i></p>
+
+                    </div>
+                    <div class="col-md-9 mb-3 ml-1">
+                        <div class="card shadow-sm">
+                            <div class="card-header" style="background-color: #e5e5e5">
+                                <div class="d-flex justify-content-between align-items-center">
+                                    <a href="authors/${post.author.id}"
+                                        style="color:black;
+                                                text-decoration: none;">
+                                        <div class="d-flex justify-content-between align-items-center">
+                                            <div class="h6 m-0 text-muted">@${post.author_username}</div>
+                                        </div>
+                                    </a>
+                                    <div class="d-flex justify-content-between align-items-center">${postVisibilityIcon}</div>
+                                </div>
+                            </div>
+                            <div class="card-body">
+                                <h3 class="card-title"><a href="authors/${post.author.id}/posts/${post.id}" style="text-decoration: none;color: black">${post.title}</a></h3>
+                                <div class="card-text fs-6 text-muted">
+                                    <i class="fa-solid fa-calendar-day"> </i><i>&nbsp;&nbsp;${postTimestamp}</i>
+                                </div>
+                                <p>
+                                    <p class="card-text fs-5 fw-light">
+                                        ${post.description} <a class="fs-6 text-muted" data-bs-toggle="collapse" href="#collapseLocal-${post.id}" role="button" aria-expanded="false" aria-controls="collapseLocal-${post.id}">
+                                        <i class="fa-solid fa-angle-down"></i>
+                                    </a>
+                                </p>
+                                </p>
+                                <div class="collapse" id="collapseLocal-${post.id}">
+                                    <div class="card card-body">
+                                        <p>
+                                            Source: <a href="${post.source}" target="_blank">${post.source}</a>
+                                        </p>
+                                        <p>
+                                            Origin: <a href="${post.origin}" target="_blank">${post.origin}</a>
+                                        </p>
+                                    </div>
+                                </div>
+                                <div class="card-text" id="post-content">${post.content}</div>
+                            `
             var postTimestamp = new Date(post.published).toLocaleString('en-US', {
                 weekday: 'short', // long, short, narrow
                 day: 'numeric', // numeric, 2-digit
@@ -147,7 +198,7 @@
                     </div>
                     <div class="col-md-9 mb-3 ml-1">
                         <div class="card shadow-sm">
-                            <div class="card-header" style="background-color: #A7C7E7">
+                            <div class="card-header" style="background-color: #e5e5e5">
                                 <div class="d-flex justify-content-between align-items-center">
                                     <a href="authors/${post.author.id}"
                                         style="color:black;
@@ -233,7 +284,7 @@
                                                     </div>
                                                 </div>`
                                         if ( post.visibility != "friends" ) {
-                                                return comment_html
+                                            return comment_html
                                         }
                                         //current user is the author of that post, or current user is comment author or that comment belongs to post author
                                         else if ((post.author.id == `{{author.id}}`) || (comment.author.id == `{{author.id}}`) || (comment.author.id == post.author.id)) {
@@ -359,8 +410,7 @@
                                     } else {
                                         commentSource += `/comments/${commentId}`;
                                     }
-                                    if ( post.visibility != "friends" ) {
-                                                return`<div class=" justify-content-center py-2">
+                                    var comment_html = `<div class=" justify-content-center py-2">
                                         <div class="pb-2 px-2 mx-2" style="background-color: #00000008;
                                              box-shadow: 5px 5px 2px #cccccc;">
                                             <p class="card-text"> ${comment.comment}</p>
@@ -378,28 +428,12 @@
                                             </div>
                                         </div>
                                     </div>`
-                                            }
+                                    if ( post.visibility != "friends" ) {
+                                        return comment_html
+                                    }
                                     //current user is the author of that post, or current user is comment author or that comment belongs to post author
                                     else if ((post.author.id == `{{author.id}}`) || (comment.author.id == `{{author.id}}`) || (comment.author.id == post.author.id)) {
-                                        return `
-                                            <div class=" justify-content-center py-2">
-                                                <div class="pb-2 px-2 mx-2"
-                                                style="background-color: #00000008; box-shadow: 5px 5px 2px #cccccc;"
-                                                >  <p class="card-text"> ${comment.comment}</p>
-                                                <div class=" d-flex justify-content-between py-1 pt-2" style="font-size: 13px";>
-                                                    <span ><a href="/authors/${comment.author.id}">
-                                                        ${comment.author_displayName}</a></span>
-                                                        <span>${Timestamp(comment.published)} </span>
-                                                        <div><a href="javascript:void(0)" class="card-link text-muted"
-                                                                style="text-decoration: none;"
-                                                                onclick="remotePostLike('${commentSource}')">
-                                                            <i class="fa-solid fa-thumbs-up"></i>
-                                                            <span id="likes-${commentId}">Like</span>
-                                                        </a></div>
-                                                    </div>
-                                                </div>
-                                            </div>
-                                            `
+                                        return comment_html
                                     }
                             }).join('')}
                             </div>
@@ -414,13 +448,52 @@
 
 
 
-        var pageNumb = 1;
+        // var pageNumb = 1;
         var postList = [];
         var postDataList = [];
-        var count = 0;
-        function fetchPosts(){
-
-            $.ajax({
+        // var count = 0;
+        function fetchRemotePosts(){
+            return $.ajax({
+                type: 'GET',
+                url: "{% url 'posts:remote_posts_api' %}",
+                dataType: 'json',
+                success: (data, status) => {
+                    postDataList = data.posts;
+                    // Remove the Fetching placeholder
+                    document.getElementById("remote_fetching").remove();
+                    // Get the latest post from the API
+                    var postLatestFromApi = data.posts[0];
+                    // Get the latest post from the DOM
+                    var rootFirstChild = document.getElementById("my_node").firstChild;
+                    // var rootFirstChild = document.getElementById("remote_node").firstChild;
+                    var postLatestElement = rootFirstChild ? rootFirstChild.nextElementSibling : null;
+                    var postLatestElementId = postLatestElement ? postLatestElement.id : "empty";
+                    var len = 5;
+                    if (postLatestElementId == "empty") {
+                        var remoteCardsHtml = '';
+                        data.posts.map(post => {
+                            postList.push(post)
+                        });
+                    } 
+                    // else if (postLatestElementId != postLatestFromApi.id) {
+                    //     var rootElement = document.getElementById("remote_node")
+                    //     rootElement.innerHTML = createRemotePostCard(postLatestFromApi) + rootElement.innerHTML
+                    // }
+                    // Inject bootstrap class card-img-bottom to constrain inline image sizes
+                    document.querySelectorAll("#post-content img:not(.card-img-bottom)").forEach(postContentInlineImg =>
+                        postContentInlineImg?.classList.add('card-img-bottom')
+                    );
+                    // Set likes count on each post currently on-screen
+                    // remoteSetLikes(postDataList.splice(0, len));
+                },
+                error: (error) => {
+                    console.log(error);
+                }
+            });
+            
+        }
+        function fetchLocalPosts() {
+            return $.ajax({
                 type: 'GET',
                 url: "{% url 'posts:all_posts_api' %}",
                 dataType: 'json',
@@ -433,17 +506,17 @@
                     var postLatestElementId = postLatestElement ? postLatestElement.id : "empty";
 
                     if (postLatestElementId == "empty") {
-                        var postCardsHtml = '';
+                        // var postCardsHtml = '';
                         data.posts.map(post => {
-                            postCardsHtml += createPostCard(post);
-
+                            // postCardsHtml += createPostCard(post);
+                            postList.push(post)
                         });
-                        document.getElementById("my_node").innerHTML += postCardsHtml;
+                        // document.getElementById("my_node").innerHTML += postCardsHtml;
                     }
-                    else if (postLatestElementId != postLatestFromApi.id) {
-                        var rootElement = document.getElementById("my_node")
-                        rootElement.innerHTML = createPostCard(postLatestFromApi) + rootElement.innerHTML
-                    }
+                    // else if (postLatestElementId != postLatestFromApi.id) {
+                    //     var rootElement = document.getElementById("my_node")
+                    //     rootElement.innerHTML = createPostCard(postLatestFromApi) + rootElement.innerHTML
+                    // }
                     var countPosts =  $(".postCard").length;
                     if (countPosts == 5) {
                         document.getElementsByClassName("loadmoreBtn")[0].style.visibility = 'visible';
@@ -457,122 +530,30 @@
                     console.log(error);
                 }
             });
-
-
-            $.ajax({
-                type: 'GET',
-                url: "{% url 'posts:remote_posts_api' %}",
-                dataType: 'json',
-                success: (data, status) => {
-                    postDataList = data.posts;
-                    // Remove the Fetching placeholder
-                    document.getElementById("remote_fetching").remove();
-                    // Get the latest post from the API
-                    var postLatestFromApi = data.posts[0];
-                    // Get the latest post from the DOM
-                    var rootFirstChild = document.getElementById("remote_node").firstChild;
-                    var postLatestElement = rootFirstChild ? rootFirstChild.nextElementSibling : null;
-                    var postLatestElementId = postLatestElement ? postLatestElement.id : "empty";
-                    var len = 5;
-                    console.log(data)
-                    if (postLatestElementId == "empty") {
-                        var remoteCardsHtml = '';
-                        data.posts.map(post => {
-                            postList.push(createRemotePostCard(post))
-                        });
-
-                        count = postList.length;
-                        if (postList.length < 5) {
-                            len = postList.length
-                        }
-                        for (let i=0; i < len; i++) {
-                            remoteCardsHtml += postList.shift();
-                        }
-                        document.getElementById("remote_node").innerHTML += remoteCardsHtml;
-                    } else if (postLatestElementId != postLatestFromApi.id) {
-                        var rootElement = document.getElementById("remote_node")
-                        rootElement.innerHTML = createRemotePostCard(postLatestFromApi) + rootElement.innerHTML
-                    }
-
-                    var countPosts =  $(".remotePostcard").length;
-                    if (countPosts == 5) {
-                        document.getElementsByClassName("loadmoreBtn-remote")[0].style.visibility = 'visible';
-                    }
-                    // Inject bootstrap class card-img-bottom to constrain inline image sizes
-                    document.querySelectorAll("#post-content img:not(.card-img-bottom)").forEach(postContentInlineImg =>
-                        postContentInlineImg?.classList.add('card-img-bottom')
-                    );
-                    // Set likes count on each post currently on-screen
-                    remoteSetLikes(postDataList.splice(0, len));
-                },
-                error: (error) => {
-                    console.log(error);
-                }
-            });
-
-
-
-            $(document).ready(function OnClickLoadMore(){
-                $(".loadmoreBtn").off('click').on('click', function(){
-                    pageNumb++;
-                    $.ajax({
-                        type: 'GET',
-                        url: "{% url 'posts:all_posts_api' %}",
-                        data: {
-                            page: pageNumb,
-                        },
-                        dataType: 'json',
-                        success: (data, status) => {
-
-                            var postCardsHtml = '';
-                            data.posts.map(post => {
-                                postCardsHtml += createPostCard(post);
-                            });
-                            document.getElementById("my_node").innerHTML += postCardsHtml;
-                            var countPosts =  $(".postCard").length;
-                            if (countPosts == data.count) {
-                                $(".loadmoreBtn").remove();
-
-                            }
-                        },
-                        error: (error) => {
-                            console.log(error);
-                            $(".loadmoreBtn").remove();
-                        }
-                    });
-
-                })
-            });
-
-            $(document).ready(function RemoteOnClickLoadMore(){
-                $(".loadmoreBtn-remote").on('click', function(){
-
-                    var len = 5;
-
-                    if (postList.length < 5) {
-                        len = postList.length
-
-                    }
-                    var remoteCardsHtml = '';
-                    for (let i=0; i < len; i++) {
-                        remoteCardsHtml += postList.shift();
-                    }
-
-                    document.getElementById("remote_node").innerHTML += remoteCardsHtml;
-                    var countPosts =  $(".remotePostcard").length;
-                    if (countPosts == count) {
-                        $(".loadmoreBtn-remote").remove();
-                    }
-                    // Set likes count on each post currently on-screen
-                    remoteSetLikes(postDataList.splice(0, len));
-                })
-            });
-
-
         }
+        
+        $.when(fetchRemotePosts(), fetchLocalPosts()).done(function(remote, local) {
 
-
-        fetchPosts();
+            const sortpostList = postList.sort( (a,b) => {
+                var dateA = new Date(a.published)
+                var dateB = new Date(b.published)
+                return dateB - dateA
+            
+            })
+            var postCardsHtml = '';
+            var len = sortpostList.length;
+            for (let i=0; i < len; i++) {
+                if (sortpostList[i].remote == "true") {
+                    console.log("yes")
+                    postCardsHtml = createRemotePostCard(sortpostList[i]);
+                } else {
+                    postCardsHtml = createPostCard(sortpostList[i]);  
+                }
+                document.getElementById("my_node").innerHTML += postCardsHtml;
+            }
+            remoteSetLikes(postDataList);
+        });
+       
         async function saveComment(postID) {
             var _comment=$(".comment-text-postID".replace("postID", postID)).val();
             var url = `/authors/{{user.author.id}}/posts/${postID}/comments`;
@@ -641,11 +622,7 @@
             var post = service + "authors/" + authorID + "/posts/" + postID
             var comment=$(".comment-text-postID".replace("postID", postID)).val();
             var url = `/api/node/authors/${authorID}/inbox`;
-            console.log(post)
-            console.log(comment)
-            console.log(url)
-            console.log(service)
-            console.log(CLONE)
+
             await fetch(url, {
                 method: 'POST',
                 headers: {

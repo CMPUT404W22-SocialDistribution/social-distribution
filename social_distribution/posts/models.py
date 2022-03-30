@@ -65,6 +65,7 @@ class Post(models.Model):
     # image posts are set to unlisted automatically 
     # owner can see the post in My Posts page
     unlisted = models.BooleanField(default=False)
+    remote = models.BooleanField(default=False)
 
     remote_author = models.JSONField(default=dict, null=True, blank=True)
 
