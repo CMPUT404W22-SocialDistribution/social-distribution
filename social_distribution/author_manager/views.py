@@ -1341,12 +1341,12 @@ class RemoteInboxAPI(generics.GenericAPIView):
                 return Response(data={'detail': response.reason}, status=response.status_code)
             elif item_type == 'comment':
                 author = {
-                        'id': f'https://{request.get_host}/api/authors/{request.user.author.id}/',
-                        'host': f'https://{request.get_host}/',
-                        'displayName': f'{request.user.author.displayName}',
-                        'github': f'{request.user.author.github}',
-                        'profileImage': f'https://{request.get_host}/static/img/{request.user.author.profileImage}',
-                        'url': f'https://{request.get_host}/api/authors/{request.user.author.id}/'
+                    'id': f'https://{request.get_host}/api/authors/{request.user.author.id}/',
+                    'host': f'https://{request.get_host}/',
+                    'displayName': f'{request.user.author.displayName}',
+                    'github': f'{request.user.author.github}',
+                    'profileImage': f'https://{request.get_host}/static/img/{request.user.author.profileImage}',
+                    'url': f'https://{request.get_host}/api/authors/{request.user.author.id}/'
                 }
                 if str(node.url) == T08 or str(node.url) == CLONE:
                     item['author'] = author
@@ -1356,7 +1356,7 @@ class RemoteInboxAPI(generics.GenericAPIView):
                 #     item['author'] = author
                 with requests.post(post_url, json=item,
                                    auth=HTTPBasicAuth(node.outgoing_username, node.outgoing_password)) as response:
-                    print(response.content)
+                    # print(response.content)
                     # print(response.url)
                     return Response(status=response.status_code)
             return Response({'detail': 'Remote Inbox POST of Like object failed'}, status=status.HTTP_400_BAD_REQUEST)

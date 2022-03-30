@@ -549,11 +549,11 @@
 
         var T08 = "http://project-socialdistribution.herokuapp.com/"
         var T05 = "https://cmput404-w22-project-backend.herokuapp.com/"
-        var CLONE = "http://squawker-dev.herokuapp.com/"
+        var CLONE = "https://squawker-dev.herokuapp.com/"
         async function saveRemoteComment(postSource) {
             var items = postSource.split('/');
             var service = items[0] + "//" + items[2] + "/"
-
+           
             if (service == T05 ){
                 var postID = items[items.length -1];
                 var authorID = items[items.length -3];
