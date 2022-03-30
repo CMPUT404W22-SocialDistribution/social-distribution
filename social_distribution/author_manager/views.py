@@ -529,9 +529,11 @@ class SearchAuthorView(ListView):
                         "object": object
                     }
 
-                    if service == "clone":
-                        friend_request = {"item" : friend_request}
-                    elif service == "t05":
+                    # if service == "clone":
+                    #     friend_request = {"item" : friend_request}
+                    # elif service == "t05":
+                    #     friend_request = {"content" : friend_request}
+                    if service == "t05":
                         friend_request = {"content" : friend_request}
 
                     headers = HEADERS
@@ -1202,7 +1204,7 @@ class InboxAPI(generics.GenericAPIView):
         try:
             author = Author.objects.get(id=id)
             inbox = Inbox.objects.get(author=author)
-            item = request.data['item']
+            item = request.data
             item_type = item['type'].lower()
 
             if item_type == 'like':
@@ -1211,7 +1213,7 @@ class InboxAPI(generics.GenericAPIView):
                 else:
                     return self._post_like_from_remote_author(item, inbox, id)
 
-            elif item_type.lower() == 'follow':
+            elif item_type == 'follow':
                 if author.url != item['object']['url'] or author.url == item['actor']['url']:
                     return Response({'detail': 'Fail to send the item!'}, status=status.HTTP_400_BAD_REQUEST)
 
@@ -1225,7 +1227,7 @@ class InboxAPI(generics.GenericAPIView):
                 return Response({'message': 'Success to send follow/friend request'}, status=status.HTTP_200_OK)
 
             
-            if item_type.lower() == 'post':
+            if item_type == 'post':
                 item_id = item['id']
                 try:
                     author_name = item["author"]["displayName"]
