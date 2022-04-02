@@ -122,7 +122,7 @@ aria-controls="collapseExample">
                         <div class=" d-flex justify-content-between py-1 pt-2" style="font-size: 13px";>
                             <span ><a href={% if comment.author %}
                                             "{% url 'author_manager:profile' comment.author.id %}">
-                                           {% elseif comment.remote_author %}
+                                           {% elif comment.remote_author %}
                                             "{{ comment.remote_author.url }}">
                                            {% else %}
                                             "javascript:void(0)">
