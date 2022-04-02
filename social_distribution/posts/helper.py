@@ -28,7 +28,7 @@ def get_post(remote_nodes, remote_posts, author):
                                 comment_id = str(comment["id"]).split('/')[-2]
                                 comment_data = {
                                     'author_displayName': comment["author"]["displayName"],
-                                    'comment': comment["comment"],
+                                    'comment': commonmark.commonmark(comment["comment"]),
                                     'contentType': comment["contentType"],
                                     'published': comment["published"],
                                     'id': comment_id,
@@ -89,6 +89,7 @@ def get_post(remote_nodes, remote_posts, author):
                             'profileImage'] else '/static/img/profile_picture.png'
                         for comment in post['commentsSrc']:
                             comment['num_likes'] = comment['likeCount']
+                            comment['comment'] = commonmark.commonmark(comment['comment'])
                         post_data = {
                             'author_username': post["author"]["displayName"],
                             'author_displayName': post["author"]["displayName"],
