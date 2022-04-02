@@ -120,22 +120,41 @@ def post_create(request, author_id):
                                 }
                                 response = requests.post(inbox_url, json=payload,
                                                          auth=(node.outgoing_username, node.outgoing_password))
+                    
                     elif node.url == "https://cmput404-w22-project-backend.herokuapp.com/":
                         authors = []
                         authors_url = f'{node.url}service/server_api/authors/'
-                        response = requests.get(authors_url)
+                        response = requests.get(authors_url, auth=(node.outgoing_username, node.outgoing_password))
                         if response.status_code == 200:
                             team5_authors = response.json()['items']
                             for item in team5_authors:
                                 authors.append(item["id"].split('/')[-1])
 
-                            post_serializer = PostSerializer(post)
+                            # post_serializer = PostSerializer(post)
                             for item in authors:
                                 inbox_url = f'{authors_url}{item}/inbox'
                                 payload = {
-                                    'content': post_serializer.data
+                                    'type': 'post',
+                                    'title': post.title,
+                                    'id': post.source
                                 }
                                 response = requests.post(inbox_url, json=payload)
+                    '''          
+                    if node.url == 'https://website404.herokuapp.com/':
+                        authors = []
+                        authors_url = f'{node.url}authors?size=100'
+                        response = requests.get(authors_url)
+                        if response.status_code == 200:
+                            team3_authors = response.json()['items']
+                            for item in team3_authors:
+                                authors.append(item["id"].split('/')[-1])
+
+                            post_serializer = PostSerializer(post)
+                            for item in authors:
+                                inbox_url = f'{node.url}authors/{item}/inbox'                 
+                                response = requests.post(inbox_url, json=post_serializer.data)
+                                print(response.status_code)
+                    '''
 
             elif post.visibility == "friends":
                 friends = author.followers.all() & author.followings.all()
