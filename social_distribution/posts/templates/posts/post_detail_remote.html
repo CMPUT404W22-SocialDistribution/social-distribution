@@ -300,6 +300,7 @@ aria-controls="collapseExample">
 
         var post = service + "authors/" + authorID + "/posts/" + postID
         var comment=$(".comment-text").val();
+        var likeCommentURL = post + "/comments/"
         var url = `/api/node/authors/${authorID}/inbox`;
 
         await fetch(url, {
@@ -327,9 +328,15 @@ aria-controls="collapseExample">
                                     style="background-color: #00000008; box-shadow: 5px 5px 2px #cccccc;">
                                     <span class="card-text">${data.comment}</span>
                                     <div class="d-flex justify-content-between py-1 pt-2" style="font-size: 13px";>
-                                        <span ><a href='${_url}'>{{request.user.author.displayName}}</a></span>
+                                        <span ><a href='${_url}'>{{request.user.author.displayName}}</a>
+                                        <i>-{{request.user.author.host}}</i></span>
                                         <span>${Timestamp(new Date())}</span>
-                                        
+                                        <div><a href="javascript:void(0)" class="card-link text-muted"
+                                                style="text-decoration: none;"
+                                                onclick="remotePostLike('${likeCommentURL}')">
+                                            <i class="fa-solid fa-thumbs-up"></i>
+                                            <span> ${getNumLikesText(data.num_likes ?? 0)}</span>
+                                        </a></div>
                                     </div>
                                 </div>
                         </div>

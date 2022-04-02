@@ -554,21 +554,16 @@
             var items = postSource.split('/');
             var service = items[0] + "//" + items[2] + "/"
            
-            if (service == T05 ){
-                var postID = items[items.length -1];
-                var authorID = items[items.length -3];
-            }
-            else if (service == CLONE) {
-                var postID = items[items.length -1];
-                var authorID = items[items.length -3];
-                service = "https://" + items[2] + "/"
-            }
-            else {  //T08
-                var postID = items[items.length -2];
-                var authorID = items[items.length -4];
-            }
+            const authorsIndex = items.findIndex(part => part === 'authors');
+            const postsIndex = items.findIndex(part => part === 'posts');
+            
+            var authorID = items[authorsIndex +1]
+            var postID = items[postsIndex +1]
+
             var post = service + "authors/" + authorID + "/posts/" + postID
             var comment=$(".comment-text-postID".replace("postID", postID)).val();
+            var likeCommentURL = post + "/comments/"
+            
             var url = `/api/node/authors/${authorID}/inbox`;
 
             await fetch(url, {
@@ -602,7 +597,12 @@
                                         <div class="d-flex justify-content-between py-1 pt-2" style="font-size: 13px";>
                                             <span ><a href='${_url}'>{{request.user.author.displayName}}</a></span>
                                             <span>${Timestamp(new Date())}</span>
-                                            
+                                            <div><a href="javascript:void(0)" class="card-link text-muted"
+                                                    style="text-decoration: none;"
+                                                    onclick="remotePostLike('${likeCommentURL}')">
+                                                <i class="fa-solid fa-thumbs-up"></i>
+                                                <span> ${getNumLikesText(data.num_likes ?? 0)}</span>
+                                            </a></div>
                                         </div>
                                     </div>
                             </div>
