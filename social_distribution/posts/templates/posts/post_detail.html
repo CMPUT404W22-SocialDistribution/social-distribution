@@ -41,7 +41,7 @@
                                 <a href="{% url 'posts:post_delete' post.author.id post.id %}"
                                     onclick="return confirm('Are you sure you want to delete this post?');"
                                     class="card-link text-muted"><i class="fa-solid fa-trash"></i></a>
-                            {% endif %}  
+                            {% endif %}
                         {% endif %}
                     </div>
                 </div>
@@ -120,7 +120,11 @@ aria-controls="collapseExample">
                         style="background-color: #00000008; box-shadow: 5px 5px 2px #cccccc;">
                         <p class="card-text">{% autoescape off %}{{ comment.comment }}{% endautoescape %}</p>
                         <div class=" d-flex justify-content-between py-1 pt-2" style="font-size: 13px";>
-                            <span ><a href="{% url 'author_manager:profile' comment.author.id %}">
+                            <span ><a href={% if comment.author.remote %}
+                                            "{{ comment.author.url }}">
+                                           {% else %}
+                                            "{% url 'author_manager:profile' comment.author.id %}">
+                                           {% endif %}
                                 {{comment.author.displayName}}</a></span>
                             <span>{{comment.published}} </span>
                             <div><a href="javascript:void(0)" class="card-link text-muted"
@@ -193,7 +197,7 @@ aria-controls="collapseExample">
     // console.log(Timestamp(datePublished));
     // content.innerHTML = Timestamp(datePublished).toString();
 
-    
+
     function saveComment(postID) {
         var _comment=$(".comment-text").val();
         var url = `/authors/{{user.author.id}}/posts/${postID}/comments`;
@@ -204,7 +208,7 @@ aria-controls="collapseExample">
                 'X-CSRFToken': '{{ csrf_token }}'
             },
             body: JSON.stringify({
-                'comment':_comment,                    
+                'comment':_comment,
             })
         }).then
         (response => {
@@ -233,7 +237,7 @@ aria-controls="collapseExample">
                                     </div>
                             </div>
                             `;
-            
+
                 $(".comment-wrapper").prepend(_html);
             }
         });
