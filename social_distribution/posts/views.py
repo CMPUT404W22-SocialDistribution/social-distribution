@@ -652,7 +652,7 @@ def RemotePostsAPI(request):
                 team8 = response.json()['items']
                 for author in team8:
                     remote_authors.append((author["id"].split('/')[-2], 'team8'))
-                    team8_authors[author["id"].split('/')[-2]] = author["displayName"]
+                    team8_authors[author["id"].split('/')[-2]] = author["displayName"] #temp 
         # Team 5
         elif node.url == 'https://cmput404-w22-project-backend.herokuapp.com/':
             remote_nodes["team5"] = node
@@ -663,6 +663,18 @@ def RemotePostsAPI(request):
                 for author in team5_authors:
                     new_id = str(author["id"])
                     remote_authors.append((new_id.split('/')[-1], 'team5'))
+        
+        # Team 3
+        elif node.url == 'https://website404.herokuapp.com/':
+            remote_nodes["team3"] = node
+            authors_url = node.url + 'authors'
+            response = requests.get(authors_url)  #no auth header yet
+            if response.status_code == 200:
+                print('ok')
+                team3_authors = response.json()['items']
+                for author in team3_authors:
+                    remote_authors.append((author['id'].split('/')[-1], 'team3'))
+
     fn = partial(get_post, remote_nodes, remote_posts, team8_authors)
     
     with concurrent.futures.ThreadPoolExecutor() as executor:

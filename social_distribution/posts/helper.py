@@ -5,7 +5,7 @@ def get_post(remote_nodes, remote_posts, team8_authors, author):
     
     team = author[1]
     author_id = author[0]
-    if team == "team8":
+    if team == "team7":
         node = remote_nodes["team8"]
         posts_url = node.url + 'api/authors/' + author_id + '/posts/'
         r =  requests.get(posts_url, auth=(node.outgoing_username, node.outgoing_password))
@@ -72,7 +72,7 @@ def get_post(remote_nodes, remote_posts, team8_authors, author):
                         }
                         remote_posts.append(post_data)
 
-    elif team == "team5":
+    elif team == "team4":
         node = remote_nodes["team5"]
         posts_url = node.url + 'service/server_api/authors/' + author_id + '/posts/'
         r =  requests.get(posts_url)
@@ -120,3 +120,48 @@ def get_post(remote_nodes, remote_posts, team8_authors, author):
 
                         }
                         remote_posts.append(post_data)
+
+    elif team == "team3":
+        node = remote_nodes["team3"]
+
+        posts_url = node.url + 'authors/' + author_id + '/posts'
+        r = requests.get(posts_url)
+        if r.status_code == 200:
+            data = r.json()
+            team3_posts = data['items']
+            for post in team3_posts:
+                if not post['unlisted'] and post['visibility'].upper() == 'PUBLIC':
+                    post_id = str(post["id"]).split('/')[-1]
+
+                    if post["contentType"] == 'text/markdown':
+                        post["content"] = commonmark.commonmark(str(post["content"]))
+                    
+                    author_image = post['author']['profileImage'] if post['author'][
+                            'profileImage'] else '/static/img/profile_picture.png'
+                    
+                    post_data = {
+                        'author_username': post["author"]["displayName"],
+                        'author_displayName': post["author"]["displayName"],
+                        'title': post["title"],
+                        'id': post_id,
+                        'remote': "true",
+                        'description': post['description'],
+                        'source': post["id"],
+                        'origin': "https://website404.herokuapp.com/",
+                        'content_type': post["contentType"],
+                        'content': post["content"],
+                        'author': post["author"],
+                        'author_id': author_id,
+                        'categories': post["categories"],
+                        'published': post["published"],
+                        'visibility': post["visibility"].lower(),
+                        'author_image': author_image,
+                        'comments': '',
+                        'commentsSrc': {
+                            'size': 0,
+                            'comments': []
+                        },
+                        'num_likes': 0
+
+                    }
+                    remote_posts.append(post_data)
