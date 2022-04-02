@@ -640,6 +640,8 @@ def RemotePostsAPI(request):
                             post["content"] = commonmark.commonmark(str(post["content"]))
                         post['author_image'] = '/static/img/' + post['author_image']
                         remote_posts.append(post)
+                        for comment in post['commentsSrc']['comments']:
+                            comment['comment'] = commonmark.commonmark(comment["comment"])
 
         # Team 8
         elif node.url == 'http://project-socialdistribution.herokuapp.com/':
