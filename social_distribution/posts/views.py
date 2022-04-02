@@ -377,6 +377,8 @@ def post_detail(request, author_id, post_id):
                 post.content = commonmark.commonmark(post.content)
             
             comments = CommentSerializer(post.commentsSrc.all().order_by('-published'), many=True).data
+            # for comment in comments:
+            #     comment["comment"] =  commonmark.commonmark(comment["comment"])
             context = {
                 "comments": comments,
                 "post": post,
@@ -408,7 +410,7 @@ def post_detail(request, author_id, post_id):
                                 'author': {
                                     'displayName': comment["author"]["displayName"],
                                     'host': node_url},
-                                'comment': comment["comment"],
+                                'comment': commonmark.commonmark(comment["comment"]),
                                 'contentType': comment["contentType"],
                                 'published': comment["published"],
                                 'id': comment_id,
@@ -471,6 +473,7 @@ def post_detail(request, author_id, post_id):
                         },
                         'num_likes': data.get('likeCount', 0)
                     }
+
                     context = {
                         "post": post,
                         "comments": data["commentsSrc"]
@@ -633,7 +636,7 @@ def get_post(remote_nodes, remote_posts, author):
                                 comment_id = str(comment["id"]).split('/')[-2]
                                 comment_data = {
                                     'author_displayName': comment["author"]["displayName"],
-                                    'comment': comment["comment"],
+                                    'comment': commonmark.commonmark(comment["comment"]),
                                     'contentType': comment["contentType"],
                                     'published': comment["published"],
                                     'id': comment_id,
@@ -694,6 +697,7 @@ def get_post(remote_nodes, remote_posts, author):
                             'profileImage'] else '/static/img/profile_picture.png'
                         for comment in post['commentsSrc']:
                             comment['num_likes'] = comment['likeCount']
+                            comment['comment'] = commonmark.commonmark(comment['comment'])
                         post_data = {
                             'author_username': post["author"]["displayName"],
                             'author_displayName': post["author"]["displayName"],

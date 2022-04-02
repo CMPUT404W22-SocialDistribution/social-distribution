@@ -106,7 +106,7 @@ aria-controls="collapseExample">
                 <div class=" justify-content-center py-2">
                     <div class="pb-2 px-2 mx-2"
                         style="background-color: #00000008; box-shadow: 5px 5px 2px #cccccc;">
-                        <p class="card-text"> {{comment.comment}}</p>
+                        <p class="card-text">{% autoescape off %}{{comment.comment}}{% endautoescape %}</p>
                         <div class=" d-flex justify-content-between py-1 pt-2" style="font-size: 13px";>
                             <span ><a href="#">
                                 @{{comment.author.displayName}}</a><i>
@@ -137,7 +137,7 @@ aria-controls="collapseExample">
                 <div class=" justify-content-center py-2">
                     <div class="pb-2 px-2 mx-2"
                         style="background-color: #00000008; box-shadow: 5px 5px 2px #cccccc;">
-                        <p class="card-text"> {{comment.comment}}</p>
+                        <p class="card-text">{% autoescape off %}{{ comment.comment }}{% endautoescape %}</p>
                         <div class=" d-flex justify-content-between py-1 pt-2" style="font-size: 13px";>
                             <span ><a href="{% url 'author_manager:profile' comment.author.id %}">
                                 {{comment.author.displayName}}</a></span>
@@ -316,18 +316,16 @@ aria-controls="collapseExample">
             })
         }).then (response => {
             if (response.status === 200) {
-                return response;
+                return response.json();
             }
-
-        }).then(res => {
-            
+        }).then(data => {
             $(".comment-text").val('')
             // Added new comment
             var _url = "{% url 'author_manager:profile' user.author.id%}";
             var _html= `<div class=" justify-content-center py-2">
                                 <div class="pb-2 px-2 mx-2"
                                     style="background-color: #00000008; box-shadow: 5px 5px 2px #cccccc;">
-                                    <span class="card-text">${comment}</span>
+                                    <span class="card-text">${data.comment}</span>
                                     <div class="d-flex justify-content-between py-1 pt-2" style="font-size: 13px";>
                                         <span ><a href='${_url}'>{{request.user.author.displayName}}</a></span>
                                         <span>${Timestamp(new Date())}</span>
