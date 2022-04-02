@@ -28,6 +28,8 @@ from posts.models import Post
 from posts.serializers import CommentSerializer, PostSerializer
 from .forms import SignUpForm, EditProfileForm
 from .serializers import *
+from functools import partial
+import concurrent.futures
 
 HEADERS = {'Referer': 'http://squawker-cmput404.herokuapp.com/', 'Mode': 'no-cors'}
 
@@ -131,6 +133,13 @@ class RemoteFriendsAPI(APIView):
     authentication_classes = [authentication.SessionAuthentication]
     permission_classes = []
 
+    def get_remote_followings(followings, data):
+        response = requests.get(data['followings_url'], headers=HEADERS, auth=(data['node_usrename'], data['node_pass']))
+        
+        # if current author following them
+        if response.status_code == 200:
+            followings.append(data['author'])                      
+
     def get(self, request, id):
         
         try:
@@ -167,6 +176,7 @@ class RemoteFriendsAPI(APIView):
 
         # get remote followings
         followings = []
+        data = []
         for node in Node.objects.all():
             # t05
             if node.url == 'https://cmput404-w22-project-backend.herokuapp.com/':
@@ -196,12 +206,19 @@ class RemoteFriendsAPI(APIView):
                     # clone
                     else:
                         following_url = author['url'].replace('authors', 'api/authors') + '/followers/' + str(id)
+
+                    data.append({'author': author, 'following_url': following_url, 'node_username': node.outgoing_username, 'node_pass': node.outgoing_password})
                     
-                    response = requests.get(following_url, headers=HEADERS, auth=(node.outgoing_username, node.outgoing_password))
+                    # response = requests.get(following_url, headers=HEADERS, auth=(node.outgoing_username, node.outgoing_password))
                     
-                    # if current author following them
-                    if response.status_code == 200:
-                        followings.append(author)           
+                    # # if current author following them
+                    # if response.status_code == 200:
+                    #     followings.append(author)           
+
+            fn = partial(self.get_remote_followings, followings)
+    
+            with concurrent.futures.ThreadPoolExecutor() as executor:
+                executor.map(fn, data)
 
         # get friends
         friends = []
