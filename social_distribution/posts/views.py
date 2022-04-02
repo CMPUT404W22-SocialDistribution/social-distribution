@@ -130,7 +130,6 @@ def post_create(request, author_id):
                             post_serializer = PostSerializer(post)
                             for item in authors:
                                 inbox_url = f'{authors_url}{item}/inbox'
-
                                 payload = {
                                     'content': post_serializer.data
                                 }
