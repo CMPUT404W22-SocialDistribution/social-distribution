@@ -2,7 +2,7 @@ import asyncio
 from functools import partial
 import json
 import sys
-
+import datetime
 import aiohttp
 import commonmark
 import requests
@@ -446,6 +446,7 @@ def post_detail(request, author_id, post_id):
             # Team 5
             elif node_url == "https://cmput404-w22-project-backend.herokuapp.com/":
                 posts_url = f"{node_url}service/server_api/authors/{author_id}/posts/{post_id}"
+                source = f"{node_url}authors/{author_id}/posts/{post_id}"
                 response = requests.get(posts_url)
                 if response.status_code == 200:
                     data = response.json()
@@ -457,7 +458,7 @@ def post_detail(request, author_id, post_id):
                     post = {
                         "title": data["title"],
                         "description": data["description"],
-                        "source": '',
+                        "source": source,
                         "origin": node_url,
                         "published": data["published"],
                         "visibility": data["visibility"].lower(),
@@ -1262,3 +1263,17 @@ class CommentLikesAPI(generics.GenericAPIView):
                 'likes': serializer.data
             },
             status=status.HTTP_200_OK)
+
+
+
+
+
+def format_published(timestamp):
+    '''
+    Helper function to beautify github timestamp based on system's locale and language settings
+    Params: timestamp - published time
+    Return: customized Python date object
+    '''
+    date = datetime.datetime.strptime(str(timestamp), "%Y-%m-%dT%H:%M:%SZ")
+    date = date.strftime('%c')
+    return date

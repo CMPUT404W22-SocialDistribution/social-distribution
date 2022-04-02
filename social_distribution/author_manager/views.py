@@ -1356,7 +1356,7 @@ class RemoteInboxAPI(generics.GenericAPIView):
                 #     item['author'] = author
                 with requests.post(post_url, json=item,
                                    auth=HTTPBasicAuth(node.outgoing_username, node.outgoing_password)) as response:
-                    # print(response.content)
+                    print(response.content)
                     # print(response.url)
                     return Response(status=response.status_code)
             return Response({'detail': 'Remote Inbox POST of Like object failed'}, status=status.HTTP_400_BAD_REQUEST)
