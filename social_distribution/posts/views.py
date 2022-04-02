@@ -124,9 +124,12 @@ def post_create(request, author_id):
                         authors_url = f'{node.url}service/server_api/authors/'
                         response = requests.get(authors_url)
                         if response.status_code == 200:
+                            print(1)
                             team5_authors = response.json()['items']
                             for item in team5_authors:
                                 authors.append(item["id"].split('/')[-1])
+
+                            print(authors)
                             post_serializer = PostSerializer(post)
                             for item in authors:
                                 inbox_url = f'{authors_url}{item}/inbox'
@@ -135,7 +138,7 @@ def post_create(request, author_id):
                                     'content': post_serializer.data
                                 }
                                 response = requests.post(inbox_url, json=payload)
-
+                                print(response.status_code)
 
             elif post.visibility == "friends":
                 friends = author.followers.all() & author.followings.all()
