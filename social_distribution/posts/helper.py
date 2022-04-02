@@ -5,7 +5,7 @@ def get_post(remote_nodes, remote_posts, team8_authors, author):
     
     team = author[1]
     author_id = author[0]
-    if team == "team7":
+    if team == "team8":
         node = remote_nodes["team8"]
         posts_url = node.url + 'api/authors/' + author_id + '/posts/'
         r =  requests.get(posts_url, auth=(node.outgoing_username, node.outgoing_password))
@@ -54,7 +54,7 @@ def get_post(remote_nodes, remote_posts, team8_authors, author):
                         }
                         remote_posts.append(post_data)
 
-    elif team == "team4":
+    elif team == "team5":
         node = remote_nodes["team5"]
         posts_url = node.url + 'service/server_api/authors/' + author_id + '/posts/'
         r =  requests.get(posts_url)

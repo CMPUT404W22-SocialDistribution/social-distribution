@@ -649,6 +649,7 @@ def RemotePostsAPI(request):
             response = requests.get(authors_url, headers=HEADERS, auth=(node.outgoing_username, node.outgoing_password))
             team8_authors = dict() #temp
             if response.status_code == 200:
+                print('ok')
                 team8 = response.json()['items']
                 for author in team8:
                     remote_authors.append((author["id"].split('/')[-2], 'team8'))
