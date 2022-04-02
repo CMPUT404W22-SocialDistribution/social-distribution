@@ -1,7 +1,7 @@
 import datetime
 import json
 from urllib.parse import urlparse
-
+import commonmark
 import requests
 from django.contrib import messages
 from django.contrib.auth import authenticate, login, logout
@@ -1348,17 +1348,17 @@ class RemoteInboxAPI(generics.GenericAPIView):
                     'profileImage': f'https://{request.get_host}/static/img/{request.user.author.profileImage}',
                     'url': f'https://{request.get_host}/api/authors/{request.user.author.id}/'
                 }
+                commentMarkdown = commonmark.commonmark(item['comment'])
                 if str(node.url) == T08 or str(node.url) == CLONE:
                     item['author'] = author
                 elif str(node.url) == T05:
                     item['content'] = 'Hello T05, T01 wants to add comment' 
-                # elif str(node.url) == CLONE:
-                #     item['author'] = author
                 with requests.post(post_url, json=item,
                                    auth=HTTPBasicAuth(node.outgoing_username, node.outgoing_password)) as response:
-                    # print(response.content)
-                    # print(response.url)
-                    return Response(status=response.status_code)
+                    print(response.content)
+                    #print(response.url)
+                    return Response(data={'comment': commentMarkdown},status=response.status_code)
+                    # return Response(data=response.json(),status=response.status_code)
             return Response({'detail': 'Remote Inbox POST of Like object failed'}, status=status.HTTP_400_BAD_REQUEST)
         except Exception as e:
             print(e)

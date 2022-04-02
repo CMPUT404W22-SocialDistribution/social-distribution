@@ -16,8 +16,26 @@ def get_post(remote_nodes, remote_posts, team8_authors, author):
                 if not post['unlisted']:
                     if post['visibility'] == 'PUBLIC':
                         post_id = str(post["id"]).split('/')[-2]
-                        
-                        
+                        comments_url = posts_url + post_id + '/comments/'
+                        res = requests.get(comments_url, auth=(node.outgoing_username, node.outgoing_password))
+                        if res.status_code == 200:
+                            comments_data = res.json()
+                            post_comments = comments_data['comments']
+                            
+                            for comment in post_comments:
+                                comment_id = str(comment["id"]).split('/')[-2]
+                                comment_data = {
+                                    'author_displayName': comment["author"]["displayName"],
+                                    'comment': commonmark.commonmark(comment["comment"]),
+                                    'contentType': comment["contentType"],
+                                    'published': comment["published"],
+                                    'id': comment_id,
+                                    'num_likes': comment['likeCount']
+                                }
+                                comments.append(comment_data)
+                        comments = comments[::-1]
+                        # post with comments
+
                         if post["contentType"] == 'text/markdown':
                             post["content"] = commonmark.commonmark(str(post["content"]))
                         author_image = post['author']['profileImage'] if post['author'][
@@ -75,6 +93,7 @@ def get_post(remote_nodes, remote_posts, team8_authors, author):
                         for comment in post['commentsSrc']:
                             comment['id'] = comment["id"].split('/')[-1]
                             comment['num_likes'] = comment['likeCount']
+                            comment['comment'] = commonmark.commonmark(comment['comment'])
                         post_data = {
                             'author_username': post["author"]["displayName"],
                             'author_displayName': post["author"]["displayName"],
