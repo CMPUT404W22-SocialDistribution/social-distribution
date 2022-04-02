@@ -2,7 +2,7 @@ import asyncio
 from functools import partial
 import json
 import sys
-
+import datetime
 import aiohttp
 import commonmark
 import requests
@@ -130,7 +130,6 @@ def post_create(request, author_id):
                             post_serializer = PostSerializer(post)
                             for item in authors:
                                 inbox_url = f'{authors_url}{item}/inbox'
-
                                 payload = {
                                     'content': post_serializer.data
                                 }
@@ -377,6 +376,8 @@ def post_detail(request, author_id, post_id):
                 post.content = commonmark.commonmark(post.content)
             
             comments = CommentSerializer(post.commentsSrc.all().order_by('-published'), many=True).data
+            # for comment in comments:
+            #     comment["comment"] =  commonmark.commonmark(comment["comment"])
             context = {
                 "comments": comments,
                 "post": post,
@@ -408,7 +409,7 @@ def post_detail(request, author_id, post_id):
                                 'author': {
                                     'displayName': comment["author"]["displayName"],
                                     'host': node_url},
-                                'comment': comment["comment"],
+                                'comment': commonmark.commonmark(comment["comment"]),
                                 'contentType': comment["contentType"],
                                 'published': comment["published"],
                                 'id': comment_id,
@@ -446,6 +447,7 @@ def post_detail(request, author_id, post_id):
             # Team 5
             elif node_url == "https://cmput404-w22-project-backend.herokuapp.com/":
                 posts_url = f"{node_url}service/server_api/authors/{author_id}/posts/{post_id}"
+                source = f"{node_url}authors/{author_id}/posts/{post_id}"
                 response = requests.get(posts_url)
                 if response.status_code == 200:
                     data = response.json()
@@ -457,7 +459,7 @@ def post_detail(request, author_id, post_id):
                     post = {
                         "title": data["title"],
                         "description": data["description"],
-                        "source": '',
+                        "source": source,
                         "origin": node_url,
                         "published": data["published"],
                         "visibility": data["visibility"].lower(),
@@ -470,6 +472,7 @@ def post_detail(request, author_id, post_id):
                         },
                         'num_likes': data.get('likeCount', 0)
                     }
+
                     context = {
                         "post": post,
                         "comments": data["commentsSrc"]
@@ -632,7 +635,7 @@ def get_post(remote_nodes, remote_posts, author):
                                 comment_id = str(comment["id"]).split('/')[-2]
                                 comment_data = {
                                     'author_displayName': comment["author"]["displayName"],
-                                    'comment': comment["comment"],
+                                    'comment': commonmark.commonmark(comment["comment"]),
                                     'contentType': comment["contentType"],
                                     'published': comment["published"],
                                     'id': comment_id,
@@ -693,6 +696,7 @@ def get_post(remote_nodes, remote_posts, author):
                             'profileImage'] else '/static/img/profile_picture.png'
                         for comment in post['commentsSrc']:
                             comment['num_likes'] = comment['likeCount']
+                            comment['comment'] = commonmark.commonmark(comment['comment'])
                         post_data = {
                             'author_username': post["author"]["displayName"],
                             'author_displayName': post["author"]["displayName"],
@@ -1262,3 +1266,17 @@ class CommentLikesAPI(generics.GenericAPIView):
                 'likes': serializer.data
             },
             status=status.HTTP_200_OK)
+
+
+
+
+
+def format_published(timestamp):
+    '''
+    Helper function to beautify github timestamp based on system's locale and language settings
+    Params: timestamp - published time
+    Return: customized Python date object
+    '''
+    date = datetime.datetime.strptime(str(timestamp), "%Y-%m-%dT%H:%M:%SZ")
+    date = date.strftime('%c')
+    return date
