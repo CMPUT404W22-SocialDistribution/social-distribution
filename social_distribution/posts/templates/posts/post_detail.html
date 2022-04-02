@@ -120,12 +120,10 @@ aria-controls="collapseExample">
                         style="background-color: #00000008; box-shadow: 5px 5px 2px #cccccc;">
                         <p class="card-text">{% autoescape off %}{{ comment.comment }}{% endautoescape %}</p>
                         <div class=" d-flex justify-content-between py-1 pt-2" style="font-size: 13px";>
-                            <span ><a href={% if comment.author %}
-                                            "{% url 'author_manager:profile' comment.author.id %}">
-                                           {% elif comment.remote_author %}
-                                            "{{ comment.remote_author.url }}">
+                            <span ><a href={% if comment.author.remote %}
+                                            "{{ comment.author.url }}">
                                            {% else %}
-                                            "javascript:void(0)">
+                                            "{% url 'author_manager:profile' comment.author.id %}">
                                            {% endif %}
                                 {{comment.author.displayName}}</a></span>
                             <span>{{comment.published}} </span>
