@@ -33,7 +33,8 @@ import concurrent.futures
 
 HEADERS = {'Referer': 'http://squawker-cmput404.herokuapp.com/', 'Mode': 'no-cors'}
 
-
+T03 = "https://website404.herokuapp.com/"
+T03_WRONG_SCHEME = "http://website404.herokuapp.com/"
 T08 = "http://project-socialdistribution.herokuapp.com/"
 T05 = "https://cmput404-w22-project-backend.herokuapp.com/"
 T03 = " https://website404.herokuapp.com/"
@@ -1221,6 +1222,7 @@ class InboxAPI(generics.GenericAPIView):
 
 
 class RemoteInboxAPI(generics.GenericAPIView):
+    AUTHOR_INBOX_ENDPOINT_T03 = 'authors/{}/inbox'
     AUTHOR_INBOX_ENDPOINT_T05 = 'authors/{}/inbox'
     AUTHOR_INBOX_ENDPOINT_T08 = 'api/authors/{}/inbox/'
     AUTHOR_INBOX_ENDPOINT_SQUAWKER_DEV = 'api/authors/{}/inbox'
@@ -1228,10 +1230,19 @@ class RemoteInboxAPI(generics.GenericAPIView):
     def post(self, request, author_id):
         if 'node' not in request.headers:
             return HttpResponseBadRequest('Missing header node:node_url')
-        node = get_object_or_404(Node, url=request.headers['node'])
+
+        node_url = request.headers['node']
+        if node_url == T03_WRONG_SCHEME:
+            node_url = node_url.replace('http', 'https')
+            assert node_url == T03, f'{node_url=}, {T03=}'
+
+        node = get_object_or_404(Node, url=node_url)
+
         # Handle team endpoint special cases (default: assume squawker-dev)
         post_url = node.url + self.AUTHOR_INBOX_ENDPOINT_SQUAWKER_DEV.format(author_id)
-        if node.url == T05:
+        if node.url == T03:
+            post_url = node.url + self.AUTHOR_INBOX_ENDPOINT_T03.format(author_id)
+        elif node.url == T05:
             post_url = node.url + "service/" + "server_api/" + self.AUTHOR_INBOX_ENDPOINT_T05.format(author_id)
         elif node.url == T08:
             post_url = node.url + self.AUTHOR_INBOX_ENDPOINT_T08.format(author_id)
@@ -1246,7 +1257,10 @@ class RemoteInboxAPI(generics.GenericAPIView):
                 # Handle differences in inbox POST spec interpretation
                 post_data = item
                 if node.url == CLONE:
-                    post_data = request.data
+                    post_data = item
+                elif node.url == T05:
+                    post_data['type'] = 'Like'
+                    post_data = item
                 elif node.url == T08:
                     # post_url += '/'
                     post_data = item
