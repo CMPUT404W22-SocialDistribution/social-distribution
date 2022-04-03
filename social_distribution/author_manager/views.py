@@ -1308,19 +1308,24 @@ class RemoteInboxAPI(generics.GenericAPIView):
                 return Response(data={'detail': response.reason}, status=response.status_code)
             elif item_type == 'comment':
                 author = {
-                    'id': f'https://{request.get_host}/api/authors/{request.user.author.id}/',
-                    'host': f'https://{request.get_host}/',
+                    'id': f'https://{request.get_host()}/api/authors/{request.user.author.id}/',
+                    'host': f'https://{request.get_host()}/',
                     'displayName': f'{request.user.author.displayName}',
                     'github': f'{request.user.author.github}',
-                    'profileImage': f'https://{request.get_host}/static/img/{request.user.author.profileImage}',
-                    'url': f'https://{request.get_host}/api/authors/{request.user.author.id}/'
+                    'profileImage': f'https://{request.get_host()}/static/img/{request.user.author.profileImage}',
+                    'url': f'https://{request.get_host()}/api/authors/{request.user.author.id}/'
                 }
                 commentMarkdown = commonmark.commonmark(item['comment'])
-                if str(node.url) == T08 or str(node.url) == CLONE:
+                if str(node.url) == T08:
                     item['author'] = author
+                    item['contentType'] = 'text/plain'
+                    item['post'] += '/'
+                elif str(node.url) == CLONE:
+                    item['author'] = author
+                    item['contentType'] = 'text/plain'
                 elif str(node.url) == T05:
                     item['author'] = author 
-                    item['contentType'] = 'text/markdown' 
+                    item['contentType'] = 'text/markdown'
                 with requests.post(post_url, json=item,
                                    auth=HTTPBasicAuth(node.outgoing_username, node.outgoing_password)) as response:
                     print(response.content)
