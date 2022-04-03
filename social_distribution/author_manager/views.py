@@ -133,10 +133,11 @@ class RemoteFriendsAPI(APIView):
     authentication_classes = [authentication.SessionAuthentication]
     permission_classes = []
 
-    def get_remote_followings(followings, data):
-        response = requests.get(data['followings_url'], headers=HEADERS, auth=(data['node_usrename'], data['node_pass']))
+    def get_remote_followings(self, followings, data):
+        response = requests.get(data['following_url'], headers=HEADERS, auth=(data['node_username'], data['node_pass']))
         
         # if current author following them
+        print("access")
         if response.status_code == 200:
             followings.append(data['author'])                      
 
@@ -213,12 +214,12 @@ class RemoteFriendsAPI(APIView):
                     
                     # # if current author following them
                     # if response.status_code == 200:
-                    #     followings.append(author)           
-
-            fn = partial(self.get_remote_followings, followings)
+                    #     followings.append(author)  
+                       
+        fn = partial(self.get_remote_followings, followings)
     
-            with concurrent.futures.ThreadPoolExecutor() as executor:
-                executor.map(fn, data)
+        with concurrent.futures.ThreadPoolExecutor() as executor:
+            executor.map(fn, data)
 
         # get friends
         friends = []
