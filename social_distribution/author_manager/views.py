@@ -242,10 +242,10 @@ class RemoteFriendsAPI(APIView):
                     # if response.status_code == 200:
                     #     followings.append(author)  
     
-            fn = partial(self.get_remote_followings, followings, id)
+        fn = partial(self.get_remote_followings, followings, id)
 
-            with concurrent.futures.ThreadPoolExecutor() as executor:
-                executor.map(fn, authors)
+        with concurrent.futures.ThreadPoolExecutor() as executor:
+            executor.map(fn, remote_authors)
 
         # get friends
         friends = []
