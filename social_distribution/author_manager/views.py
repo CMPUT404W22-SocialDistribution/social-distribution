@@ -38,6 +38,12 @@ T08 = "http://project-socialdistribution.herokuapp.com/"
 T05 = "https://cmput404-w22-project-backend.herokuapp.com/"
 T03 = " https://website404.herokuapp.com/"
 CLONE = "https://squawker-dev.herokuapp.com/"
+
+T08_NAME = "project-socialdistribution"
+T05_NAME = "cmput404-w22-project-backend"
+T03_NAME = "website404"
+CLONE_NAME = "squawker-dev"
+
 def sign_up(request):
     '''
     The function defines a view that allows account creation
@@ -134,13 +140,30 @@ class RemoteFriendsAPI(APIView):
     authentication_classes = [authentication.SessionAuthentication]
     permission_classes = []
 
-    def get_remote_followings(self, followings, data):
-        response = requests.get(data['following_url'], headers=HEADERS, auth=(data['node_username'], data['node_pass']))
+    def get_remote_followings(self, followings, id, author):
+        print("access")
+        # t08
+        author_url = author['url']
+        if T08_NAME in author_url:
+            node = Node.objects.get(url=T08)
+            following_url = author_url.replace('authors', 'api/authors') + 'followers/' + str(id) + '/'
+        # t05:
+        elif T05_NAME in author_url:
+            node = Node.objects.get(url=T05)
+            following_url = author_url.replace('authors', 'service/server_api/authors') + '/followers/' + str(id)
+        # t03:
+        elif T03_NAME in author_url:
+            return
+        # clone
+        else:
+            node = Node.objects.get(url=CLONE)
+            following_url = author_url.replace('authors', 'api/authors') + '/followers/' + str(id)
+
+        response = requests.get(following_url, headers=HEADERS, auth=(node.outgoing_username, node.outgoing_password))
         
         # if current author following them
-        print("access")
         if response.status_code == 200:
-            followings.append(data['author'])                      
+            followings.append(author)                      
 
     def get(self, request, id):
         
@@ -178,7 +201,7 @@ class RemoteFriendsAPI(APIView):
 
         # get remote followings
         followings = []
-        data = []
+        remote_authors = []
         for node in Node.objects.all():
             # t05
             if node.url == T05:
@@ -194,33 +217,33 @@ class RemoteFriendsAPI(APIView):
                 authors_url = node.url + 'api/authors'
 
             response = requests.get(authors_url, headers=HEADERS, auth=(node.outgoing_username, node.outgoing_password))
-      
+
             if response.status_code == 200:
-                authors = response.json()['items']
+                # authors = response.json()['items']
+                remote_authors += response.json()['items']
+                # for author in authors:
+                #     # t08
+                #     if node.url == T08:
+                #         following_url = author['url'].replace('authors', 'api/authors') + 'followers/' + str(id) + '/'
+                #     # t05:
+                #     elif node.url == T05:
+                #         following_url = author['url'].replace('authors', 'service/server_api/authors') + '/followers/' + str(id)
+                #     # clone
+                #     else:
+                #         following_url = author['url'].replace('authors', 'api/authors') + '/followers/' + str(id)
 
-                for author in authors:
-                    # t08
-                    if node.url == T08:
-                        following_url = author['url'].replace('authors', 'api/authors') + 'followers/' + str(id) + '/'
-                    # t05:
-                    elif node.url == T05:
-                        following_url = author['url'].replace('authors', 'service/server_api/authors') + '/followers/' + str(id)
-                    # clone
-                    else:
-                        following_url = author['url'].replace('authors', 'api/authors') + '/followers/' + str(id)
-
-                    data.append({'author': author, 'following_url': following_url, 'node_username': node.outgoing_username, 'node_pass': node.outgoing_password})
+                    # data.append({'author': author, 'following_url': following_url, 'node_username': node.outgoing_username, 'node_pass': node.outgoing_password})
                     
                     # response = requests.get(following_url, headers=HEADERS, auth=(node.outgoing_username, node.outgoing_password))
                     
                     # # if current author following them
                     # if response.status_code == 200:
                     #     followings.append(author)  
-                       
-        fn = partial(self.get_remote_followings, followings)
     
+        fn = partial(self.get_remote_followings, followings, id)
+
         with concurrent.futures.ThreadPoolExecutor() as executor:
-            executor.map(fn, data)
+            executor.map(fn, remote_authors)
 
         # get friends
         friends = []
