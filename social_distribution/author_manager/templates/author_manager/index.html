@@ -35,7 +35,7 @@
                                 <p class="text-center h6" style="display: none;" id="num_lfollowings">{{ author.followings.all.count }}</p>
                             </div>
                             <div class="col border-end" id="followers">
-                                <p class="text-center h7 mt-2 mb-1">Following</p>
+                                <p class="text-center h7 mt-2 mb-1">Followers</p>
                                 <p class="text-center h6" style="display: none;" id="num_lfollowers">{{ author.followers.all.count }}</p>
                             </div>
                             <div class="col" id="friends">
@@ -547,9 +547,11 @@
 
         }
 
-        var T08 = "http://project-socialdistribution.herokuapp.com/"
-        var T05 = "https://cmput404-w22-project-backend.herokuapp.com/"
-        var CLONE = "https://squawker-dev.herokuapp.com/"
+        const T03 = "https://website404.herokuapp.com/";
+        const T03_WRONG_SCHEME = "http://website404.herokuapp.com/";
+        const T05 = "https://cmput404-w22-project-backend.herokuapp.com/";
+        const T08 = "http://project-socialdistribution.herokuapp.com/";
+        const CLONE = "https://squawker-dev.herokuapp.com/";
         async function saveRemoteComment(postSource) {
             var items = postSource.split('/');
             var service = items[0] + "//" + items[2] + "/"
@@ -687,6 +689,10 @@
             const authorId = objectUrlPathParts[authorsIndex + 1];
             const likedObjectType = commentsIndex === -1 ? 'Post' : 'Comment';
 
+            let nodeUrl = objectUrl.origin + '/'
+            if (nodeUrl === T03_WRONG_SCHEME) {
+                nodeUrl = nodeUrl.replace('http', 'https');
+            }
             let fetchUrl = `/api/node/authors/${authorId}/inbox`;
             // console.debug(`fetchUrl=${fetchUrl}`);
             await fetch(fetchUrl, {
@@ -694,7 +700,7 @@
                 headers: {
                     'Content-Type': 'application/json',
                     'X-CSRFToken': '{{ csrf_token }}',
-                    'node': objectUrl.origin + '/'
+                    'node': nodeUrl
                 },
                 body: JSON.stringify({
                     type: 'like',
@@ -717,28 +723,36 @@
             })
                 .then(response => {
                     // Handle different team response behaviors
-                    const hostUrl = objectUrl.origin + '/';
-                    if (hostUrl === CLONE) {
-                        if (response.status === 201) {
+                    // console.debug('nodeUrl', nodeUrl);
+                    switch(nodeUrl) {
+                        case CLONE:
+                            if (response.status === 201) {
                             return response.json();
-                        } else {
+                            }
                             return response.json().then(res => Promise.reject(res));
-                        }
-                    }
-                    else if (hostUrl === T08) {
-                        // TODO: figure out what T08's use of 201 and 200 are
-                        if (response.status === 200 || response.status === 201) {
-                            return response.json();
-                        } else {
+
+                        case T03:
+                            if (response.status === 200) {
+                                return response.json();
+                            }
                             return response.json().then(res => Promise.reject(res));
-                        }
-                    } else if (hostUrl === T05) {
-                        // TODO: verify
-                        if (response.status === 200 || response.status === 201) {
-                            return response.json();
-                        } else {
+
+                        case T05:
+                            if (response.status === 200 || response.status === 201) {
+                                return response.json();
+                            }
                             return response.json().then(res => Promise.reject(res));
-                        }
+
+                        case T08:
+                            // TODO: figure out what T08's use of 201 and 200 are
+                            if (response.status === 200 || response.status === 201) {
+                                return response.json();
+                            }
+                            return response.json().then(res => Promise.reject(res));
+
+                        default:
+                            console.warn('Unknown nodeUrl', nodeUrl);
+                            return response.json().then(res => Promise.reject(res));
                     }
                 })
                 .then((data) => {

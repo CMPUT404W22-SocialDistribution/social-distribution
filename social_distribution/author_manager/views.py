@@ -33,11 +33,18 @@ import concurrent.futures
 
 HEADERS = {'Referer': 'http://squawker-cmput404.herokuapp.com/', 'Mode': 'no-cors'}
 
-
+T03 = "https://website404.herokuapp.com/"
+T03_WRONG_SCHEME = "http://website404.herokuapp.com/"
 T08 = "http://project-socialdistribution.herokuapp.com/"
 T05 = "https://cmput404-w22-project-backend.herokuapp.com/"
 T03 = " https://website404.herokuapp.com/"
 CLONE = "https://squawker-dev.herokuapp.com/"
+
+T08_NAME = "project-socialdistribution"
+T05_NAME = "cmput404-w22-project-backend"
+T03_NAME = "website404"
+CLONE_NAME = "squawker-dev"
+
 def sign_up(request):
     '''
     The function defines a view that allows account creation
@@ -134,12 +141,30 @@ class RemoteFriendsAPI(APIView):
     authentication_classes = [authentication.SessionAuthentication]
     permission_classes = []
 
-    def get_remote_followings(followings, data):
-        response = requests.get(data['followings_url'], headers=HEADERS, auth=(data['node_usrename'], data['node_pass']))
+    def get_remote_followings(self, followings, id, author):
+        print("access")
+        # t08
+        author_url = author['url']
+        if T08_NAME in author_url:
+            node = Node.objects.get(url=T08)
+            following_url = author_url.replace('authors', 'api/authors') + 'followers/' + str(id) + '/'
+        # t05:
+        elif T05_NAME in author_url:
+            node = Node.objects.get(url=T05)
+            following_url = author_url.replace('authors', 'service/server_api/authors') + '/followers/' + str(id)
+        # t03:
+        elif T03_NAME in author_url:
+            return
+        # clone
+        else:
+            node = Node.objects.get(url=CLONE)
+            following_url = author_url.replace('authors', 'api/authors') + '/followers/' + str(id)
+
+        response = requests.get(following_url, headers=HEADERS, auth=(node.outgoing_username, node.outgoing_password))
         
         # if current author following them
         if response.status_code == 200:
-            followings.append(data['author'])                      
+            followings.append(author)                      
 
     def get(self, request, id):
         
@@ -177,7 +202,7 @@ class RemoteFriendsAPI(APIView):
 
         # get remote followings
         followings = []
-        data = []
+        remote_authors = []
         for node in Node.objects.all():
             # t05
             if node.url == T05:
@@ -193,33 +218,33 @@ class RemoteFriendsAPI(APIView):
                 authors_url = node.url + 'api/authors'
 
             response = requests.get(authors_url, headers=HEADERS, auth=(node.outgoing_username, node.outgoing_password))
-      
+
             if response.status_code == 200:
-                authors = response.json()['items']
+                # authors = response.json()['items']
+                remote_authors += response.json()['items']
+                # for author in authors:
+                #     # t08
+                #     if node.url == T08:
+                #         following_url = author['url'].replace('authors', 'api/authors') + 'followers/' + str(id) + '/'
+                #     # t05:
+                #     elif node.url == T05:
+                #         following_url = author['url'].replace('authors', 'service/server_api/authors') + '/followers/' + str(id)
+                #     # clone
+                #     else:
+                #         following_url = author['url'].replace('authors', 'api/authors') + '/followers/' + str(id)
 
-                for author in authors:
-                    # t08
-                    if node.url == T08:
-                        following_url = author['url'].replace('authors', 'api/authors') + 'followers/' + str(id) + '/'
-                    # t05:
-                    elif node.url == T05:
-                        following_url = author['url'].replace('authors', 'service/server_api/authors') + '/followers/' + str(id)
-                    # clone
-                    else:
-                        following_url = author['url'].replace('authors', 'api/authors') + '/followers/' + str(id)
-
-                    data.append({'author': author, 'following_url': following_url, 'node_username': node.outgoing_username, 'node_pass': node.outgoing_password})
+                    # data.append({'author': author, 'following_url': following_url, 'node_username': node.outgoing_username, 'node_pass': node.outgoing_password})
                     
                     # response = requests.get(following_url, headers=HEADERS, auth=(node.outgoing_username, node.outgoing_password))
                     
                     # # if current author following them
                     # if response.status_code == 200:
-                    #     followings.append(author)           
-
-            fn = partial(self.get_remote_followings, followings)
+                    #     followings.append(author)  
     
-            with concurrent.futures.ThreadPoolExecutor() as executor:
-                executor.map(fn, data)
+        fn = partial(self.get_remote_followings, followings, id)
+
+        with concurrent.futures.ThreadPoolExecutor() as executor:
+            executor.map(fn, remote_authors)
 
         # get friends
         friends = []
@@ -1220,6 +1245,7 @@ class InboxAPI(generics.GenericAPIView):
 
 
 class RemoteInboxAPI(generics.GenericAPIView):
+    AUTHOR_INBOX_ENDPOINT_T03 = 'authors/{}/inbox'
     AUTHOR_INBOX_ENDPOINT_T05 = 'authors/{}/inbox'
     AUTHOR_INBOX_ENDPOINT_T08 = 'api/authors/{}/inbox/'
     AUTHOR_INBOX_ENDPOINT_SQUAWKER_DEV = 'api/authors/{}/inbox'
@@ -1227,10 +1253,19 @@ class RemoteInboxAPI(generics.GenericAPIView):
     def post(self, request, author_id):
         if 'node' not in request.headers:
             return HttpResponseBadRequest('Missing header node:node_url')
-        node = get_object_or_404(Node, url=request.headers['node'])
+
+        node_url = request.headers['node']
+        if node_url == T03_WRONG_SCHEME:
+            node_url = node_url.replace('http', 'https')
+            assert node_url == T03, f'{node_url=}, {T03=}'
+
+        node = get_object_or_404(Node, url=node_url)
+
         # Handle team endpoint special cases (default: assume squawker-dev)
         post_url = node.url + self.AUTHOR_INBOX_ENDPOINT_SQUAWKER_DEV.format(author_id)
-        if node.url == T05:
+        if node.url == T03:
+            post_url = node.url + self.AUTHOR_INBOX_ENDPOINT_T03.format(author_id)
+        elif node.url == T05:
             post_url = node.url + "service/" + "server_api/" + self.AUTHOR_INBOX_ENDPOINT_T05.format(author_id)
         elif node.url == T08:
             post_url = node.url + self.AUTHOR_INBOX_ENDPOINT_T08.format(author_id)
@@ -1245,7 +1280,10 @@ class RemoteInboxAPI(generics.GenericAPIView):
                 # Handle differences in inbox POST spec interpretation
                 post_data = item
                 if node.url == CLONE:
-                    post_data = request.data
+                    post_data = item
+                elif node.url == T05:
+                    post_data['type'] = 'Like'
+                    post_data = item
                 elif node.url == T08:
                     # post_url += '/'
                     post_data = item
