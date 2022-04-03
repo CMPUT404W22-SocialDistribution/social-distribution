@@ -581,12 +581,11 @@
                     // }
                 })
             }).then (response => {
-                if (response.status === 200) {
+                if (response.status === 200 || response.status === 201) {
                     return response.json();
                 }
 
             }).then(data => {
-                console.log(data)
                 $(".comment-text-postID".replace("postID", postID)).val('')
                 // Added new comment
                 var _url = "{% url 'author_manager:profile' user.author.id%}";
