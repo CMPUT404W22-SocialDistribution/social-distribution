@@ -1048,7 +1048,6 @@ def create_comment(request, author_id, post_id):
         if (author.id != postAuthor.id):
             postAuthor.inbox.comments.add(comment)
         # postAuthor.inbox.comments.remove(comment)
-
     return JsonResponse(
         {"bool": True, 'comment': comment.comment, 'published': comment.published, 'id': comment.id,
          'author': author.id, 'num_likes': num_likes})
@@ -1077,8 +1076,8 @@ class CommentsAPI(APIView):
         post_author = get_object_or_404(Author, id=author_id)  # Check if post author exist
         post = get_object_or_404(Post, id=post_id, author=post_author)  # Check if post exist
         comments = post.commentsSrc.all()  # get all comments from that post_id
+        
         serializer = CommentSerializer(comments, many=True, remove_fields=['author_displayName'])  # many=True
-
         data = serializer.data
 
         if remote:
@@ -1217,15 +1216,3 @@ class CommentLikesAPI(generics.GenericAPIView):
             status=status.HTTP_200_OK)
 
 
-
-
-
-def format_published(timestamp):
-    '''
-    Helper function to beautify github timestamp based on system's locale and language settings
-    Params: timestamp - published time
-    Return: customized Python date object
-    '''
-    date = datetime.datetime.strptime(str(timestamp), "%Y-%m-%dT%H:%M:%SZ")
-    date = date.strftime('%c')
-    return date

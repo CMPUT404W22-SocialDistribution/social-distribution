@@ -36,6 +36,7 @@ HEADERS = {'Referer': 'http://squawker-cmput404.herokuapp.com/', 'Mode': 'no-cor
 
 T08 = "http://project-socialdistribution.herokuapp.com/"
 T05 = "https://cmput404-w22-project-backend.herokuapp.com/"
+T03 = " https://website404.herokuapp.com/"
 CLONE = "https://squawker-dev.herokuapp.com/"
 def sign_up(request):
     '''
@@ -1222,6 +1223,7 @@ class RemoteInboxAPI(generics.GenericAPIView):
     AUTHOR_INBOX_ENDPOINT_T05 = 'authors/{}/inbox'
     AUTHOR_INBOX_ENDPOINT_T08 = 'api/authors/{}/inbox/'
     AUTHOR_INBOX_ENDPOINT_SQUAWKER_DEV = 'api/authors/{}/inbox'
+    
     def post(self, request, author_id):
         if 'node' not in request.headers:
             return HttpResponseBadRequest('Missing header node:node_url')
@@ -1232,7 +1234,8 @@ class RemoteInboxAPI(generics.GenericAPIView):
             post_url = node.url + "service/" + "server_api/" + self.AUTHOR_INBOX_ENDPOINT_T05.format(author_id)
         elif node.url == T08:
             post_url = node.url + self.AUTHOR_INBOX_ENDPOINT_T08.format(author_id)
-
+        elif node.url == T03:
+            post_url = node.url + self.AUTHOR_INBOX_ENDPOINT_T05.format(author_id)
         # print(f'{request.data=}')
         # print(f'{post_url=}')
         try:
@@ -1266,7 +1269,8 @@ class RemoteInboxAPI(generics.GenericAPIView):
                 if str(node.url) == T08 or str(node.url) == CLONE:
                     item['author'] = author
                 elif str(node.url) == T05:
-                    item['content'] = 'Hello T05, T01 wants to add comment' 
+                    item['author'] = author 
+                    item['contentType'] = 'text/markdown' 
                 with requests.post(post_url, json=item,
                                    auth=HTTPBasicAuth(node.outgoing_username, node.outgoing_password)) as response:
                     print(response.content)
