@@ -131,11 +131,7 @@
                 <a href="#">
                     <div class="d-flex justify-content-between align-items-center">
                         <div class="mr-2">
-                            {% if ${author.profileImage} %}
-                                <img class="rounded-circle" width="60px" src="${author.profileImage}" alt="profile picture">
-                            {% else %}
-                                <img class="rounded-circle" width="60px" src="/static/img/profile_picture.png" alt="profile picture">
-                            {% endif %}
+                            <img class="rounded-circle" width="60px" src="${author.profileImage}" alt="profile picture">
                         </div>
                     </div>
                 </a>
@@ -165,11 +161,7 @@
             <a href="#">
                 <div class="d-flex justify-content-between align-items-center">
                     <div class="mr-2">
-                        {% if ${author.profileImage} %}
-                            <img class="rounded-circle" width="60px" src="${author.profileImage}" alt="profile picture">
-                        {% else %}
-                            <img class="rounded-circle" width="60px" src="/static/img/profile_picture.png" alt="profile picture">
-                        {% endif %}
+                        <img class="rounded-circle" width="60px" src="${author.profileImage}" alt="profile picture">
                     </div>
                 </div>
             </a>
@@ -205,6 +197,9 @@
                 else {
                     let remoteFollowingCardsHtml = '';
                     data.followings.map(following => {
+                        if (following.profileImage == 'null'){
+                            following.profileImage = '/static/img/profile_picture.png'
+                        }
                         remoteFollowingCardsHtml += createFollowingCard(following);
                     });
                     followingsHtml.innerHTML += remoteFollowingCardsHtml;
@@ -219,6 +214,9 @@
                 else{
                     let remoteFollowerCardsHtml = '';
                     data.followers.map(follower => {
+                        if (follower.profileImage == 'null'){
+                            follower.profileImage = '/static/img/profile_picture.png'
+                        }
                         remoteFollowerCardsHtml += createFollowerFriendCard(follower);
                     });
                     followersHtml.innerHTML += remoteFollowerCardsHtml;
@@ -233,6 +231,9 @@
                 else{
                     let remoteFriendCardsHtml = '';
                     data.friends.map(friend => {
+                        if (friend.profileImage == 'null'){
+                            friend.profileImage = '/static/img/profile_picture.png'
+                        }
                         remoteFriendCardsHtml += createFollowerFriendCard(friend);
                     });
                     friendsHtml.innerHTML += remoteFriendCardsHtml;   
