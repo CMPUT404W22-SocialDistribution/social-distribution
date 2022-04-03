@@ -37,6 +37,7 @@ T03 = "https://website404.herokuapp.com/"
 T03_WRONG_SCHEME = "http://website404.herokuapp.com/"
 T08 = "http://project-socialdistribution.herokuapp.com/"
 T05 = "https://cmput404-w22-project-backend.herokuapp.com/"
+T03 = " https://website404.herokuapp.com/"
 CLONE = "https://squawker-dev.herokuapp.com/"
 def sign_up(request):
     '''
@@ -134,10 +135,11 @@ class RemoteFriendsAPI(APIView):
     authentication_classes = [authentication.SessionAuthentication]
     permission_classes = []
 
-    def get_remote_followings(followings, data):
-        response = requests.get(data['followings_url'], headers=HEADERS, auth=(data['node_usrename'], data['node_pass']))
+    def get_remote_followings(self, followings, data):
+        response = requests.get(data['following_url'], headers=HEADERS, auth=(data['node_username'], data['node_pass']))
         
         # if current author following them
+        print("access")
         if response.status_code == 200:
             followings.append(data['author'])                      
 
@@ -214,12 +216,12 @@ class RemoteFriendsAPI(APIView):
                     
                     # # if current author following them
                     # if response.status_code == 200:
-                    #     followings.append(author)           
-
-            fn = partial(self.get_remote_followings, followings)
+                    #     followings.append(author)  
+                       
+        fn = partial(self.get_remote_followings, followings)
     
-            with concurrent.futures.ThreadPoolExecutor() as executor:
-                executor.map(fn, data)
+        with concurrent.futures.ThreadPoolExecutor() as executor:
+            executor.map(fn, data)
 
         # get friends
         friends = []
@@ -1224,6 +1226,7 @@ class RemoteInboxAPI(generics.GenericAPIView):
     AUTHOR_INBOX_ENDPOINT_T05 = 'authors/{}/inbox'
     AUTHOR_INBOX_ENDPOINT_T08 = 'api/authors/{}/inbox/'
     AUTHOR_INBOX_ENDPOINT_SQUAWKER_DEV = 'api/authors/{}/inbox'
+    
     def post(self, request, author_id):
         if 'node' not in request.headers:
             return HttpResponseBadRequest('Missing header node:node_url')
@@ -1243,7 +1246,8 @@ class RemoteInboxAPI(generics.GenericAPIView):
             post_url = node.url + "service/" + "server_api/" + self.AUTHOR_INBOX_ENDPOINT_T05.format(author_id)
         elif node.url == T08:
             post_url = node.url + self.AUTHOR_INBOX_ENDPOINT_T08.format(author_id)
-
+        elif node.url == T03:
+            post_url = node.url + self.AUTHOR_INBOX_ENDPOINT_T05.format(author_id)
         # print(f'{request.data=}')
         # print(f'{post_url=}')
         try:
@@ -1280,11 +1284,12 @@ class RemoteInboxAPI(generics.GenericAPIView):
                 if str(node.url) == T08 or str(node.url) == CLONE:
                     item['author'] = author
                 elif str(node.url) == T05:
-                    item['content'] = 'Hello T05, T01 wants to add comment' 
+                    item['author'] = author 
+                    item['contentType'] = 'text/markdown' 
                 with requests.post(post_url, json=item,
                                    auth=HTTPBasicAuth(node.outgoing_username, node.outgoing_password)) as response:
                     print(response.content)
-                    #print(response.url)
+                    # print(response.url)
                     return Response(data={'comment': commentMarkdown},status=response.status_code)
                     # return Response(data=response.json(),status=response.status_code)
             return Response({'detail': 'Remote Inbox POST of Like object failed'}, status=status.HTTP_400_BAD_REQUEST)

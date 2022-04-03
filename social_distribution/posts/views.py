@@ -120,22 +120,41 @@ def post_create(request, author_id):
                                 }
                                 response = requests.post(inbox_url, json=payload,
                                                          auth=(node.outgoing_username, node.outgoing_password))
+                    
                     elif node.url == "https://cmput404-w22-project-backend.herokuapp.com/":
                         authors = []
                         authors_url = f'{node.url}service/server_api/authors/'
-                        response = requests.get(authors_url)
+                        response = requests.get(authors_url, auth=(node.outgoing_username, node.outgoing_password))
                         if response.status_code == 200:
                             team5_authors = response.json()['items']
                             for item in team5_authors:
                                 authors.append(item["id"].split('/')[-1])
 
-                            post_serializer = PostSerializer(post)
+                            # post_serializer = PostSerializer(post)
                             for item in authors:
                                 inbox_url = f'{authors_url}{item}/inbox'
                                 payload = {
-                                    'content': post_serializer.data
+                                    'type': 'post',
+                                    'title': post.title,
+                                    'id': post.source
                                 }
                                 response = requests.post(inbox_url, json=payload)
+                    '''          
+                    if node.url == 'https://website404.herokuapp.com/':
+                        authors = []
+                        authors_url = f'{node.url}authors?size=100'
+                        response = requests.get(authors_url)
+                        if response.status_code == 200:
+                            team3_authors = response.json()['items']
+                            for item in team3_authors:
+                                authors.append(item["id"].split('/')[-1])
+
+                            post_serializer = PostSerializer(post)
+                            for item in authors:
+                                inbox_url = f'{node.url}authors/{item}/inbox'                 
+                                response = requests.post(inbox_url, json=post_serializer.data)
+                                print(response.status_code)
+                    '''
 
             elif post.visibility == "friends":
                 friends = author.followers.all() & author.followings.all()
@@ -393,31 +412,12 @@ def post_detail(request, author_id, post_id):
                 node_url += "/"
             # Team 8
             if node_url == "https://project-socialdistribution.herokuapp.com/":
-                node_url.replace("https", "http")
+                node_url = node_url.replace("https", "http")
+                node = Node.objects.get(url=node_url)
                 post_url = f"{node_url}api/authors/{author_id}/posts/{post_id}"
-                response = requests.get(post_url, auth=("squawker", "sQu@k3r"))
+                response = requests.get(post_url, auth=(node.outgoing_username, node.outgoing_password))
                 if response.status_code == 200:
                     data = response.json()
-
-                    comments_url = f'{post_url}/comments/'
-                    res = requests.get(comments_url, auth=("squawker", "sQu@k3r"))
-                    if res.status_code == 200:
-                        comments = []
-                        post_comments = res.json()['comments']
-                        for comment in post_comments:
-                            comment_id = str(comment["id"]).split('/')[-2]
-                            comment_data = {
-                                'author': {
-                                    'displayName': comment["author"]["displayName"],
-                                    'host': node_url},
-                                'comment': commonmark.commonmark(comment["comment"]),
-                                'contentType': comment["contentType"],
-                                'published': comment["published"],
-                                'id': comment_id,
-                                'num_likes': comment.get('likeCount', 0)
-                            }
-                            comments.append(comment_data)
-                    comments = sorted(comments, key=lambda k: k['published'], reverse=True)
 
                     if data["contentType"] == 'text/markdown':
                         data["content"] = commonmark.commonmark(str(data["content"]))
@@ -441,16 +441,25 @@ def post_detail(request, author_id, post_id):
                         },
                         "num_likes": data.get('likeCount', 0)
                     }
+                    for comment in data["commentsSrc"]["comments"]:
+                        comment['num_likes'] = comment.get('likeCount', 0)
+                        comment['comment'] = commonmark.commonmark(comment["comment"])
+                        comment['author'] =  {
+                                    'displayName': 'abc',
+                                    'host': node_url
+                        } # temp
                     context = {
                         "post": post,
-                        "comments": comments
+                        "comments": data["commentsSrc"]["comments"]
                     }
             # Team 5
             elif node_url == "https://cmput404-w22-project-backend.herokuapp.com/":
-                posts_url = f"{node_url}service/server_api/authors/{author_id}/posts/{post_id}"
+                post_url = f"{node_url}service/server_api/authors/{author_id}/posts/{post_id}"
                 source = f"{node_url}authors/{author_id}/posts/{post_id}"
-                response = requests.get(posts_url)
+                node = Node.objects.get(url=node_url)
+                response = requests.get(post_url, auth=(node.outgoing_username, node.outgoing_password))
                 if response.status_code == 200:
+                    print('ok')
                     data = response.json()
                     if data["contentType"] == 'text/markdown':
                         data["content"] = commonmark.commonmark(str(data["content"]))
@@ -474,10 +483,50 @@ def post_detail(request, author_id, post_id):
                         'num_likes': data.get('likeCount', 0)
                     }
 
+                    for comment in data["commentsSrc"]:
+                        comment['num_likes'] = comment.get('likeCount', 0)
+                        comment['comment'] = commonmark.commonmark(comment["comment"])
                     context = {
                         "post": post,
                         "comments": data["commentsSrc"]
                     }
+
+            elif node_url == "https://website404.herokuapp.com/":
+                post_url = f"{node_url}authors/{author_id}/posts/{post_id}"
+                response = requests.get(post_url)
+                if response.status_code == 200:
+                    data = response.json()
+                    if data["contentType"] == 'text/markdown':
+                        data["content"] = commonmark.commonmark(str(data["content"]))
+                    
+                    author_image = data['author']['profileImage'] if data['author'][
+                        'profileImage'] else '/static/img/profile_picture.png'
+                    post = {
+                        "title": data["title"],
+                        "description": data["description"],
+                        "source": post_url,
+                        "origin": node_url,
+                        "published": data["published"],
+                        "visibility": data["visibility"].lower(),
+                        "content": data["content"],
+                        "image": '',
+                        "author": {
+                            "displayName": data["author"]["displayName"],
+                            "host": data["author"]["host"],
+                            "profileImage": author_image,
+                        },
+                        'num_likes': data.get('likeCount', 0)
+                    }
+
+                    for comment in data["commentsSrc"]['comments']:
+                        comment['num_likes'] = comment.get('likeCount', 0)
+                        comment['comment'] = commonmark.commonmark(comment["comment"])
+                    context = {
+                        "post": post,
+                        "comments": data["commentsSrc"]['comments']
+                    }
+
+
             # Dev
             elif node_url == "http://squawker-dev.herokuapp.com/" or node_url == "https://squawker-dev.herokuapp.com/":
                 posts_url = f"{node_url}api/authors/{author_id}/posts/{post_id}"
@@ -640,6 +689,8 @@ def RemotePostsAPI(request):
                             post["content"] = commonmark.commonmark(str(post["content"]))
                         post['author_image'] = '/static/img/' + post['author_image']
                         remote_posts.append(post)
+                        for comment in post['commentsSrc']['comments']:
+                            comment['comment'] = commonmark.commonmark(comment["comment"])
 
         # Team 8
         elif node.url == 'http://project-socialdistribution.herokuapp.com/':
@@ -668,7 +719,7 @@ def RemotePostsAPI(request):
         # Team 3
         elif node.url == 'https://website404.herokuapp.com/':
             remote_nodes["team3"] = node
-            authors_url = node.url + 'authors'
+            authors_url = node.url + 'authors?size=100'
             response = requests.get(authors_url)  #no auth header yet
             if response.status_code == 200:
                 print('ok')
@@ -997,7 +1048,6 @@ def create_comment(request, author_id, post_id):
         if (author.id != postAuthor.id):
             postAuthor.inbox.comments.add(comment)
         # postAuthor.inbox.comments.remove(comment)
-
     return JsonResponse(
         {"bool": True, 'comment': comment.comment, 'published': comment.published, 'id': comment.id,
          'author': author.id, 'num_likes': num_likes})
@@ -1026,8 +1076,8 @@ class CommentsAPI(APIView):
         post_author = get_object_or_404(Author, id=author_id)  # Check if post author exist
         post = get_object_or_404(Post, id=post_id, author=post_author)  # Check if post exist
         comments = post.commentsSrc.all()  # get all comments from that post_id
+        
         serializer = CommentSerializer(comments, many=True, remove_fields=['author_displayName'])  # many=True
-
         data = serializer.data
 
         if remote:
@@ -1166,15 +1216,3 @@ class CommentLikesAPI(generics.GenericAPIView):
             status=status.HTTP_200_OK)
 
 
-
-
-
-def format_published(timestamp):
-    '''
-    Helper function to beautify github timestamp based on system's locale and language settings
-    Params: timestamp - published time
-    Return: customized Python date object
-    '''
-    date = datetime.datetime.strptime(str(timestamp), "%Y-%m-%dT%H:%M:%SZ")
-    date = date.strftime('%c')
-    return date
