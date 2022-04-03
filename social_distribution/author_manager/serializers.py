@@ -25,9 +25,12 @@ class ProfileSerializer(serializers.ModelSerializer):
 
 class RemoteProfileSerializer(serializers.ModelSerializer):
     id = serializers.SerializerMethodField('get_author_id')
+    profileImage = serializers.SerializerMethodField('get_profile_image')
 
     def get_author_id(self, obj):
         return obj.url
+    def get_profile_image(self, obj):
+        return obj.host +  'static/img/' + obj.profileImage
 
     class Meta:
         model = Author
