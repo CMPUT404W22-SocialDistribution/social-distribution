@@ -37,7 +37,6 @@ T03 = "https://website404.herokuapp.com/"
 T03_WRONG_SCHEME = "http://website404.herokuapp.com/"
 T08 = "http://project-socialdistribution.herokuapp.com/"
 T05 = "https://cmput404-w22-project-backend.herokuapp.com/"
-T03 = " https://website404.herokuapp.com/"
 CLONE = "https://squawker-dev.herokuapp.com/"
 
 T08_NAME = "project-socialdistribution"
@@ -211,7 +210,8 @@ class RemoteFriendsAPI(APIView):
             elif node.url == T08:
                 authors_url = node.url + 'api/authors/'
             # t03
-            elif node.url == 'https://website404.herokuapp.com':
+            elif node.url == T03:
+                print("access")
                 continue
             # clone
             else:
