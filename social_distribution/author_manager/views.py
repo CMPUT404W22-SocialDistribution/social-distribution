@@ -141,7 +141,7 @@ class RemoteFriendsAPI(APIView):
     permission_classes = []
 
     def get_remote_followings(self, followings, id, author):
-        print("access")
+        # print("access")
         # t08
         author_url = author['url']
         if T08_NAME in author_url:
@@ -153,7 +153,8 @@ class RemoteFriendsAPI(APIView):
             following_url = author_url.replace('authors', 'service/server_api/authors') + '/followers/' + str(id)
         # t03:
         elif T03_NAME in author_url:
-            return
+            node = Node.objects.get(url=T03)
+            following_url = author_url + '/followers/' + str(id)
         # clone
         else:
             node = Node.objects.get(url=CLONE)
@@ -180,14 +181,17 @@ class RemoteFriendsAPI(APIView):
             for follower in remote_followers:
                 # print(follower)
                 # t08
-                if 'project-socialdistribution' in follower:
+                if T08_NAME in follower:
                     node = Node.objects.get(url=T08)
                     follower_url = follower.replace('authors', 'api/authors')
                 # t05
-                elif 'cmput404-w22-project-backend' in follower:
+                elif T05_NAME in follower:
                     node = Node.objects.get(url=T05)
                     follower_url = follower.replace('authors', 'service/server_api/authors')
                 # t03
+                elif T03_NAME in follower:
+                    node = Node.objects.get(url=T03)
+                    follower_url = follower
                 # clone
                 else:
                     node = Node.objects.get(url=CLONE)
@@ -211,8 +215,7 @@ class RemoteFriendsAPI(APIView):
                 authors_url = node.url + 'api/authors/'
             # t03
             elif node.url == T03:
-                print("access")
-                continue
+                authors_url = node.url + 'authors?size=100'
             # clone
             else:
                 authors_url = node.url + 'api/authors'
@@ -221,7 +224,8 @@ class RemoteFriendsAPI(APIView):
 
             if response.status_code == 200:
                 # authors = response.json()['items']
-                remote_authors += response.json()['items']
+                authors = response.json()['items']
+                remote_authors += authors
                 # for author in authors:
                 #     # t08
                 #     if node.url == T08:
@@ -282,16 +286,19 @@ def friends_view(request, author_id):
         if 'http' in requested_id:
 
             # t08
-            if 'project-socialdistribution' in requested_id:
+            if T08_NAME in requested_id:
                 node = Node.objects.get(url=T08)
                 follow_url = requested_id.replace('authors', 'api/authors') + 'followers/' + str(author_id) + '/'
             
             # t05
-            elif 'cmput404-w22-project-backend' in requested_id:
+            elif T05_NAME in requested_id:
                 node = Node.objects.get(url=T05)
                 follow_url = requested_id.replace('authors', 'service/server_api/authors') + '/followers/' + str(author_id)
             
             # t03 
+            elif T03_NAME in requested_id:
+                node = Node.objects.get(url=T03)
+                follow_url = requested_id + '/followers/' + str(author_id)
             # clone
             else:
                 node = Node.objects.get(url=CLONE)
@@ -370,12 +377,12 @@ class SearchAuthorView(ListView):
                 elif node.url == T08:
                     authors_url = node.url + 'api/authors/'
                 # t03
-                elif node.url == 'https://website404.herokuapp.com':
-                    continue
+                elif node.url == T03:
+                    authors_url = node.url + 'authors?size=100'
                 # clone
                 else:
                     authors_url = node.url + 'api/authors'
-               
+                
                 response = requests.get(authors_url, headers=HEADERS, auth=(node.outgoing_username, node.outgoing_password))
               
                 if response.status_code == 200:
@@ -394,13 +401,15 @@ class SearchAuthorView(ListView):
                                  'profileImage': author.profileImage, 'displayName': author.displayName, 'url': author.url})
 
             for node in Node.objects.all():
+                # t05
                 if node.url == T05:
                     authors_url = node.url + 'service/server_api/authors/'
+                # t08
                 elif node.url == T08:
                     authors_url = node.url + 'api/authors/'
                  # t03
-                elif node.url == 'https://website404.herokuapp.com':
-                    continue
+                elif node.url == T03:
+                    authors_url = node.url + 'authors?size=100'
                 else:
                     authors_url = node.url + 'api/authors'
             
@@ -409,10 +418,11 @@ class SearchAuthorView(ListView):
                 if response.status_code == 200:
                     authors = response.json()['items']
                     for author in authors:
-                        if query in author["displayName"]:
+                        if query in author['displayName']: 
+                            profileImage = author['profileImage'] if author['profileImage'] else '/static/img/profile_picture.png'
                             queryset.append(
                                 {'id': author['id'], 'username': 'remote author',
-                                    'profileImage': 'profile_picture.png', 'displayName': author['displayName'], 'url': author['url']})
+                                    'profileImage': profileImage, 'displayName': author['displayName'], 'url': author['url']})
 
             return ['query', queryset]
 
@@ -425,26 +435,28 @@ class SearchAuthorView(ListView):
             # remote
             if 'http' in requested_id:
                 # t08
-                if 'project-socialdistribution' in requested_id:
+                if T08_NAME in requested_id:
                     node = Node.objects.get(url=T08)
-                    service = 't08'
                     author_url = requested_id.replace('authors', 'api/authors')
                     follow_url = author_url + 'followers/' + str(author_id) + '/'
                     inbox_url = author_url + 'inbox/'
 
                 # t05
-                elif 'cmput404-w22-project-backend' in requested_id:
+                elif T05_NAME in requested_id:
                     node = Node.objects.get(url=T05)
-                    service = 't05' 
                     author_url = requested_id.replace('authors', 'service/server_api/authors')
                     follow_url = author_url + '/followers/' + str(author_id)
                     inbox_url = author_url + '/inbox'
                 
                 #t03
+                elif T03_NAME in requested_id:
+                    node = Node.objects.get(url=T03) 
+                    author_url = requested_id
+                    follow_url = author_url + '/followers/' + str(author_id)
+                    inbox_url = author_url + '/inbox'
                 # clone
                 else:
                     node = Node.objects.get(url=CLONE)
-                    service = 'clone'
                     author_url = requested_id.replace('authors', 'api/authors')
                     follow_url = author_url + '/followers/' + str(author_id)
                     inbox_url = author_url + '/inbox'
