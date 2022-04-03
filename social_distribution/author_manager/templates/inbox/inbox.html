@@ -20,9 +20,13 @@
                                             <a href="{{ follow.actor.url }}">
                                                 <div class="d-flex justify-content-between align-items-center">
                                                     <div class="mr-2">
-                                                        <img class="rounded-circle" width="60px"
-                                                             src="/static/img/{{ follow.actor.profileImage }}"
-                                                             alt="profile picture">
+                                                        {% if follow.actor.username  %}
+                                                            <img class="rounded-circle" width="60px" src="/static/img/{{ follow.actor.profileImage }}" alt="profile picture">
+                                                        {% elif follow.actor.profileImage %}
+                                                            <img class="rounded-circle" width="60px" src="{{ follow.actor.profileImage }}" alt="profile picture">
+                                                        {% else %}
+                                                            <img class="rounded-circle" width="60px" src="/static/img/profile_picture.png" alt="profile picture">
+                                                        {% endif %}
                                                     </div>
                                                 </div>
                                             </a>
@@ -213,7 +217,7 @@
                                                 <button type="button">
                                                     <a class="nav-link"
                                                        href="{% url 'posts:post_detail' like.post.author.id like.post.id %}">View
-                                                        Post</a>
+                                                    </a>
                                                 </button>
                                             </div>
                                         </div>

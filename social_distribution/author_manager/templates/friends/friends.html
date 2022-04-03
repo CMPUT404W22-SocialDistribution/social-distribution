@@ -121,84 +121,6 @@
             </div>
         </div>
     </div>
-
-    <!-- <div class="card local-authors shadow mb-5">
-        <h2 class="card-header mb-2 bg-secondary text-white">Local Authors</h2>
-        <div class="card-body">
-            <div class="card-text">
-                {% for author in local_authors %}
-                    {% if user != author.user %}
-                        <div class="card flex-row flex-grow-1 p-2 my-2 align-items-center shadow-sm">
-                            <a href="{{author.url}}">
-                                <div class="d-flex justify-content-between align-items-center">
-                                    <div class="mr-2">
-                                        <img class="rounded-circle" width="60px" src="/static/img/{{author.profileImage}}" alt="profile picture">
-                                    </div>
-                                </div>
-                            </a>
-                            <a href="{{author.url}}" style="color:black; text-decoration: none;">
-                                <div class="d-flex justify-content-between align-items-center">
-                                    <div class="ml-2">
-                                        <h5>@{{author.user.username}}</h5>
-                                        <h6 class="text-muted pl-2">{{author.displayName}}</h6>
-                                    </div>
-                                </div>
-                            </a>
-                            <div class="d-flex flex-row card-right flex-grow-1 justify-content-end mx-1">
-                                <form method="post">
-                                    {% csrf_token %}
-                                    <input type="hidden" name="object_id" value="{{author.id}}">
-                                    <button type="submit" class="btn btn-outline-primary">Follow</button>
-                                </form>
-                            </div>
-                        </div>
-                    {% endif %}
-                {% endfor %}
-            </div>
-        </div>
-    </div>
-
-    <div class="card remote-authors shadow mb-5">
-        <h2 class="card-header mb-2 bg-secondary text-white">Remote Authors</h2>
-        <div class="card-body">
-            <div class="card-text">
-                {% if remote_authors %}
-                    {% for author in remote_authors %}
-                        <div class="card flex-row flex-grow-1 p-2 my-2 align-items-center shadow-sm">
-                            <a href="{{author.url}}">
-                                <div class="d-flex justify-content-between align-items-center">
-                                    <div class="mr-2">
-                                        <img class="rounded-circle" width="60px" src="/static/img/{{author.profileImage}}" alt="profile picture">
-                                    </div>
-                                </div>
-                            </a>
-                            <a href="{{author.url}}" style="color:black; text-decoration: none;">
-                                <div class="d-flex justify-content-between align-items-center">
-                                    <div class="ml-2">
-                                        {% if author.username %}
-                                            <h5>@{{author.username}}</h5>
-                                            <h6 class="text-muted pl-2">{{author.displayName}}</h6>
-                                        {% else %}
-                                            <h5>@{{friend.displayName}}</h5>
-                                        {% endif %}
-                                    </div>
-                                </div>
-                            </a>
-                            <div class="d-flex flex-row card-right flex-grow-1 justify-content-end mx-1">
-                                <form method="post">
-                                    {% csrf_token %}
-                                    <input type="hidden" name="object_id" value="{{author.id}}">
-                                    <button type="submit" class="btn btn-outline-primary">Follow</button>
-                                </form>
-                            </div>
-                        </div>
-                    {% endfor %}
-                {% else %}
-                    <h5 class="form-text" style="font-size: 16px">Haven't had any remote authors yet !</h5>
-                {% endif %}
-            </div>
-        </div>
-    </div> -->
 </div>
 
 <script>
@@ -209,7 +131,7 @@
                 <a href="#">
                     <div class="d-flex justify-content-between align-items-center">
                         <div class="mr-2">
-                            <img class="rounded-circle" width="60px" src="/static/img/profile_picture.png" alt="profile picture">
+                            <img class="rounded-circle" width="60px" src="${author.profileImage}" alt="profile picture">
                         </div>
                     </div>
                 </a>
@@ -239,7 +161,7 @@
             <a href="#">
                 <div class="d-flex justify-content-between align-items-center">
                     <div class="mr-2">
-                        <img class="rounded-circle" width="60px" src="/static/img/profile_picture.png" alt="profile picture">
+                        <img class="rounded-circle" width="60px" src="${author.profileImage}" alt="profile picture">
                     </div>
                 </div>
             </a>
@@ -275,6 +197,9 @@
                 else {
                     let remoteFollowingCardsHtml = '';
                     data.followings.map(following => {
+                        if (following.profileImage == 'null'){
+                            following.profileImage = '/static/img/profile_picture.png'
+                        }
                         remoteFollowingCardsHtml += createFollowingCard(following);
                     });
                     followingsHtml.innerHTML += remoteFollowingCardsHtml;
@@ -289,6 +214,9 @@
                 else{
                     let remoteFollowerCardsHtml = '';
                     data.followers.map(follower => {
+                        if (follower.profileImage == 'null'){
+                            follower.profileImage = '/static/img/profile_picture.png'
+                        }
                         remoteFollowerCardsHtml += createFollowerFriendCard(follower);
                     });
                     followersHtml.innerHTML += remoteFollowerCardsHtml;
@@ -303,6 +231,9 @@
                 else{
                     let remoteFriendCardsHtml = '';
                     data.friends.map(friend => {
+                        if (friend.profileImage == 'null'){
+                            friend.profileImage = '/static/img/profile_picture.png'
+                        }
                         remoteFriendCardsHtml += createFollowerFriendCard(friend);
                     });
                     friendsHtml.innerHTML += remoteFriendCardsHtml;   

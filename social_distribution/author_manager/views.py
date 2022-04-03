@@ -483,7 +483,7 @@ class SearchAuthorView(ListView):
                         "host": current_author.host,
                         "displayName": current_author.displayName,
                         "github": current_author.github,
-                        "profileImage": current_author.profileImage
+                        "profileImage": current_author.host +  'static/img/' + current_author.profileImage
                     }
 
                     friend_request = {
