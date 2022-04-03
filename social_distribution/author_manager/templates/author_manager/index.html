@@ -16,7 +16,7 @@
             </div>
         </div>
         <div class="row gutters-sm" style="margin-top: 20px; margin-left:20px;" >
-            <div class="col-md-2 mb-3" style="position: fixed">
+            <div class="col-md-2 mb-3" style="position: fixed; z-index: 1;">
                 <div class="card shadow-sm">
                     <div class="card-body">
                         <div class="d-flex flex-column align-items-center text-center">
@@ -28,19 +28,19 @@
                             </div>
                         </div>
                     </div>
-                    <div class="card-footer">
+                    <div class="card-footer" type="button" onclick="displayFriendStatic()">
                         <div class="row">
-                            <div class="col border-end">
-                                <p class="text-center h6 mt-2 mb-1">{{ author.followings.all.count }}</p>
-                                <p class="text-center h7">Following</p>
+                            <div class="col border-end" id="followings">
+                                <p class="text-center h7 mt-2 mb-1">Following</p>
+                                <p class="text-center h6" style="display: none;" id="num_lfollowings">{{ author.followings.all.count }}</p>
                             </div>
-                            <div class="col border-end">
-                                <p class="text-center h6 mt-2 mb-1">{{ author.followers.all.count }}</p>
-                                <p class="text-center h7">Followers</p>
+                            <div class="col border-end" id="followers">
+                                <p class="text-center h7 mt-2 mb-1">Following</p>
+                                <p class="text-center h6" style="display: none;" id="num_lfollowers">{{ author.followers.all.count }}</p>
                             </div>
-                            <div class="col">
-                                <p class="text-center h6 mt-2 mb-1">{{ friends_count }}</p>
-                                <p class="text-center h7">Friends</p>
+                            <div class="col" id="friends">
+                                <p class="text-center h7 mt-2 mb-1">Friends</p>
+                                <p class="text-center h6" style="display: none;" id="num_lfriends">{{ friends_count }}</p>
                             </div>
                         </div>
                     </div>
@@ -868,6 +868,49 @@
             throw Error(`Invalid comment ID: ${commentIdText}`);
         }
         return commentIdUrlParts[commentsIndex + 1];
+    }
+
+    let num_rfollowings = 0;
+    let num_rfollowers = 0;
+    let num_rfriends = 0;
+    function fetchRemoteFriends(){
+        $.ajax({
+            type: 'GET',
+            url: "{% url 'author_manager:remotefriends_api' user.author.id %}",
+            dataType: 'json',
+            success: (data, status) => {
+                num_rfollowings += data.followings.length;
+                num_rfollowers +=  data.followers.length;
+                num_rfriends += data.friends.length;
+            },
+            error: (error) => {
+                console.log(error);
+            }
+        });
+    }
+    fetchRemoteFriends();
+
+    function displayFriendStatic(){
+        if ( document.getElementById("total_followings") == null){
+
+            const num_lfollowings = Number(document.getElementById("num_lfollowings").innerHTML);
+            const num_lfollowers = Number(document.getElementById("num_lfollowers").innerHTML);
+            const num_lfriends = Number(document.getElementById("num_lfriends").innerHTML);
+            
+            const total_followings = `<p class="text-center h6" id="total_followings"> ${ num_lfollowings + num_rfollowings} </p>`;
+            const total_followers = `<p class="text-center h6" id="total_followers"> ${ num_lfollowers + num_rfollowers}</p>`;
+            const total_friends = `<p class="text-center h6" id="total_friends"> ${ num_lfriends+ num_rfriends} </p>`;
+
+            document.getElementById("followings").innerHTML += total_followings;
+            document.getElementById("followers").innerHTML += total_followers;
+            document.getElementById("friends").innerHTML += total_friends;  
+        }
+        else {
+            document.getElementById("total_followings").remove();
+            document.getElementById("total_followers").remove();
+            document.getElementById("total_friends").remove();
+
+        }
     }
 
     </script>
