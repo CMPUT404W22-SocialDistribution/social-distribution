@@ -1,4 +1,5 @@
 import datetime
+from dbm import ndbm
 import json
 from urllib.parse import urlparse
 import commonmark
@@ -204,6 +205,7 @@ class RemoteFriendsAPI(APIView):
         followings = []
         remote_authors = []
         for node in Node.objects.all():
+            print(node.url)
             # t05
             if node.url == T05:
                 authors_url = node.url + 'service/server_api/authors/'
@@ -211,7 +213,8 @@ class RemoteFriendsAPI(APIView):
             elif node.url == T08:
                 authors_url = node.url + 'api/authors/'
             # t03
-            elif node.url == 'https://website404.herokuapp.com':
+            elif node.url == "https://website404.herokuapp.com/":
+                print("access")
                 continue
             # clone
             else:
