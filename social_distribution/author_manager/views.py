@@ -216,7 +216,7 @@ class RemoteFriendsAPI(APIView):
                     # if current author following them
                     if node.url == T03 and response.status_code == 200 and response.json()['result'] == 'true':
                         followings.append(following_author) 
-                    elif response.status_code == 200:
+                    elif node.url != T03 and response.status_code == 200:
                         followings.append(following_author) 
 
         # get friends
