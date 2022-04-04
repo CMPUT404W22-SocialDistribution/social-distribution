@@ -179,45 +179,84 @@ class RemoteFriendsAPI(APIView):
 
         # get remote followings
         followings = []
-        for node in Node.objects.all():
-            # t05
-            if node.url == T05:
-                authors_url = node.url + 'service/server_api/authors/'
-            # t08
-            elif node.url == T08:
-                authors_url = node.url + 'api/authors/'
-            # t03
-            elif node.url == T03:
-                authors_url = node.url + 'authors?size=100'
-            # clone
-            else:
-                authors_url = node.url + 'api/authors'
+        if current_author.remote_followings: 
+            remote_followings = current_author.remote_followings.split(' ')
+            remote_followings.pop()
+            for following in remote_followings:
+                # print(follower)
+                # t08
+                if T08_NAME in following:
+                    node = Node.objects.get(url=T08)
+                    author_url = following.replace('authors', 'api/authors')
+                    following_url = author_url + 'followers/' + current_author.url.replace('https', 'http') + '//'
+                # t05
+                elif T05_NAME in following:
+                    node = Node.objects.get(url=T05)
+                    author_url = following.replace('authors', 'service/server_api/authors')
+                    following_url = author_url + '/followers/' + str(id)
+                # t03
+                elif T03_NAME in following:
+                    node = Node.objects.get(url=T03)
+                    author_url = following
+                    following_url = author_url + '/followers/' + str(id)
+                # clone
+                else:
+                    node = Node.objects.get(url=CLONE)
+                    author_url = following.replace('authors', 'api/authors')
+                    following_url = author_url + '/followers/' + str(id)
+                
+                response = requests.get(author_url, headers=HEADERS, auth=(node.outgoing_username, node.outgoing_password))
 
-            response = requests.get(authors_url, headers=HEADERS, auth=(node.outgoing_username, node.outgoing_password))
+                if response.status_code == 200:
+                    following_author = response.json()
 
-            if response.status_code == 200:
-                # authors = response.json()['items']
-                authors = response.json()['items']
-                for author in authors:
-                    # t08
-                    if node.url == T08:
-                        following_url = author['url'].replace('authors', 'api/authors') + 'followers/' + current_author.url.replace('https', 'http') + '//'
-                    # t05:
-                    elif node.url == T05:
-                        following_url = author['url'].replace('authors', 'service/server_api/authors') + '/followers/' + str(id)
-                    # t03
-                    elif node.url == T03:
-                        following_url = author['url'] + '/followers/' + str(id)
-                    # clone
-                    else:
-                        following_url = author['url'].replace('authors', 'api/authors') + '/followers/' + str(id)
-                    
+                    # check if current author is follower of the potential following author
                     response = requests.get(following_url, headers=HEADERS, auth=(node.outgoing_username, node.outgoing_password))
-                    
+                        
                     # if current author following them
                     t03_conndition = node.url == T03 and response.status_code == 200 and response.json()['result'] == 'true'
                     if response.status_code == 200 or t03_conndition:
-                        followings.append(author)  
+                        followings.append(following_author)
+
+        # for node in Node.objects.all():
+        #     # t05
+        #     if node.url == T05:
+        #         authors_url = node.url + 'service/server_api/authors/'
+        #     # t08
+        #     elif node.url == T08:
+        #         authors_url = node.url + 'api/authors/'
+        #     # t03
+        #     elif node.url == T03:
+        #         authors_url = node.url + 'authors?size=100'
+        #     # clone
+        #     else:
+        #         authors_url = node.url + 'api/authors'
+
+        #     response = requests.get(authors_url, headers=HEADERS, auth=(node.outgoing_username, node.outgoing_password))
+
+        #     if response.status_code == 200:
+        #         # authors = response.json()['items']
+        #         authors = response.json()['items']
+        #         for author in authors:
+        #             # t08
+        #             if node.url == T08:
+        #                 following_url = author['url'].replace('authors', 'api/authors') + 'followers/' + current_author.url.replace('https', 'http') + '//'
+        #             # t05:
+        #             elif node.url == T05:
+        #                 following_url = author['url'].replace('authors', 'service/server_api/authors') + '/followers/' + str(id)
+        #             # t03
+        #             elif node.url == T03:
+        #                 following_url = author['url'] + '/followers/' + str(id)
+        #             # clone
+        #             else:
+        #                 following_url = author['url'].replace('authors', 'api/authors') + '/followers/' + str(id)
+                    
+        #             response = requests.get(following_url, headers=HEADERS, auth=(node.outgoing_username, node.outgoing_password))
+                    
+        #             # if current author following them
+        #             t03_conndition = node.url == T03 and response.status_code == 200 and response.json()['result'] == 'true'
+        #             if response.status_code == 200 or t03_conndition:
+        #                 followings.append(author)  
 
         # get friends
         friends = []
@@ -275,8 +314,10 @@ def friends_view(request, author_id):
             
             response = requests.get(requested_id, headers=HEADERS, auth=(node.outgoing_username, node.outgoing_password))
 
-            # if not found following author, then accept remove
+            # if not found following author, then accept unfriend
             if response.status_code != 200:
+                current_author.remote_followings = current_author.remote_followings.replace(f'{requested_id} ', '')
+                current_author.save()
                 messages.success(request, 'Your are now unfriend with the selected author !')
                 return redirect('author_manager:friends', author_id)
             
@@ -285,6 +326,8 @@ def friends_view(request, author_id):
                 response = requests.delete(follow_url, headers=HEADERS, auth=(node.outgoing_username, node.outgoing_password))
 
                 if response.status_code == 200 or response.status_code == 204:
+                    current_author.remote_followings = current_author.remote_followings.replace(f'{requested_id} ', '')
+                    current_author.save()
                     messages.success(request, 'Your are now unfriend with the selected author !')
                     return redirect('author_manager:friends', author_id)
                 
@@ -468,6 +511,9 @@ class SearchAuthorView(ListView):
                     response =  requests.post(inbox_url, data=json.dumps(friend_request), headers=headers, auth=(node.outgoing_username, node.outgoing_password))
 
                     if response.status_code == 200 or response.status_code == 201:
+                        # add to track remote_followings
+                        current_author.remote_followings += f'{requested_id} '
+                        current_author.save()
                         messages.success(request, 'Your friend request has been sent.')
                     elif response.status_code == 204:
                         messages.info(request, 'You already sent the follow request to this author.')
