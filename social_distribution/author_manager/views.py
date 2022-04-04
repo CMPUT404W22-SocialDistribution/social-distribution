@@ -1331,8 +1331,8 @@ class RemoteInboxAPI(generics.GenericAPIView):
                 author = {
                     'id': f'https://{request.get_host()}/api/authors/{request.user.author.id}/',
                     'host': f'https://{request.get_host()}/',
-                    'displayName': f'{request.user.author.displayName}',
-                    'github': f'{request.user.author.github}',
+                    'displayName': request.user.author.displayName,
+                    'github': request.user.author.github,
                     'profileImage': f'https://{request.get_host()}/static/img/{request.user.author.profileImage}',
                     'url': f'https://{request.get_host()}/api/authors/{request.user.author.id}/'
                 }

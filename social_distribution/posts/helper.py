@@ -73,6 +73,7 @@ def get_post(remote_nodes, remote_posts, team8_authors, author):
                         author_image = post['author']['profileImage'] if post['author'][
                             'profileImage'] else '/static/img/profile_picture.png'
                         for comment in post['commentsSrc']:
+                            
                             comment['id'] = comment["id"].split('/')[-1]
                             comment['num_likes'] = comment['likeCount']
                             comment['comment'] = commonmark.commonmark(comment['comment'])
