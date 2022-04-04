@@ -214,7 +214,7 @@
                 else{
                     let remoteFollowerCardsHtml = '';
                     data.followers.map(follower => {
-                        if (follower.profileImage == 'null'){
+                        if (follower.profileImage == null){
                             follower.profileImage = '/static/img/profile_picture.png'
                         }
                         remoteFollowerCardsHtml += createFollowerFriendCard(follower);
@@ -231,7 +231,7 @@
                 else{
                     let remoteFriendCardsHtml = '';
                     data.friends.map(friend => {
-                        if (friend.profileImage == 'null'){
+                        if (friend.profileImage == null){
                             friend.profileImage = '/static/img/profile_picture.png'
                         }
                         remoteFriendCardsHtml += createFollowerFriendCard(friend);
