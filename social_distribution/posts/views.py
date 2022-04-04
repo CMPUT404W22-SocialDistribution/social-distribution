@@ -102,7 +102,8 @@ def post_create(request, author_id):
                                 }
                                 response = requests.post(inbox_url, json=payload,
                                                          auth=(node.outgoing_username, node.outgoing_password))
-                    elif node.url == "https://project-socialdistribution.herokuapp.com/":
+                                
+                    elif node.url == "http://project-socialdistribution.herokuapp.com/":
                         authors = []
                         authors_url = f'{node.url}api/authors'
                         response = requests.get(authors_url, headers=HEADERS,
@@ -112,14 +113,16 @@ def post_create(request, author_id):
                             for item in team8_authors:
                                 authors.append(item["id"].split('/')[-2])
                             for item in authors:
-                                inbox_url = f'{authors_url}/{item}/inbox'
+                                inbox_url = f'{authors_url}/{item}/inbox/'
                                 payload = {
                                     'type': 'post',
-                                    'owner': item,
-                                    'id': post.source
+                                    'visibility': 'public',
+                                    'author': item,
+                                    'id': author.host + 'api/authors/' + str(author.id) + '/posts/' + str(post.id)
                                 }
-                                response = requests.post(inbox_url, json=payload,
-                                                         auth=(node.outgoing_username, node.outgoing_password))
+                                response = requests.post(inbox_url, json=payload, headers=HEADERS,
+                                                         auth=HTTPBasicAuth(node.outgoing_username, node.outgoing_password))
+
                     
                     elif node.url == "https://cmput404-w22-project-backend.herokuapp.com/":
                         authors = []
@@ -139,20 +142,28 @@ def post_create(request, author_id):
                                     'id': post.source
                                 }
                                 response = requests.post(inbox_url, json=payload)
-                    '''          
-                    if node.url == 'https://website404.herokuapp.com/':
+                    '''  
+                    elif node.url == 'https://website404.herokuapp.com/':
                         authors = []
                         authors_url = f'{node.url}authors?size=100'
                         response = requests.get(authors_url)
+                        print('ok')
                         if response.status_code == 200:
+                            print('ok2')
                             team3_authors = response.json()['items']
                             for item in team3_authors:
                                 authors.append(item["id"].split('/')[-1])
 
-                            post_serializer = PostSerializer(post)
                             for item in authors:
-                                inbox_url = f'{node.url}authors/{item}/inbox'                 
-                                response = requests.post(inbox_url, json=post_serializer.data)
+                                inbox_url = f'{node.url}authors/{item}/inbox'  
+                                payload = {
+                                    'type': 'post',
+                                    'author': {
+                                        'id': author.url
+                                    },
+                                    'id': post.source
+                                }               
+                                response = requests.post(inbox_url, json=payload, auth=(node.outgoing_username, node.outgoing_password))
                                 print(response.status_code)
                     '''
 
@@ -702,7 +713,6 @@ def RemotePostsAPI(request):
             if response.status_code == 200:
                 print('ok')
                 team8 = response.json()['items']
-               
                 for author in team8:
                     remote_authors.append((author["id"].split('/')[-2], 'team8'))
                     team8_authors[author["id"].split('/')[-2]] = author["displayName"] #temp 
@@ -734,7 +744,7 @@ def RemotePostsAPI(request):
         executor.map(fn, remote_authors)
         
     remote_posts = sorted(remote_posts, key=lambda k: k['published'], reverse=True)
-    
+
     print("--- %s seconds ---" % (time.time() - start_time))
 
     return JsonResponse({"posts": remote_posts}, status=200)
@@ -1049,6 +1059,7 @@ def create_comment(request, author_id, post_id):
         if (author.id != postAuthor.id):
             postAuthor.inbox.comments.add(comment)
         # postAuthor.inbox.comments.remove(comment)
+
     return JsonResponse(
         {"bool": True, 'comment': comment.comment, 'published': comment.published, 'id': comment.id,
          'author': author.id, 'num_likes': num_likes})
@@ -1077,8 +1088,8 @@ class CommentsAPI(APIView):
         post_author = get_object_or_404(Author, id=author_id)  # Check if post author exist
         post = get_object_or_404(Post, id=post_id, author=post_author)  # Check if post exist
         comments = post.commentsSrc.all()  # get all comments from that post_id
-        
         serializer = CommentSerializer(comments, many=True, remove_fields=['author_displayName'])  # many=True
+
         data = serializer.data
 
         if remote:
@@ -1217,3 +1228,15 @@ class CommentLikesAPI(generics.GenericAPIView):
             status=status.HTTP_200_OK)
 
 
+
+
+
+def format_published(timestamp):
+    '''
+    Helper function to beautify github timestamp based on system's locale and language settings
+    Params: timestamp - published time
+    Return: customized Python date object
+    '''
+    date = datetime.datetime.strptime(str(timestamp), "%Y-%m-%dT%H:%M:%SZ")
+    date = date.strftime('%c')
+    return date
