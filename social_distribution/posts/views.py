@@ -702,6 +702,7 @@ def RemotePostsAPI(request):
             if response.status_code == 200:
                 print('ok')
                 team8 = response.json()['items']
+               
                 for author in team8:
                     remote_authors.append((author["id"].split('/')[-2], 'team8'))
                     team8_authors[author["id"].split('/')[-2]] = author["displayName"] #temp 
@@ -733,7 +734,7 @@ def RemotePostsAPI(request):
         executor.map(fn, remote_authors)
         
     remote_posts = sorted(remote_posts, key=lambda k: k['published'], reverse=True)
-
+    
     print("--- %s seconds ---" % (time.time() - start_time))
 
     return JsonResponse({"posts": remote_posts}, status=200)
