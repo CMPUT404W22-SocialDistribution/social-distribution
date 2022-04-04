@@ -1,4 +1,5 @@
 import datetime
+from enum import Flag
 import json
 from urllib.parse import urlparse
 import commonmark
@@ -215,7 +216,7 @@ class RemoteFriendsAPI(APIView):
                         
                     # if current author following them
                     if node.url == T03: 
-                        if response.status_code == 200 and response.json()['result'] == 'true':
+                        if response.status_code == 200 and response.json()['result'] == True:
                             followings.append(following_author) 
                     elif response.status_code == 200:
                         followings.append(following_author) 
@@ -448,7 +449,7 @@ class SearchAuthorView(ListView):
                 response = requests.get(follow_url, headers=HEADERS, auth=(node.outgoing_username, node.outgoing_password))
 
                 # if not follow yet
-                t03_condition = T03_NAME in requested_id and response.status_code == 200 and response.json()['result'] == 'false'
+                t03_condition = T03_NAME in requested_id and response.status_code == 200 and response.json()['result'] == False
                 if response.status_code == 404 or response.status_code == 400 or t03_condition:
                     actor = {
                         "type": "author",
