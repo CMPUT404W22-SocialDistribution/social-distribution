@@ -1,5 +1,4 @@
 import datetime
-from enum import Flag
 import json
 from urllib.parse import urlparse
 import commonmark
