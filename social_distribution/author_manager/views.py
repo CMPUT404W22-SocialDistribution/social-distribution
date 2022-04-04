@@ -201,7 +201,7 @@ class RemoteFriendsAPI(APIView):
                 for author in authors:
                     # t08
                     if node.url == T08:
-                        following_url = author['url'].replace('authors', 'api/authors') + 'followers/' + current_author.url.replace('https', 'http') + '/'
+                        following_url = author['url'].replace('authors', 'api/authors') + 'followers/' + current_author.url.replace('https', 'http') + '//'
                     # t05:
                     elif node.url == T05:
                         following_url = author['url'].replace('authors', 'service/server_api/authors') + '/followers/' + str(id)
@@ -256,7 +256,7 @@ def friends_view(request, author_id):
             # t08
             if T08_NAME in requested_id:
                 node = Node.objects.get(url=T08)
-                follow_url = requested_id.replace('authors', 'api/authors') + 'followers/' + current_author.url.replace('https', 'http') + '/'
+                follow_url = requested_id.replace('authors', 'api/authors') + 'followers/' + current_author.url.replace('https', 'http') + '//'
             
             # t05
             elif T05_NAME in requested_id:
@@ -283,7 +283,7 @@ def friends_view(request, author_id):
             else:
                 response = requests.delete(follow_url, headers=HEADERS, auth=(node.outgoing_username, node.outgoing_password))
 
-                if response.status_code == 200 or response.status_code == 404:
+                if response.status_code == 200 or response.status_code == 204:
                     messages.success(request, 'Your are now unfriend with the selected author !')
                     return redirect('author_manager:friends', author_id)
                 
@@ -406,7 +406,7 @@ class SearchAuthorView(ListView):
                 if T08_NAME in requested_id:
                     node = Node.objects.get(url=T08)
                     author_url = requested_id.replace('authors', 'api/authors')
-                    follow_url = author_url + 'followers/' + current_author.url.replace('https', 'http') + '/'
+                    follow_url = author_url + 'followers/' + current_author.url.replace('https', 'http') + '//'
                     inbox_url = author_url + 'inbox/'
 
                 # t05
@@ -443,7 +443,7 @@ class SearchAuthorView(ListView):
                 # print(response.status_code)
                 # print(response.json())
                 # if not follow yet
-                if response.status_code == 404 or response.status_code == 400 or response.json()["ok"] == []:
+                if response.status_code == 404 or response.status_code == 400:
                     actor = {
                         "type": "author",
                         "id": current_author.url,
