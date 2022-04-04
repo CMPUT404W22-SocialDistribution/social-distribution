@@ -1,5 +1,6 @@
 import datetime
 import json
+from re import I
 from urllib.parse import urlparse
 import commonmark
 import requests
@@ -404,6 +405,7 @@ class SearchAuthorView(ListView):
     def post(self, request, *args, **kwargs):
         author_id = request.user.author.id
         current_author = Author.objects.get(id=author_id)
+        inbox = Inbox.objects.get(author=current_author)
         requested_id = request.POST['object_id']
 
         try:
@@ -467,6 +469,11 @@ class SearchAuthorView(ListView):
                         "object": object
                     }
 
+                    for follow in inbox.follows:
+                        if current_author.url == follow['actor']['url'] and object['url'] == follow['object']['url']:
+                            messages.warning(request, 'You already sent a friend request to this author.')
+                            return redirect('author_manager:friends', author_id)
+
                     headers = HEADERS
                     headers["Content-Type"] = "application/json"
                     response =  requests.post(inbox_url, data=json.dumps(friend_request), headers=headers, auth=(node.outgoing_username, node.outgoing_password))
@@ -509,7 +516,6 @@ class SearchAuthorView(ListView):
                 inbox.save()
                 messages.success(request, 'Your friend request has been sent.')
                 return redirect('author_manager:friends', author_id)
-
 
         except Author.DoesNotExist:
             messages.warning(request, 'Sorry, we could not find this author.')
