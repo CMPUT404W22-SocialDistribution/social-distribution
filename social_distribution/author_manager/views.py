@@ -215,7 +215,8 @@ class RemoteFriendsAPI(APIView):
                     response = requests.get(following_url, headers=HEADERS, auth=(node.outgoing_username, node.outgoing_password))
                     
                     # if current author following them
-                    if response.status_code == 200:
+                    t03_conndition = node.url == T03 and response.status_code == 200 and response.json()['result'] == 'true'
+                    if response.status_code == 200 or t03_conndition:
                         followings.append(author)  
 
         # get friends
@@ -443,7 +444,8 @@ class SearchAuthorView(ListView):
                 # print(response.status_code)
                 # print(response.json())
                 # if not follow yet
-                if response.status_code == 404 or response.status_code == 400:
+                t03_condition = T03_NAME in requested_id and response.status_code == 200 and response.json()['result'] == 'false'
+                if response.status_code == 404 or response.status_code == 400 or t03_condition:
                     actor = {
                         "type": "author",
                         "id": current_author.url,
