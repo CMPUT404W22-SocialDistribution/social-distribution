@@ -1,6 +1,5 @@
 import datetime
 import json
-from re import I
 from urllib.parse import urlparse
 import commonmark
 import requests
