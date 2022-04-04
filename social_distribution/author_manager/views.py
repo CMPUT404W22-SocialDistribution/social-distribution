@@ -1134,8 +1134,10 @@ class InboxAPI(generics.GenericAPIView):
                     return self._post_like_from_remote_author(item, inbox, id)
 
             elif item_type == 'follow':
+                # t08
                 if 'api' in item['object']['url']:
                     item['object']['url'].replace('api/','')
+                    item['object']['url'].replace('http','https')
 
                 if author.url != item['object']['url'] or author.url == item['actor']['url']:
                     return Response({'detail': 'Fail to send the item!'}, status=status.HTTP_400_BAD_REQUEST)
