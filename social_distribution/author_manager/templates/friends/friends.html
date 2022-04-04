@@ -197,7 +197,7 @@
                 else {
                     let remoteFollowingCardsHtml = '';
                     data.followings.map(following => {
-                        if (following.profileImage == 'null'){
+                        if (following.profileImage == null){
                             following.profileImage = '/static/img/profile_picture.png'
                         }
                         remoteFollowingCardsHtml += createFollowingCard(following);
