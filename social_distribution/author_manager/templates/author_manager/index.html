@@ -223,7 +223,7 @@
                                                         <p class="card-text"> ${comment.comment}</p>
                                                         <div class=" d-flex justify-content-between py-1 pt-2" style="font-size: 13px";>
                                                             <span><a href="/authors/${comment.author.id}">
-                                                                ${comment.author_displayName}
+                                                                ${comment.author.displayName}
                                                             </a></span>
                                                             <span>${Timestamp(comment.published)} </span>
                                                             <div><a href="javascript:void(0)" class="card-link text-muted"
@@ -368,7 +368,7 @@
                                             <p class="card-text"> ${comment.comment}</p>
                                             <div class=" d-flex justify-content-between py-1 pt-2" style="font-size: 13px";>
                                                 <span><a href="#">
-                                                    ${comment.author_displayName}
+                                                    ${comment.author.displayName}
                                                 </a></span>
                                                 <span>${Timestamp(comment.published)} </span>
                                                 <div><a href="javascript:void(0)" class="card-link text-muted"
