@@ -16,16 +16,15 @@ def get_post(remote_nodes, remote_posts, team8_authors, author):
                 if not post['unlisted']:
                     if post['visibility'] == 'PUBLIC':
                         post_id = str(post["id"]).split('/')[-2]
-                    
                         if post["contentType"] == 'text/markdown':
                             post["content"] = commonmark.commonmark(str(post["content"]))
                         author_image = post['author']['profileImage'] if post['author'][
                             'profileImage'] else 'static/img/profile_picture.png'
                         for comment in post['commentsSrc']['comments']:
-                            comment['author_displayName'] = team8_authors[comment["author"].split('/')[-2]] #placeholder
                             comment['id'] = comment["id"].split('/')[-2]
                             comment['num_likes'] = comment['likeCount']
                             comment['comment'] = commonmark.commonmark(comment["comment"])
+                        
                         post_data = {
                             'author_username': post["author"]["displayName"],
                             'author_displayName': post["author"]["displayName"],
@@ -52,6 +51,7 @@ def get_post(remote_nodes, remote_posts, team8_authors, author):
                             'num_likes': post['likeCount']
 
                         }
+                        # print(post_data)
                         remote_posts.append(post_data)
 
     elif team == "team5":
@@ -73,6 +73,7 @@ def get_post(remote_nodes, remote_posts, team8_authors, author):
                         author_image = post['author']['profileImage'] if post['author'][
                             'profileImage'] else '/static/img/profile_picture.png'
                         for comment in post['commentsSrc']:
+                            
                             comment['id'] = comment["id"].split('/')[-1]
                             comment['num_likes'] = comment['likeCount']
                             comment['comment'] = commonmark.commonmark(comment['comment'])

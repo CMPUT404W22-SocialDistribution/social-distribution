@@ -1270,8 +1270,7 @@ class RemoteInboxAPI(generics.GenericAPIView):
             post_url = node.url + self.AUTHOR_INBOX_ENDPOINT_T08.format(author_id)
         elif node.url == T03:
             post_url = node.url + self.AUTHOR_INBOX_ENDPOINT_T05.format(author_id)
-        # print(f'{request.data=}')
-        # print(f'{post_url=}')
+ 
         try:
             item = request.data
             item_type = item['type']
@@ -1284,12 +1283,9 @@ class RemoteInboxAPI(generics.GenericAPIView):
                     post_data['type'] = 'Like'
                     post_data = item
                 elif node.url == T08:
-                    # post_url += '/'
                     post_data = item
-                # print(json.dumps(post_data, indent=4))
                 with requests.post(post_url, json=post_data,
                                    auth=HTTPBasicAuth(node.outgoing_username, node.outgoing_password)) as response:
-                    # print(f'{response.reason=}, {response.content=}')
                     if response.ok:
                         return Response(data=response.json(), status=response.status_code)
                 return Response(data={'detail': response.reason}, status=response.status_code)
@@ -1297,8 +1293,8 @@ class RemoteInboxAPI(generics.GenericAPIView):
                 author = {
                     'id': f'https://{request.get_host()}/api/authors/{request.user.author.id}/',
                     'host': f'https://{request.get_host()}/',
-                    'displayName': f'{request.user.author.displayName}',
-                    'github': f'{request.user.author.github}',
+                    'displayName': request.user.author.displayName,
+                    'github': request.user.author.github,
                     'profileImage': f'https://{request.get_host()}/static/img/{request.user.author.profileImage}',
                     'url': f'https://{request.get_host()}/api/authors/{request.user.author.id}/'
                 }
@@ -1316,9 +1312,8 @@ class RemoteInboxAPI(generics.GenericAPIView):
                 with requests.post(post_url, json=item,
                                    auth=HTTPBasicAuth(node.outgoing_username, node.outgoing_password)) as response:
                     print(response.content)
-                    # print(response.url)
                     return Response(data={'comment': commentMarkdown},status=response.status_code)
-                    # return Response(data=response.json(),status=response.status_code)
+                    
             return Response({'detail': 'Remote Inbox POST of Like object failed'}, status=status.HTTP_400_BAD_REQUEST)
         except Exception as e:
             print(e)

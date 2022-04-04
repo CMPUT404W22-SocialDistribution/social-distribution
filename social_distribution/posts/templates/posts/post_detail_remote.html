@@ -206,7 +206,6 @@ aria-controls="collapseExample">
     }
 
     async function remotePostLike(likedObjectSource) {
-        // console.debug(`likedObjectSource=${likedObjectSource}`);
         let objectUrl = {};
         try {
             objectUrl = new URL(likedObjectSource);
@@ -224,7 +223,6 @@ aria-controls="collapseExample">
         const likedObjectType = commentsIndex === -1 ? 'Post' : 'Comment';
 
         let fetchUrl = `/api/node/authors/${authorId}/inbox`;
-        // console.debug(`fetchUrl=${fetchUrl}`);
         await fetch(fetchUrl, {
             method: 'POST',
             headers: {
