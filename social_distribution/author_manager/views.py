@@ -216,47 +216,7 @@ class RemoteFriendsAPI(APIView):
                     # if current author following them
                     t03_conndition = node.url == T03 and response.status_code == 200 and response.json()['result'] == 'true'
                     if response.status_code == 200 or t03_conndition:
-                        followings.append(following_author)
-
-        # for node in Node.objects.all():
-        #     # t05
-        #     if node.url == T05:
-        #         authors_url = node.url + 'service/server_api/authors/'
-        #     # t08
-        #     elif node.url == T08:
-        #         authors_url = node.url + 'api/authors/'
-        #     # t03
-        #     elif node.url == T03:
-        #         authors_url = node.url + 'authors?size=100'
-        #     # clone
-        #     else:
-        #         authors_url = node.url + 'api/authors'
-
-        #     response = requests.get(authors_url, headers=HEADERS, auth=(node.outgoing_username, node.outgoing_password))
-
-        #     if response.status_code == 200:
-        #         # authors = response.json()['items']
-        #         authors = response.json()['items']
-        #         for author in authors:
-        #             # t08
-        #             if node.url == T08:
-        #                 following_url = author['url'].replace('authors', 'api/authors') + 'followers/' + current_author.url.replace('https', 'http') + '//'
-        #             # t05:
-        #             elif node.url == T05:
-        #                 following_url = author['url'].replace('authors', 'service/server_api/authors') + '/followers/' + str(id)
-        #             # t03
-        #             elif node.url == T03:
-        #                 following_url = author['url'] + '/followers/' + str(id)
-        #             # clone
-        #             else:
-        #                 following_url = author['url'].replace('authors', 'api/authors') + '/followers/' + str(id)
-                    
-        #             response = requests.get(following_url, headers=HEADERS, auth=(node.outgoing_username, node.outgoing_password))
-                    
-        #             # if current author following them
-        #             t03_conndition = node.url == T03 and response.status_code == 200 and response.json()['result'] == 'true'
-        #             if response.status_code == 200 or t03_conndition:
-        #                 followings.append(author)  
+                        followings.append(following_author) 
 
         # get friends
         friends = []
@@ -265,6 +225,7 @@ class RemoteFriendsAPI(APIView):
                 friends.append(follower)
        
         return Response({'followings': followings, 'followers': followers,'friends': friends}, status=status.HTTP_200_OK)
+
 
 @login_required
 def friends_view(request, author_id):
@@ -484,8 +445,6 @@ class SearchAuthorView(ListView):
                 # check if already follow
                 response = requests.get(follow_url, headers=HEADERS, auth=(node.outgoing_username, node.outgoing_password))
 
-                # print(response.status_code)
-                # print(response.json())
                 # if not follow yet
                 t03_condition = T03_NAME in requested_id and response.status_code == 200 and response.json()['result'] == 'false'
                 if response.status_code == 404 or response.status_code == 400 or t03_condition:
